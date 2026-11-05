@@ -1,0 +1,1297 @@
+/* ==========================================================================
+   DUNA MEN'S WEAR — SARTORIAL RETAIL APPAREL UI (STYLE.CSS)
+   Engineered under taste-skill specifications & brandkit standards:
+   - High-end menswear retail management & POS system
+   - Precision typographic hierarchy, flat surfaces, 1px rules
+   - Zero AI tells: no violet gradients, no glowing buttons, no glass blur cards
+   - Tabular numerals for monetary values, barcodes, and dates
+   ========================================================================== */
+
+/* ---------- 1. Top Navigation Bar (App Shell) ---------- */
+.navbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: var(--shadow-subtle);
+  transition: background var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.navbar-brand img,
+.navbar-brand-logo {
+  width: 36px !important;
+  height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  border-radius: var(--radius-sm, 6px);
+  object-fit: contain;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  padding: 2px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.navbar-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.brand-monogram {
+  font-family: var(--font-brand);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.brand-monogram span {
+  color: var(--brand-accent);
+}
+
+.brand-subtext {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 4px 0;
+}
+
+.nav-menu a, .nav-item {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  text-decoration: none;
+  transition: all var(--t-fast) var(--ease);
+  position: relative;
+}
+
+.nav-menu a:hover, .nav-item:hover {
+  color: var(--text-primary);
+  background: var(--raised);
+}
+
+.nav-menu a.active, .nav-menu a[style*="color:#2196F3"], .nav-menu a[style*="color: #2196F3"] {
+  color: var(--text-primary) !important;
+  background: var(--raised) !important;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 var(--brand-accent);
+}
+
+.nav-right-cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.nav-user-name {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-user-name:hover {
+  color: var(--brand-accent);
+}
+
+.nav-divider {
+  color: var(--border);
+  user-select: none;
+}
+
+.nav-logout-btn {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12.5px;
+  text-decoration: none;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--t-fast) var(--ease);
+}
+
+.nav-logout-btn:hover {
+  color: var(--negative);
+  background: var(--negative-bg);
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  user-select: none;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--control-border) !important;
+  box-shadow: var(--shadow-subtle) !important;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.theme-toggle-btn:hover {
+  background: var(--raised) !important;
+  border-color: var(--text) !important;
+}
+
+/* ---------- 2. Toolbars & Filter Bars ---------- */
+.toolbar-section, .management-header, .filter-bar, .filter-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.filter-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.search-box-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+}
+
+.search-box, .search-bar input {
+  height: var(--control-h);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 14px;
+  font-size: 13.5px;
+  outline: none;
+  width: 100%;
+  transition: border-color var(--t-fast) var(--ease);
+}
+
+.search-box:focus, .search-bar input:focus {
+  border-color: var(--control-focus);
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- 3. Typographic KPI Metrics (Zero tells) ---------- */
+.overview-grid, .stats-row, .kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card, .stat-box, .kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-subtle);
+  position: relative;
+}
+
+.stat-card-icon, .stat-icon {
+  display: none !important; /* Taste rule: KPIs are type, not tiles */
+}
+
+.stat-label, .stat-card-label, .kpi-label, .stat-box .label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.stat-value, .stat-card-value, .kpi-metric, .stat-box .value {
+  font-size: var(--fs-kpi);
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.stat-sub, .kpi-trend {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- 4. POS (Bán Hàng) Screen Components ---------- */
+.sell-layout {
+  display: grid;
+  grid-template-columns: minmax(520px, 1.35fr) minmax(420px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .sell-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.product-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-subtle);
+  transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+  position: relative;
+  min-height: 190px;
+}
+
+.product-card:hover {
+  border-color: var(--control-focus);
+}
+
+.product-card.hidden {
+  display: none !important;
+}
+
+.product-thumb {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  margin-bottom: 8px;
+}
+
+.product-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin: 4px 0 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 36px;
+}
+
+.product-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.product-price {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.product-stock {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.product-actions {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.product-actions input {
+  height: 32px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  padding: 0 4px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+}
+
+.product-actions button {
+  height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+/* POS Cart Panel */
+.cart-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+}
+
+.cart-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cart-table th, .cart-table td {
+  border-bottom: 1px solid var(--rule);
+  padding: 10px 8px;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+.cart-table th {
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cart-empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 36px 0;
+  font-size: 13.5px;
+  margin: auto;
+}
+
+.qty-cell {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+
+.qty-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--control-border);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.qty-btn:hover {
+  background: var(--raised);
+  border-color: var(--text);
+}
+
+.remove-btn {
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  background: var(--negative-bg);
+  color: var(--negative-ink);
+  border: 1px solid var(--negative-border);
+  cursor: pointer;
+}
+
+/* POS Customer Inline Widget */
+.kh-search-wrap {
+  position: relative;
+}
+
+.kh-dropdown {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--surface);
+  border: 1px solid var(--control-focus);
+  border-radius: var(--radius-control);
+  z-index: 200;
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-card);
+}
+
+.kh-dropdown.open {
+  display: block;
+}
+
+.kh-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.kh-option:hover {
+  background: var(--surface-hover);
+}
+
+.kh-option:last-child {
+  border-bottom: 0;
+}
+
+.kh-sidebar {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 12px;
+}
+
+.kh-selected-info {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.kh-rank-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 4px;
+  text-transform: uppercase;
+  background: var(--brand-accent-tint);
+  color: var(--brand-accent-ink);
+  border: 1px solid var(--brand-accent);
+}
+
+/* POS Voucher Section */
+.voucher-section {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 12px;
+  margin: 10px 0;
+}
+
+.voucher-section label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: block;
+  text-transform: uppercase;
+}
+
+.voucher-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.voucher-select {
+  height: 34px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  padding: 0 8px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+
+.voucher-input {
+  flex: 1;
+  height: 34px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.voucher-input:focus {
+  border-color: var(--control-focus);
+}
+
+.btn-apply-voucher {
+  height: 34px;
+  padding: 0 14px;
+  background: var(--primary);
+  color: var(--primary-ink);
+  border: 0;
+  border-radius: var(--radius-control);
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.voucher-result {
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--radius-control);
+  display: none;
+}
+.voucher-result.ok {
+  background: var(--positive-bg);
+  color: var(--positive-ink);
+  border: 1px solid var(--positive-border);
+  display: block;
+}
+.voucher-result.err {
+  background: var(--negative-bg);
+  color: var(--negative-ink);
+  border: 1px solid var(--negative-border);
+  display: block;
+}
+
+/* POS Summary & Tender Calculation */
+.summary {
+  position: sticky;
+  top: 80px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--border);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.summary-row span[id$="Text"] {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-row strong {
+  font-size: 14.5px;
+  color: var(--text-primary);
+}
+
+.summary-divider {
+  border-bottom: 1px solid var(--border);
+  margin: 8px 0 10px;
+}
+
+.summary-label {
+  font-weight: 700;
+  margin: 10px 0 5px;
+  font-size: 11.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.summary-readonly {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.money-input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--control-focus);
+  border-radius: var(--radius-control);
+  padding: 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  background: var(--surface);
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.grand-total {
+  color: var(--text-primary) !important;
+  font-size: 22px !important;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.change-money {
+  color: var(--positive);
+  font-weight: 800;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.paid-warn {
+  color: var(--negative);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  display: none;
+}
+
+/* Payment Method Toggle */
+.pay-method-row {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.pay-method-btn {
+  flex: 1;
+  height: 38px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.pay-method-btn.active {
+  border-color: var(--text-primary);
+  background: var(--raised);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* Dynamic VietQR Panel in POS */
+.qr-section {
+  display: none;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 12px;
+  margin-top: 10px;
+  text-align: left;
+}
+.qr-section.show {
+  display: block;
+}
+
+.qr-bank-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.qr-bank-btn {
+  height: 28px;
+  padding: 0 4px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+.qr-bank-btn.active {
+  border-color: var(--text-primary);
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+
+.qr-img-wrap {
+  margin: 0;
+  width: 160px;
+  height: 160px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.qr-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* POS Action Buttons */
+.pay-btn-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+  height: 44px;
+}
+
+.pay-btn {
+  height: 44px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: var(--radius-control);
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.pay-btn-main {
+  flex: 1;
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+.pay-btn-main:hover {
+  background: var(--primary-hover);
+}
+
+.pay-btn-hold {
+  flex: 0 0 160px;
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  color: var(--text);
+}
+.pay-btn-hold:hover {
+  background: var(--raised);
+  border-color: var(--text);
+}
+
+/* Scanner viewport modal */
+.scanner-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 12px;
+}
+#reader {
+  width: 100%;
+  height: 100%;
+}
+.btn-close-scanner {
+  width: 100%;
+  height: 38px;
+  background: var(--negative);
+  color: #fff;
+  border: 0;
+  border-radius: var(--radius-control);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ---------- 5. Barcode Price Tag Preview Card ---------- */
+.tag-preview-card {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-card);
+  padding: 24px;
+  text-align: center;
+  width: 320px;
+  margin: 0 auto;
+  box-shadow: var(--shadow-card);
+}
+
+.tag-brand {
+  font-family: var(--font-brand);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #0f172a;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.tag-sub {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.tag-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.tag-price {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 14px;
+}
+
+.tag-barcode {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.tag-sku {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- 6. Detail View & Profile Sheets ---------- */
+.detail-view-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.detail-view-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 28px;
+}
+.info-grid.full {
+  grid-template-columns: 1fr;
+}
+@media (max-width: 768px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.info-item label {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.info-item .info-value {
+  font-size: 14.5px;
+  color: var(--text-primary);
+  font-weight: 600;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 24px;
+}
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cred-form-box {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 20px 24px;
+  margin: 22px 0;
+}
+
+.cred-form-box h3 {
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+
+/* Phone prefix wrapper */
+.phone-wrap {
+  display: flex;
+  align-items: stretch;
+}
+.phone-prefix {
+  background: var(--raised);
+  border: 1px solid var(--control-border);
+  border-right: none;
+  padding: 0 12px;
+  border-radius: var(--radius-control) 0 0 var(--radius-control);
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+.phone-wrap input {
+  border-radius: 0 var(--radius-control) var(--radius-control) 0 !important;
+  flex: 1;
+}
+
+/* ---------- 7. Login Page Architecture ---------- */
+.login-page-container {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface);
+  width: 440px;
+  max-width: 95%;
+  padding: 44px 38px;
+  border-radius: var(--radius-modal);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  position: relative;
+}
+
+.login-brand-logo {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-control);
+  object-fit: contain;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  padding: 4px;
+}
+
+.login-brand-title {
+  font-family: var(--font-brand);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.login-brand-title span {
+  color: var(--brand-accent);
+}
+
+.login-brand-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 28px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.login-form {
+  width: 100%;
+}
+
+.login-btn-container {
+  margin-top: 18px;
+}
+
+.login-btn-container .btn {
+  width: 100%;
+  height: var(--control-lg-h);
+  font-size: 14px;
+}
+
+/* ---------- 8. Reports & Analytics Charts ---------- */
+.chart-container, .chart-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.chart-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.chart-wrapper {
+  height: 360px;
+  position: relative;
+}
+
+/* ---------- 9. Mobile QR Payment Page (qr-mobile.jsp) ---------- */
+.qr-mobile-canvas {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--ground);
+}
+
+.qr-mobile-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-modal);
+  width: 100%;
+  max-width: 440px;
+  padding: 32px 24px;
+  box-shadow: var(--shadow-modal);
+  text-align: center;
+}
+
+.qr-mobile-badge {
+  display: inline-block;
+  background: var(--brand-accent-tint);
+  color: var(--brand-accent-ink);
+  border: 1px solid var(--brand-accent);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 18px;
+}
+
+.qr-mobile-amount-box {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 18px;
+  margin: 20px 0;
+}
+
+.qr-mobile-amount-val {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.qr-mobile-info-list {
+  text-align: left;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+}
+
+.qr-mobile-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13.5px;
+}
+
+.qr-mobile-info-row:last-child {
+  border-bottom: none;
+}
+
+/* ---------- 10. Footer ---------- */
+.footer-wrapper {
+  margin-top: auto;
+  width: 100%;
+  clear: both;
+}
+
+.custom-footer {
+  background: var(--surface);
+  color: var(--muted);
+  padding: 20px 24px;
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+}
+
+.footer-container {
+  max-width: 1720px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-brand-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer-brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  padding: 2px;
+}
+
+.footer-brand-title {
+  font-family: var(--font-brand);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.1em;
+}
+
+.footer-brand-title span {
+  color: var(--brand-accent);
+}
+
+.footer-links-box {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.footer-item a {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.footer-item a:hover {
+  color: var(--brand-accent);
+}
+
+.footer-copyright {
+  font-size: 12px;
+  color: var(--muted);
+}

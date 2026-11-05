@@ -1,0 +1,809 @@
+/* ==========================================================================
+   DUNA MEN'S WEAR — LUXURY SARTORIAL DESIGN SYSTEM (THEME.CSS)
+   Architectural Menswear Identity & Anti-Slop Standards
+   Specifications:
+   - Taste Skill: Art-directed app screens, flat surfaces, zero neon glows,
+     zero AI tells, tabular figures for currency/SKUs/dates.
+   - Brandkit: DUNA Men's Wear (Savile Row precision, bespoke tailoring palette,
+     burnished bronze/gold accent, crisp obsidian & fine alabaster surfaces).
+   - Modal Isolation: Robust display:none !important at rest; display:flex when open.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+
+/* ---------- 1. Design Tokens ---------- */
+:root {
+  /* Surface & Ground - Light Mode (Fine Alabaster / Chalk Paper) */
+  --ground: #f4f6f8;
+  --surface: #ffffff;
+  --raised: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --active: #e2e8f0;
+  
+  /* Borders & Rules */
+  --border: #d9e2ec;
+  --border-subtle: #edf2f7;
+  --rule: #e2e8f0;
+  --control-border: #cbd5e1;
+  --control-focus: #0f172a;
+  
+  /* Typography & Ink */
+  --text: #0f172a;
+  --text-primary: #0f172a;
+  --muted: #475569;
+  --faint: #94a3b8;
+  --on-dark: #ffffff;
+  
+  /* DUNA Brand Colors (Sartorial Menswear & Burnished Bronze Gold) */
+  --brand-navy: #0f172a;
+  --brand-accent: #c5a059;
+  --brand-accent-hover: #b38e42;
+  --brand-accent-tint: rgba(197, 160, 89, 0.12);
+  --brand-accent-ink: #785a1a;
+  
+  --primary: #0f172a;
+  --primary-hover: #1e293b;
+  --primary-ink: #ffffff;
+  
+  /* Semantic Status Indicators (Flat, High Legibility, No Fluorescent Glow) */
+  --positive: #15803d;
+  --positive-bg: #dcfce7;
+  --positive-border: #86efac;
+  --positive-ink: #14532d;
+  
+  --warning: #b45309;
+  --warning-bg: #fef3c7;
+  --warning-border: #fde68a;
+  --warning-ink: #78350f;
+  
+  --negative: #b91c1c;
+  --negative-bg: #fee2e2;
+  --negative-border: #fca5a5;
+  --negative-ink: #7f1d1d;
+  
+  --info: #1d4ed8;
+  --info-bg: #dbeafe;
+  --info-border: #93c5fd;
+  --info-ink: #1e3a8a;
+  
+  --neutral-pill-bg: #f1f5f9;
+  --neutral-pill-ink: #334155;
+  --neutral-pill-border: #cbd5e1;
+
+  /* Typography scale */
+  --font-brand: 'Cinzel', serif;
+  --font-base: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  
+  --fs-hero: 28px;
+  --fs-title: 22px;
+  --fs-section: 16px;
+  --fs-kpi: 26px;
+  --fs-body: 14px;
+  --fs-small: 12px;
+  --fs-micro: 11px;
+  
+  /* Precision Geometries */
+  --radius-sm: 4px;
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --radius-modal: 12px;
+  --radius-pill: 9999px;
+  
+  --control-h: 38px;
+  --control-sm-h: 32px;
+  --control-lg-h: 44px;
+  
+  /* Motion & Transitions */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-hover: 160ms;
+  --t-fast: 100ms;
+  
+  /* Shadows: Taste standard — No murky fuzzy AI shadows */
+  --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-modal: 0 20px 40px -10px rgba(15, 23, 42, 0.3);
+}
+
+/* ---------- Dark Mode (Tailored Obsidian Canvas) ---------- */
+html.dark-mode {
+  --ground: #0a0d12;
+  --surface: #12161f;
+  --raised: #181d28;
+  --surface-hover: #1f2533;
+  --active: #272e3f;
+  
+  --border: #262e3d;
+  --border-subtle: #1c222e;
+  --rule: #202735;
+  --control-border: #333d50;
+  --control-focus: #c5a059;
+  
+  --text: #f1f5f9;
+  --text-primary: #f8fafc;
+  --muted: #94a3b8;
+  --faint: #64748b;
+  --on-dark: #ffffff;
+  
+  --brand-navy: #1e293b;
+  --brand-accent: #dfb76c;
+  --brand-accent-hover: #ebd092;
+  --brand-accent-tint: rgba(223, 183, 108, 0.15);
+  --brand-accent-ink: #fef08a;
+  
+  --primary: #f8fafc;
+  --primary-hover: #e2e8f0;
+  --primary-ink: #0f172a;
+  
+  --positive: #4ade80;
+  --positive-bg: rgba(74, 222, 128, 0.12);
+  --positive-border: rgba(74, 222, 128, 0.3);
+  --positive-ink: #86efac;
+  
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.12);
+  --warning-border: rgba(251, 191, 36, 0.3);
+  --warning-ink: #fde68a;
+  
+  --negative: #f87171;
+  --negative-bg: rgba(248, 113, 113, 0.12);
+  --negative-border: rgba(248, 113, 113, 0.3);
+  --negative-ink: #fca5a5;
+  
+  --info: #60a5fa;
+  --info-bg: rgba(96, 165, 250, 0.12);
+  --info-border: rgba(96, 165, 250, 0.3);
+  --info-ink: #bfdbfe;
+  
+  --neutral-pill-bg: #1e2330;
+  --neutral-pill-ink: #cbd5e1;
+  --neutral-pill-border: #333d50;
+  
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 25px 60px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- 2. Global Reset & Base Typography ---------- */
+*, *::before, *::after {
+  box-sizing: border-box !important;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--ground);
+  color: var(--text);
+  font-family: var(--font-base);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Precision Tabular Numbers on all financial & code data */
+.tabular, .money, .price, .code, .sku, .number, td.text-right, th.text-right {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--t-hover) var(--ease);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.navbar-brand img,
+.navbar-brand-logo {
+  width: 36px !important;
+  height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  border-radius: var(--radius-sm, 6px) !important;
+  object-fit: contain !important;
+  background: var(--raised, #16161a);
+  border: 1px solid var(--border, #26262b);
+  padding: 2px;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+.footer-brand-logo {
+  width: 32px !important;
+  height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  border-radius: var(--radius-sm, 6px);
+  object-fit: contain;
+  background: var(--raised, #16161a);
+  border: 1px solid var(--border, #26262b);
+  padding: 2px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.login-brand-logo {
+  width: 64px !important;
+  height: 64px !important;
+  max-width: 64px !important;
+  max-height: 64px !important;
+  border-radius: var(--radius-control, 8px);
+  object-fit: contain;
+  background: var(--raised, #16161a);
+  border: 1px solid var(--border, #26262b);
+  padding: 4px;
+  margin: 0 auto 16px auto;
+  display: block;
+}
+
+/* Minimalist Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--control-border);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* ---------- 3. Layout Building Blocks ---------- */
+.page-container, .container, .page {
+  max-width: 1720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+  flex: 1 0 auto;
+  box-sizing: border-box;
+}
+
+.panel, .card, .content-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-subtle);
+  position: relative;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-subtitle {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ---------- 4. Form Controls ---------- */
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: var(--fs-body);
+}
+
+.form-group, .form-row {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label, label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-control, input[type="text"], input[type="password"], input[type="number"], 
+input[type="email"], input[type="tel"], input[type="date"], select, textarea {
+  width: 100%;
+  height: var(--control-h);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 12px;
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+  box-sizing: border-box;
+}
+
+textarea.form-control, textarea {
+  height: auto;
+  min-height: 80px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.form-control:focus, input:focus, select:focus, textarea:focus {
+  border-color: var(--control-focus);
+}
+
+.form-control:disabled, input:disabled, select:disabled, textarea:disabled, input[readonly] {
+  background: var(--raised);
+  color: var(--muted);
+  cursor: not-allowed;
+  border-color: var(--border);
+}
+
+/* Checkbox & Radio */
+input[type="checkbox"], input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* ---------- 5. Buttons Architecture ---------- */
+.btn {
+  height: var(--control-h);
+  padding: 0 16px;
+  border-radius: var(--radius-control);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: background var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary, .btn-main {
+  background: var(--primary);
+  color: var(--primary-ink) !important;
+  border-color: var(--primary);
+}
+.btn-primary:hover, .btn-main:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-accent, .btn-brand {
+  background: var(--brand-accent);
+  color: #ffffff !important;
+  border-color: var(--brand-accent);
+}
+.btn-accent:hover, .btn-brand:hover {
+  background: var(--brand-accent-hover);
+  border-color: var(--brand-accent-hover);
+}
+
+.btn-outline, .btn-secondary {
+  background: var(--surface);
+  color: var(--text) !important;
+  border-color: var(--control-border);
+}
+.btn-outline:hover, .btn-secondary:hover {
+  background: var(--raised);
+  border-color: var(--text);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted) !important;
+  border-color: transparent;
+}
+.btn-ghost:hover {
+  background: var(--raised);
+  color: var(--text) !important;
+}
+
+.btn-danger {
+  background: var(--negative);
+  color: #ffffff !important;
+  border-color: var(--negative);
+}
+.btn-danger:hover {
+  background: #991b1b;
+  border-color: #991b1b;
+}
+
+.btn-success {
+  background: var(--positive);
+  color: #ffffff !important;
+  border-color: var(--positive);
+}
+.btn-success:hover {
+  background: #166534;
+  border-color: #166534;
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: #ffffff !important;
+  border-color: var(--warning);
+}
+.btn-warning:hover {
+  background: #92400e;
+  border-color: #92400e;
+}
+
+.btn-sm {
+  height: var(--control-sm-h);
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.btn-lg {
+  height: var(--control-lg-h);
+  padding: 0 24px;
+  font-size: 15px;
+}
+
+/* ---------- 6. Status Pills & Badges ---------- */
+.badge, .status-pill, .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge-success, .status-done, .pill-success, .status.done {
+  background: var(--positive-bg);
+  color: var(--positive-ink);
+  border-color: var(--positive-border);
+}
+
+.badge-warning, .status-pending, .pill-warning, .status.pending {
+  background: var(--warning-bg);
+  color: var(--warning-ink);
+  border-color: var(--warning-border);
+}
+
+.badge-danger, .status-cancelled, .pill-danger, .status.cancelled {
+  background: var(--negative-bg);
+  color: var(--negative-ink);
+  border-color: var(--negative-border);
+}
+
+.badge-info, .status-shipping, .pill-info, .status.shipping {
+  background: var(--info-bg);
+  color: var(--info-ink);
+  border-color: var(--info-border);
+}
+
+.badge-neutral, .status-hold, .pill-neutral, .status.hold {
+  background: var(--neutral-pill-bg);
+  color: var(--neutral-pill-ink);
+  border-color: var(--neutral-pill-border);
+}
+
+/* ---------- 7. Notifications & Alerts ---------- */
+.alert, .notice, .messages .alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  font-size: 13.5px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid transparent;
+}
+
+.alert-success, .alert.success {
+  background: var(--positive-bg);
+  color: var(--positive-ink);
+  border-color: var(--positive-border);
+}
+
+.alert-warning, .alert.warning {
+  background: var(--warning-bg);
+  color: var(--warning-ink);
+  border-color: var(--warning-border);
+}
+
+.alert-danger, .alert-error, .alert.error {
+  background: var(--negative-bg);
+  color: var(--negative-ink);
+  border-color: var(--negative-border);
+}
+
+/* ---------- 8. Tables Base (Retail Ledger Grid) ---------- */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-subtle);
+}
+
+table, .styled-table, .data-table, .mgmt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+
+table th, .styled-table th, .data-table th, .mgmt-table th {
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+table td, .styled-table td, .data-table td, .mgmt-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+table tr:last-child td, .styled-table tr:last-child td, 
+.data-table tr:last-child td, .mgmt-table tr:last-child td {
+  border-bottom: none;
+}
+
+table tbody tr:hover, .styled-table tbody tr:hover, 
+.data-table tbody tr:hover, .mgmt-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+/* Helper Alignments */
+.text-left { text-align: left !important; }
+.text-center { text-align: center !important; }
+.text-right { text-align: right !important; }
+
+/* ---------- 9. BULLETPROOF MODAL ISOLATION ---------- */
+/* Strictly never displayed at rest. Only flex when .open or active */
+.modal-bg, .scanner-modal-bg, div[class*="modal-bg"] {
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(11, 15, 23, 0.72) !important;
+  backdrop-filter: blur(4px) !important;
+  z-index: 99999 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.modal-bg.open, .scanner-modal-bg.open, div[class*="modal-bg"].open {
+  display: flex !important;
+}
+
+.modal-box, .scanner-box {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-modal) !important;
+  box-shadow: var(--shadow-modal) !important;
+  width: 100% !important;
+  max-width: 680px !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  position: relative !important;
+  padding: 28px !important;
+  box-sizing: border-box !important;
+  margin: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.modal-box.wide {
+  max-width: 900px !important;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.close-btn {
+  position: absolute !important;
+  top: 16px !important;
+  right: 18px !important;
+  border: 0 !important;
+  background: transparent !important;
+  font-size: 22px !important;
+  cursor: pointer !important;
+  color: var(--muted) !important;
+  line-height: 1 !important;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+
+.close-btn:hover {
+  color: var(--text-primary) !important;
+  background: var(--raised) !important;
+}
+
+.modal-body {
+  flex: 1 1 auto;
+}
+
+.modal-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ---------- 10. Pagination Bar ---------- */
+.pagination-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin: 24px 0 10px;
+  flex-wrap: wrap;
+}
+
+.pagination-bar a, .pagination-bar .page-arrow, .pagination-bar span.active {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  text-decoration: none;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.pagination-bar a:hover:not(.active):not(.disabled) {
+  background: var(--raised);
+  border-color: var(--text);
+}
+
+.pagination-bar a.active, .pagination-bar span.active {
+  background: var(--primary);
+  color: var(--primary-ink) !important;
+  border-color: var(--primary);
+}
+
+.pagination-bar .page-arrow.disabled, .pagination-bar span.disabled {
+  color: var(--faint);
+  border-color: var(--border);
+  background: var(--raised);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.page-jump-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.page-jump-box input {
+  width: 58px;
+  height: 34px;
+  text-align: center;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.page-jump-box button {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+}
+.page-jump-box button:hover {
+  background: var(--raised);
+  border-color: var(--text);
+}
+
+/* Print Utilities */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+}
