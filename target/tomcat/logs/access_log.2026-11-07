@@ -1,0 +1,14 @@
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:02 +0700] "GET /DUNA HTTP/1.1" 302 - http-bio-8080-exec-2 0
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:02 +0700] "GET /DUNA/ HTTP/1.1" 302 - http-bio-8080-exec-3 7
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:02 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 11229 http-bio-8080-exec-4 104
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:02 +0700] "GET /DUNA/style.css?v=duna_v4 HTTP/1.1" 304 - http-bio-8080-exec-1 3
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:02 +0700] "GET /DUNA/theme.css?v=duna_v4 HTTP/1.1" 304 - http-bio-8080-exec-5 4
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:02 +0700] "GET /DUNA/img/duna-logo.png HTTP/1.1" 200 529629 http-bio-8080-exec-6 11
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:02 +0700] "GET /favicon.ico HTTP/1.1" 404 - http-bio-8080-exec-8 0
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:06 +0700] "POST /DUNA/LoginServlet HTTP/1.1" 302 - http-bio-8080-exec-9 1467
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:07 +0700] "GET /DUNA/EmployeeManagementServlet HTTP/1.1" 200 21066 http-bio-8080-exec-10 277
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:12 +0700] "GET /DUNA/OrderServlet?view=report HTTP/1.1" 200 62763 http-bio-8080-exec-10 3298
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:32 +0700] "GET /DUNA/LogoutServlet HTTP/1.1" 302 - http-bio-8080-exec-10 1
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:32 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 11229 http-bio-8080-exec-10 2
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:36 +0700] "POST /DUNA/LoginServlet HTTP/1.1" 302 - http-bio-8080-exec-10 46
+0:0:0:0:0:0:0:1 - - [07/Nov/2026:09:10:37 +0700] "GET /DUNA/OrderServlet?view=sell HTTP/1.1" 200 152497 http-bio-8080-exec-10 647
