@@ -18,7 +18,7 @@ public class ChangeCredentialsServlet extends HttpServlet {
         String role = (String) request.getSession().getAttribute("role");
         String idNhanVien = request.getParameter("idNhanVien");
 
-        if (!"MANAGER".equals(role)) {
+        if (!"MANAGER".equals(role) || idNhanVien == null || idNhanVien.trim().isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/EmployeeManagementServlet");
             return;
         }

@@ -49,7 +49,33 @@ public class EmployeeDetailServlet extends HttpServlet {
             return;
         }
 
+        HttpSession session = request.getSession(false);
+        String role = (session != null && session.getAttribute("role") != null) ? (String) session.getAttribute("role") : "";
+        Integer loggedInEmpId = (session != null && session.getAttribute("nhanVienID") != null) ? (Integer) session.getAttribute("nhanVienID") : null;
+        boolean isManager = "MANAGER".equals(role) || (session != null && session.getAttribute("roleID") != null && "1".equals(session.getAttribute("roleID").toString()));
+
         String id = request.getParameter("id");
+        int targetId = 0;
+        try {
+            if (id != null && !id.trim().isEmpty()) targetId = Integer.parseInt(id.trim());
+        } catch (NumberFormatException nfe) { targetId = 0; }
+
+        if (targetId <= 0) {
+            if (loggedInEmpId != null) {
+                targetId = loggedInEmpId;
+                id = String.valueOf(targetId);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/EmployeeManagementServlet");
+                return;
+            }
+        }
+
+        // Chống leo quyền IDOR: EMPLOYEE chỉ được xem thông tin chính mình, không được xem nhân viên khác hoặc Admin
+        if (!isManager && (loggedInEmpId == null || loggedInEmpId != targetId)) {
+            response.sendRedirect(request.getContextPath() + "/OrderServlet?view=sell&error=unauthorized");
+            return;
+        }
+
         Map<String, String> nv = new HashMap<>();
         connectService db = new connectService();
 
@@ -65,25 +91,25 @@ public class EmployeeDetailServlet extends HttpServlet {
                     "INNER JOIN TaiKhoan t ON n.ID_NhanVien = t.NhanVienID " +
                     "INNER JOIN TrangThaiNhanVien tt ON n.TrangThaiNV_ID = tt.TrangThaiNV_ID WHERE n.ID_NhanVien = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, id);
+            ps.setInt(1, targetId);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                nv.put("id", id);
+                nv.put("id", String.valueOf(targetId));
                 String username = rs.getString("Username") != null ? rs.getString("Username") : "";
                 String hoVaTen = rs.getString("HoVaTen") != null ? rs.getString("HoVaTen") : "";
                 int roleID = 0;
                 try { roleID = rs.getInt("Role_ID"); } catch (Exception ignored) {}
                 nv.put("hoVaTen", hoVaTen);
                 nv.put("username", username);
-                nv.put("password", rs.getString("Password") != null ? rs.getString("Password") : "Chưa đặt");
+                nv.put("password", "••••••••"); // Bảo mật: Không bao giờ lộ plaintext password trong HTML
                 
                 String maNV = null;
                 try { maNV = rs.getString("MaNhanVien"); } catch(Exception exCol) {}
                 boolean isAdmin = (roleID != 2) && ((roleID == 1) || "admin".equalsIgnoreCase(username) || hoVaTen.contains("Admin") || (roleID == 0 && maNV != null && maNV.trim().toUpperCase().startsWith("QL")));
                 if (maNV == null || maNV.trim().isEmpty() || maNV.contains("-")) {
                     try {
-                        maNV = isAdmin ? "QL001" : String.format("NV%03d", Integer.parseInt(id));
+                        maNV = isAdmin ? "QL001" : String.format("NV%03d", targetId);
                     } catch (Exception e) {
                         maNV = isAdmin ? "QL001" : "NV001";
                     }
@@ -115,6 +141,9 @@ public class EmployeeDetailServlet extends HttpServlet {
         }
 
         String mode = request.getParameter("mode");
+        if (!isManager && "edit".equals(mode)) {
+            mode = "view"; // EMPLOYEE không có quyền sửa thông tin
+        }
         if (mode == null || !mode.equals("edit")) {
             mode = (String) request.getAttribute("mode");
             if (mode == null || !mode.equals("edit")) {

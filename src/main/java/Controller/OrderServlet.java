@@ -261,7 +261,7 @@ public class OrderServlet extends HttpServlet {
                     if (!first) json.append(",");
                     String hang = rs.getString("HangKhachHang"); if (hang==null) hang="Th\u01b0\u1eddng";
                     int discPct = 0;
-                    if (hang.equals("B\u1ea1c")) discPct=5; else if (hang.equals("V\u00e0ng")) discPct=10; else if (hang.equals("VIP")) discPct=15;
+                    if (hang.equals("B\u1ea1c")) discPct=2; else if (hang.equals("V\u00e0ng")) discPct=4; else if (hang.equals("VIP")) discPct=7;
                     json.append("{\"id\":").append(rs.getInt("ID_KhachHang"))
                         .append(",\"maKH\":\"").append(escape(rs.getString("MaKH")!=null?rs.getString("MaKH"):"")).append("\"")
                         .append(",\"ten\":\"").append(escape(rs.getString("HoTen")!=null?rs.getString("HoTen"):"")).append("\"")
@@ -493,11 +493,11 @@ public class OrderServlet extends HttpServlet {
                     String hang = rsKH.getString("HangKhachHang");
                     if (hang == null) hang = "Thường";
                     k.put("hang", hang);
-                    // Discount % theo hạng
+                    // Discount % theo hạng: Bạc 2%, Vàng 4%, VIP 7%
                     int discountPct = 0;
-                    if (hang.equals("Bạc")) discountPct = 5;
-                    else if (hang.equals("Vàng")) discountPct = 10;
-                    else if (hang.equals("VIP")) discountPct = 15;
+                    if (hang.equals("Bạc")) discountPct = 2;
+                    else if (hang.equals("Vàng")) discountPct = 4;
+                    else if (hang.equals("VIP")) discountPct = 7;
                     k.put("discountPct", discountPct);
                     listKH.add(k);
                 }
@@ -1612,9 +1612,22 @@ public class OrderServlet extends HttpServlet {
 
             } else if ("exchangeItem".equals(action)) {
                 // Đổi trả hàng / Đổi size thời trang DUNA
-                int idDH = Integer.parseInt(request.getParameter("idDH"));
-                int idCT = Integer.parseInt(request.getParameter("idCT"));
-                int idBienTheMoi = Integer.parseInt(request.getParameter("idBienTheMoi"));
+                int idDH = 0, idCT = 0, idBienTheMoi = 0;
+                try {
+                    String sDH = request.getParameter("idDH");
+                    String sCT = request.getParameter("idCT");
+                    String sBT = request.getParameter("idBienTheMoi");
+                    if (sDH != null && !sDH.trim().isEmpty()) idDH = Integer.parseInt(sDH.trim());
+                    if (sCT != null && !sCT.trim().isEmpty()) idCT = Integer.parseInt(sCT.trim());
+                    if (sBT != null && !sBT.trim().isEmpty()) idBienTheMoi = Integer.parseInt(sBT.trim());
+                } catch (NumberFormatException nfe) {
+                    response.sendRedirect(request.getContextPath() + "/OrderServlet?error=invalid_id");
+                    return;
+                }
+                if (idDH <= 0 || idCT <= 0 || idBienTheMoi <= 0) {
+                    response.sendRedirect(request.getContextPath() + "/OrderServlet?error=invalid_id");
+                    return;
+                }
 
                 conn.setAutoCommit(false);
                 try {
@@ -1718,7 +1731,15 @@ public class OrderServlet extends HttpServlet {
                 }
 
             } else if ("changeStatus".equals(action)) {
-                int id       = Integer.parseInt(request.getParameter("id"));
+                String idParam = request.getParameter("id");
+                int id = 0;
+                try {
+                    if (idParam != null && !idParam.trim().isEmpty()) id = Integer.parseInt(idParam.trim());
+                } catch (NumberFormatException nfe) { id = 0; }
+                if (id <= 0) {
+                    response.sendRedirect(request.getContextPath() + "/OrderServlet");
+                    return;
+                }
                 String newSt = request.getParameter("trangThai");
 
                 // Kiểm tra trạng thái hiện tại trong database
@@ -1825,7 +1846,9 @@ public class OrderServlet extends HttpServlet {
                 "FROM ChiTietDonHang ct " +
                 "JOIN DonHang dh ON ct.ID_DonHang = dh.ID_DonHang " +
                 "JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID = ttdh.TrangThaiDH_ID " +
-                "WHERE dh.ID_KhachHang = ? AND ttdh.TenTrangThai = N'Đã thanh toán'"
+                "JOIN KhachHang k ON dh.ID_KhachHang = k.ID_KhachHang " +
+                "WHERE dh.ID_KhachHang = ? AND ttdh.TenTrangThai = N'Đã thanh toán' " +
+                "  AND (k.NgayBatDauChuKy IS NULL OR dh.NgayTao >= k.NgayBatDauChuKy)"
             );
             ps.setInt(1, idKH);
             ResultSet rs = ps.executeQuery();
@@ -1834,10 +1857,11 @@ public class OrderServlet extends HttpServlet {
                 tongSP = rs.getInt("TongSP");
             }
             
+            // Quy định mới: 1-4 Thường (0%), 5-8 Bạc (2%), 9-12 Vàng (4%), >=13 VIP (7%)
             String hangMoi = "Thường";
-            if (tongSP >= 10) hangMoi = "VIP";
-            else if (tongSP >= 5) hangMoi = "Vàng";
-            else if (tongSP >= 2) hangMoi = "Bạc";
+            if (tongSP >= 13) hangMoi = "VIP";
+            else if (tongSP >= 9) hangMoi = "Vàng";
+            else if (tongSP >= 5) hangMoi = "Bạc";
             
             PreparedStatement psUpd = conn.prepareStatement("UPDATE KhachHang SET HangKhachHang = ?, NgayCapNhat = GETDATE() WHERE ID_KhachHang = ?");
             psUpd.setString(1, hangMoi);
@@ -1852,11 +1876,26 @@ public class OrderServlet extends HttpServlet {
 
     private void syncAllCustomerRanks(Connection conn) {
         try (Statement st = conn.createStatement()) {
+            // 1. Hạ về Thường nếu quá 90 ngày không mua
+            st.executeUpdate(
+                "UPDATE k SET k.HangKhachHang = N'Thường', k.NgayBatDauChuKy = GETDATE() " +
+                "FROM KhachHang k " +
+                "INNER JOIN (" +
+                "    SELECT dh.ID_KhachHang, MAX(dh.NgayTao) AS NgayMuaCuoi " +
+                "    FROM DonHang dh " +
+                "    JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID = ttdh.TrangThaiDH_ID " +
+                "    WHERE ttdh.TenTrangThai = N'Đã thanh toán' " +
+                "    GROUP BY dh.ID_KhachHang " +
+                ") LastOrder ON k.ID_KhachHang = LastOrder.ID_KhachHang " +
+                "WHERE DATEDIFF(day, LastOrder.NgayMuaCuoi, GETDATE()) > 90 AND k.HangKhachHang <> N'Thường'"
+            );
+
+            // 2. Cập nhật hạng theo số lượng sản phẩm (0-4 Thường, 5-8 Bạc, 9-12 Vàng, >=13 VIP)
             st.executeUpdate(
                 "UPDATE k SET k.HangKhachHang = CASE " +
-                "    WHEN ISNULL(O.TongSP, 0) >= 10 THEN N'VIP' " +
-                "    WHEN ISNULL(O.TongSP, 0) >= 5  THEN N'Vàng' " +
-                "    WHEN ISNULL(O.TongSP, 0) >= 2  THEN N'Bạc' " +
+                "    WHEN ISNULL(O.TongSP, 0) >= 13 THEN N'VIP' " +
+                "    WHEN ISNULL(O.TongSP, 0) >= 9  THEN N'Vàng' " +
+                "    WHEN ISNULL(O.TongSP, 0) >= 5  THEN N'Bạc' " +
                 "    ELSE N'Thường' " +
                 "END " +
                 "FROM KhachHang k " +
@@ -1865,9 +1904,15 @@ public class OrderServlet extends HttpServlet {
                 "    FROM DonHang dh " +
                 "    JOIN ChiTietDonHang ct ON dh.ID_DonHang = ct.ID_DonHang " +
                 "    JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID = ttdh.TrangThaiDH_ID " +
+                "    JOIN KhachHang k2 ON dh.ID_KhachHang = k2.ID_KhachHang " +
                 "    WHERE ttdh.TenTrangThai = N'Đã thanh toán' " +
+                "      AND (k2.NgayBatDauChuKy IS NULL OR dh.NgayTao >= k2.NgayBatDauChuKy) " +
                 "    GROUP BY dh.ID_KhachHang" +
-                ") O ON k.ID_KhachHang = O.ID_KhachHang"
+                ") O ON k.ID_KhachHang = O.ID_KhachHang " +
+                "WHERE k.ID_KhachHang NOT IN (" +
+                "    SELECT dh.ID_KhachHang FROM DonHang dh JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID = ttdh.TrangThaiDH_ID " +
+                "    WHERE ttdh.TenTrangThai = N'Đã thanh toán' GROUP BY dh.ID_KhachHang HAVING DATEDIFF(day, MAX(dh.NgayTao), GETDATE()) > 90" +
+                ")"
             );
         } catch (Exception ex) {
             ex.printStackTrace();

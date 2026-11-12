@@ -23,7 +23,7 @@ public class AuthFilter implements Filter {
         String requestURI = request.getRequestURI();
 
         boolean loggedIn = session != null && session.getAttribute("role") != null;
-        boolean loginRequest = requestURI.equals(loginURI) || requestURI.equals(loginServletURI) || requestURI.endsWith(".css") || requestURI.endsWith(".js") || requestURI.endsWith(".png") || requestURI.endsWith(".jpg") || requestURI.contains("QRConfirmServlet") || requestURI.contains("qr-mobile.jsp");
+        boolean loginRequest = requestURI.equals(loginURI) || requestURI.equals(loginServletURI) || requestURI.endsWith(".css") || requestURI.endsWith(".js") || requestURI.endsWith(".png") || requestURI.endsWith(".jpg") || requestURI.endsWith(".ico") || requestURI.contains("QRConfirmServlet") || requestURI.contains("qr-mobile.jsp");
 
         if (loggedIn || loginRequest) {
             if (loggedIn && "EMPLOYEE".equals(session.getAttribute("role"))) {
@@ -40,9 +40,7 @@ public class AuthFilter implements Filter {
                         || isReport 
                         || requestURI.contains("add-employee.jsp") 
                         || requestURI.contains("employee-management.jsp") 
-                        || requestURI.contains("admin-dashboard.html")
-                        || requestURI.contains("CustomerServlet") 
-                        || requestURI.contains("quan-ly-khach-hang");
+                        || requestURI.contains("admin-dashboard.html");
                 if (isAdminOnly) {
                     response.sendRedirect(request.getContextPath() + "/OrderServlet?view=sell");
                     return;

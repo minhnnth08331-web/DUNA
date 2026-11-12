@@ -29,6 +29,15 @@
 
 <script>
 (function() {
+    // 0. Tự động gắn Favicon DUNA Men's Wear nếu trang chưa có
+    if (!document.querySelector('link[rel*="icon"]')) {
+        var iconLink = document.createElement('link');
+        iconLink.type = 'image/png';
+        iconLink.rel = 'shortcut icon';
+        iconLink.href = '${pageContext.request.contextPath}/img/duna-logo.png';
+        document.head.appendChild(iconLink);
+    }
+
     // 1. Khôi phục theme lưu trong localStorage
     var savedTheme = localStorage.getItem('duna_theme') || 'light';
     if (savedTheme === 'dark') {

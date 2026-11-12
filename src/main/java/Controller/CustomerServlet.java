@@ -33,61 +33,85 @@ public class CustomerServlet extends HttpServlet {
 
         try (Connection conn = db.myConnection()) {
             if (conn != null) {
-                // 1. Tự động cập nhật mốc chu kỳ 24 tháng nếu qua 2 năm kể từ Ngày Bắt Đầu Chu Kỳ
+                // 1. Tự động kiểm tra và hạ về hạng Thường nếu quá 3 tháng (90 ngày) không mua hàng
                 try (Statement stAutoReset = conn.createStatement()) {
                     stAutoReset.executeUpdate(
-                        "UPDATE KhachHang " +
-                        "SET NgayBatDauChuKy = CASE " +
-                        "    WHEN DATEDIFF(day, ISNULL(NgayBatDauChuKy, ISNULL(NgayTao, '2024-01-01')), GETDATE()) >= 730 " +
-                        "    THEN DATEADD(year, (DATEDIFF(day, ISNULL(NgayBatDauChuKy, ISNULL(NgayTao, '2024-01-01')), GETDATE()) / 730) * 2, ISNULL(NgayBatDauChuKy, ISNULL(NgayTao, '2024-01-01'))) " +
-                        "    ELSE ISNULL(NgayBatDauChuKy, ISNULL(NgayTao, GETDATE())) " +
-                        "END"
+                        "UPDATE k " +
+                        "SET k.HangKhachHang = N'Thường', " +
+                        "    k.NgayBatDauChuKy = GETDATE() " +
+                        "FROM KhachHang k " +
+                        "INNER JOIN (" +
+                        "    SELECT dh.ID_KhachHang, MAX(dh.NgayTao) AS NgayMuaCuoi " +
+                        "    FROM DonHang dh " +
+                        "    JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID = ttdh.TrangThaiDH_ID " +
+                        "    WHERE ttdh.TenTrangThai = N'Đã thanh toán' " +
+                        "    GROUP BY dh.ID_KhachHang " +
+                        ") LastOrder ON k.ID_KhachHang = LastOrder.ID_KhachHang " +
+                        "WHERE DATEDIFF(day, LastOrder.NgayMuaCuoi, GETDATE()) > 90 " +
+                        "  AND k.HangKhachHang <> N'Thường'"
                     );
                 } catch (Exception exAuto) {
                     exAuto.printStackTrace();
                 }
 
-                // 2. Đồng bộ Hạng Khách Hàng chuẩn theo Tổng Chi Tiêu VNĐ trong chu kỳ 24 tháng (§4.3)
-                // >= 10.000.000 VNĐ: VIP | 5.000.000 - < 10.000.000 VNĐ: Vàng | 2.000.000 - < 5.000.000 VNĐ: Bạc | < 2.000.000: Thường
+                // 2. Đồng bộ Hạng Khách Hàng theo Số Lượng Sản Phẩm trong chu kỳ tích lũy 3 tháng cuốn chiếu
+                // Thường: 0-4 SP (0%) | Bạc: 5-8 SP (Giảm 2%) | Vàng: 9-12 SP (Giảm 4%) | VIP: >= 13 SP (Giảm 7%)
                 try (Statement stSync = conn.createStatement()) {
                     stSync.executeUpdate(
                         "UPDATE k SET k.HangKhachHang = CASE " +
-                        "    WHEN ISNULL(O.TongChiTieu, 0) >= 10000000 THEN N'VIP' " +
-                        "    WHEN ISNULL(O.TongChiTieu, 0) >= 5000000  THEN N'Vàng' " +
-                        "    WHEN ISNULL(O.TongChiTieu, 0) >= 2000000  THEN N'Bạc' " +
+                        "    WHEN ISNULL(O.TongSP, 0) >= 13 THEN N'VIP' " +
+                        "    WHEN ISNULL(O.TongSP, 0) >= 9  THEN N'Vàng' " +
+                        "    WHEN ISNULL(O.TongSP, 0) >= 5  THEN N'Bạc' " +
                         "    ELSE N'Thường' " +
                         "END " +
                         "FROM KhachHang k " +
                         "LEFT JOIN (" +
-                        "    SELECT dh.ID_KhachHang, SUM(dh.TongTien) AS TongChiTieu " +
+                        "    SELECT dh.ID_KhachHang, SUM(ct.SoLuong) AS TongSP " +
                         "    FROM DonHang dh " +
+                        "    JOIN ChiTietDonHang ct ON dh.ID_DonHang = ct.ID_DonHang " +
                         "    JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID = ttdh.TrangThaiDH_ID " +
                         "    JOIN KhachHang k2 ON dh.ID_KhachHang = k2.ID_KhachHang " +
                         "    WHERE ttdh.TenTrangThai = N'Đã thanh toán' " +
                         "      AND (k2.NgayBatDauChuKy IS NULL OR dh.NgayTao >= k2.NgayBatDauChuKy) " +
                         "    GROUP BY dh.ID_KhachHang" +
-                        ") O ON k.ID_KhachHang = O.ID_KhachHang"
+                        ") O ON k.ID_KhachHang = O.ID_KhachHang " +
+                        "WHERE k.ID_KhachHang NOT IN (" +
+                        "    SELECT dh.ID_KhachHang FROM DonHang dh JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID = ttdh.TrangThaiDH_ID " +
+                        "    WHERE ttdh.TenTrangThai = N'Đã thanh toán' GROUP BY dh.ID_KhachHang HAVING DATEDIFF(day, MAX(dh.NgayTao), GETDATE()) > 90" +
+                        ")"
                     );
                 } catch (Exception exSync) {
                     exSync.printStackTrace();
                 }
 
-                // 3. Truy vấn danh sách khách hàng kèm Tổng chi tiêu & Số đơn mua
+                // 3. Truy vấn danh sách khách hàng kèm Tổng chi tiêu, Tổng SP & Số đơn mua
                 StringBuilder sql = new StringBuilder(
                     "SELECT k.ID_KhachHang, k.MaKH, k.HoTen, k.SoDienThoai, k.Email, k.GioiTinh, k.NgaySinh, k.HangKhachHang, k.DiaChi, k.TrangThai, k.NgayTao, k.NgayCapNhat, k.NgayBatDauChuKy, " +
                     "ISNULL(O.TongChiTieu, 0) AS TongChiTieu, " +
-                    "ISNULL(O.SoDonDaMua, 0) AS SoDonDaMua " +
+                    "ISNULL(O.SoDonDaMua, 0) AS SoDonDaMua, " +
+                    "ISNULL(O.TongSP, 0) AS TongSP, " +
+                    "O.NgayMuaCuoi " +
                     "FROM KhachHang k " +
                     "LEFT JOIN (" +
                     "    SELECT dh.ID_KhachHang, " +
                     "           SUM(dh.TongTien) AS TongChiTieu, " +
-                    "           COUNT(DISTINCT dh.ID_DonHang) AS SoDonDaMua " +
+                    "           COUNT(DISTINCT dh.ID_DonHang) AS SoDonDaMua, " +
+                    "           MAX(dh.NgayTao) AS NgayMuaCuoi, " +
+                    "           ISNULL(( " +
+                    "               SELECT SUM(ct.SoLuong) " +
+                    "               FROM ChiTietDonHang ct " +
+                    "               JOIN DonHang dh2 ON ct.ID_DonHang = dh2.ID_DonHang " +
+                    "               JOIN TrangThaiDonHang ttdh2 ON dh2.TrangThaiDH_ID = ttdh2.TrangThaiDH_ID " +
+                    "               WHERE dh2.ID_KhachHang = dh.ID_KhachHang " +
+                    "                 AND ttdh2.TenTrangThai = N'Đã thanh toán' " +
+                    "                 AND (k2.NgayBatDauChuKy IS NULL OR dh2.NgayTao >= k2.NgayBatDauChuKy) " +
+                    "           ), 0) AS TongSP " +
                     "    FROM DonHang dh " +
                     "    JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID = ttdh.TrangThaiDH_ID " +
                     "    JOIN KhachHang k2 ON dh.ID_KhachHang = k2.ID_KhachHang " +
                     "    WHERE ttdh.TenTrangThai = N'Đã thanh toán' " +
                     "      AND (k2.NgayBatDauChuKy IS NULL OR dh.NgayTao >= k2.NgayBatDauChuKy) " +
-                    "    GROUP BY dh.ID_KhachHang" +
+                    "    GROUP BY dh.ID_KhachHang, k2.NgayBatDauChuKy " +
                     ") O ON k.ID_KhachHang = O.ID_KhachHang " +
                     "WHERE 1=1 ");
 
@@ -131,6 +155,8 @@ public class CustomerServlet extends HttpServlet {
                             m.put("diaChi",    rs.getString("DiaChi") != null ? rs.getString("DiaChi") : "");
                             m.put("trangThai", rs.getString("TrangThai"));
                             
+                            int tongSP = rs.getInt("TongSP");
+                            m.put("tongSP", tongSP);
                             double tongChiTieu = rs.getDouble("TongChiTieu");
                             m.put("tongChiTieu", tongChiTieu);
                             m.put("tongChiTieuFormatted", currencyFmt.format(tongChiTieu) + " VNĐ");
@@ -149,17 +175,25 @@ public class CustomerServlet extends HttpServlet {
                             m.put("ngayTao",   ntStr);
                             m.put("ngayCapNhat", ncnStr);
 
-                            java.sql.Timestamp tsChuKy = null;
-                            try { tsChuKy = rs.getTimestamp("NgayBatDauChuKy"); } catch (Exception exK) {}
-                            if (tsChuKy == null) {
-                                try { tsChuKy = rs.getTimestamp("NgayTao"); } catch (Exception exT) {}
-                            }
-                            String hanResetStr = "Chu kỳ 24 tháng";
-                            if (tsChuKy != null) {
+                            java.sql.Timestamp tsLast = rs.getTimestamp("NgayMuaCuoi");
+                            String hanResetStr = "Chưa mua đơn";
+                            if (tsLast != null) {
                                 Calendar cal = Calendar.getInstance();
-                                cal.setTimeInMillis(tsChuKy.getTime());
-                                cal.add(Calendar.YEAR, 2);
-                                hanResetStr = new java.text.SimpleDateFormat("dd/MM/yyyy").format(cal.getTime());
+                                cal.setTimeInMillis(tsLast.getTime());
+                                cal.add(Calendar.MONTH, 3);
+                                java.util.Date expireDate = cal.getTime();
+                                java.util.Date now = new java.util.Date();
+                                long diffMillis = expireDate.getTime() - now.getTime();
+                                long daysLeft = diffMillis / (24L * 60 * 60 * 1000);
+                                
+                                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+                                if (daysLeft < 0) {
+                                    hanResetStr = "<span style='color: var(--negative); font-weight:600;'>Đã hết hạn</span>";
+                                } else {
+                                    hanResetStr = sdf.format(expireDate) + " <span style='font-size:11.5px; color:var(--muted);'>(còn " + daysLeft + " ngày)</span>";
+                                }
+                            } else {
+                                hanResetStr = "<span style='color: var(--muted);'>3 tháng từ đơn đầu</span>";
                             }
                             m.put("hanReset", hanResetStr);
 
@@ -261,7 +295,15 @@ public class CustomerServlet extends HttpServlet {
                         }
                     }
                 } else if ("edit".equals(action)) {
-                    int id = Integer.parseInt(request.getParameter("id"));
+                    String idStr = request.getParameter("id");
+                    int id = 0;
+                    try {
+                        if (idStr != null && !idStr.trim().isEmpty()) id = Integer.parseInt(idStr.trim());
+                    } catch (NumberFormatException nfe) { id = 0; }
+                    if (id <= 0) {
+                        response.sendRedirect(request.getContextPath() + "/CustomerServlet");
+                        return;
+                    }
                     String sql = "UPDATE KhachHang SET HoTen=?, SoDienThoai=?, Email=?, GioiTinh=?, NgaySinh=?, DiaChi=?, NgayCapNhat=GETDATE() WHERE ID_KhachHang=?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setString(1, request.getParameter("hoTen"));
@@ -275,7 +317,15 @@ public class CustomerServlet extends HttpServlet {
                         ps.executeUpdate();
                     }
                 } else if ("lock".equals(action)) {
-                    int id = Integer.parseInt(request.getParameter("id"));
+                    String idStr = request.getParameter("id");
+                    int id = 0;
+                    try {
+                        if (idStr != null && !idStr.trim().isEmpty()) id = Integer.parseInt(idStr.trim());
+                    } catch (NumberFormatException nfe) { id = 0; }
+                    if (id <= 0) {
+                        response.sendRedirect(request.getContextPath() + "/CustomerServlet");
+                        return;
+                    }
                     String cur = "active";
                     try (PreparedStatement psStatus = conn.prepareStatement("SELECT TrangThai FROM KhachHang WHERE ID_KhachHang=?")) {
                         psStatus.setInt(1, id);

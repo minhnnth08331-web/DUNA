@@ -69,7 +69,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">Quản Lý Khách Hàng & Hội Viên VIP</h1>
-            <p class="page-subtitle">Hồ sơ khách hàng, hạn mức chiết khấu hội viên DUNA Club và chu kỳ thăng hạng 24 tháng</p>
+            <p class="page-subtitle">Hồ sơ khách hàng, chiết khấu hội viên DUNA Club và chu kỳ thăng hạng 3 tháng cuốn chiếu</p>
         </div>
         <c:if test="${sessionScope.role == 'MANAGER' or sessionScope.roleID == 1}">
             <div class="action-buttons">
@@ -93,9 +93,9 @@
                 </select>
                 <select name="rank" class="form-control" style="width:auto; min-width: 140px;">
                     <option value="">Tất cả hạng VIP</option>
-                    <option value="VIP"    <c:if test="${p_rank == 'VIP'}">selected</c:if>>VIP (Giảm 15%)</option>
-                    <option value="Vàng"  <c:if test="${p_rank == 'Vàng'}">selected</c:if>>Vàng (Giảm 10%)</option>
-                    <option value="Bạc"   <c:if test="${p_rank == 'Bạc'}">selected</c:if>>Bạc (Giảm 5%)</option>
+                    <option value="VIP"    <c:if test="${p_rank == 'VIP'}">selected</c:if>>VIP (Giảm 7%)</option>
+                    <option value="Vàng"  <c:if test="${p_rank == 'Vàng'}">selected</c:if>>Vàng (Giảm 4%)</option>
+                    <option value="Bạc"   <c:if test="${p_rank == 'Bạc'}">selected</c:if>>Bạc (Giảm 2%)</option>
                     <option value="Thường" <c:if test="${p_rank == 'Thường'}">selected</c:if>>Thường (0%)</option>
                 </select>
                 <select name="status" class="form-control" style="width:auto; min-width: 140px;">
@@ -116,16 +116,16 @@
             <table class="styled-table">
                 <thead>
                     <tr>
-                        <th style="width: 10%;">Mã KH</th>
-                        <th style="width: 18%;">Họ và Tên</th>
-                        <th style="width: 12%;">Số điện thoại</th>
-                        <th style="width: 16%;">Email</th>
-                        <th style="width: 12%; text-align: right;">Chi tiêu (24T)</th>
-                        <th style="width: 8%; text-align: center;">Số đơn</th>
-                        <th style="width: 12%;">Hạng hội viên</th>
-                        <th style="width: 12%; text-align: center;">Hạn chu kỳ</th>
-                        <th style="width: 10%;">Trạng thái</th>
-                        <th style="width: 12%; text-align: center;">Thao tác</th>
+                        <th style="width: 9%;">Mã KH</th>
+                        <th style="width: 16%;">Họ và Tên</th>
+                        <th style="width: 11%;">Số điện thoại</th>
+                        <th style="width: 14%;">Email</th>
+                        <th style="width: 9%; text-align: center;">Đã mua</th>
+                        <th style="width: 12%; text-align: right;">Tổng chi tiêu</th>
+                        <th style="width: 11%;">Hạng hội viên</th>
+                        <th style="width: 13%; text-align: center;">Hạn giữ hạng</th>
+                        <th style="width: 8%;">Trạng thái</th>
+                        <th style="width: 11%; text-align: center;">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -135,18 +135,18 @@
                             <td style="font-weight: 600;">${kh.hoTen}</td>
                             <td>${kh.sdt}</td>
                             <td>${kh.email}</td>
-                            <td class="text-right" style="font-weight: 700; color: var(--positive);">${kh.tongChiTieu}</td>
-                            <td class="text-center" style="font-weight: 700; font-family: var(--font-mono);">${kh.soDonDaMua}</td>
+                            <td class="text-center" style="font-weight: 700; font-family: var(--font-mono); color: var(--brand-accent-ink);">${kh.tongSP} SP</td>
+                            <td class="text-right" style="font-weight: 700; color: var(--positive);">${kh.tongChiTieuFormatted}</td>
                             <td>
                                 <c:choose>
                                     <c:when test="${kh.hang == 'VIP'}">
-                                        <span class="badge" style="background: var(--brand-accent-tint); color: var(--brand-accent-ink); border: 1px solid var(--brand-accent);">VIP &bull; -15%</span>
+                                        <span class="badge" style="background: var(--brand-accent-tint); color: var(--brand-accent-ink); border: 1px solid var(--brand-accent);">VIP &bull; -7%</span>
                                     </c:when>
                                     <c:when test="${kh.hang == 'Vàng'}">
-                                        <span class="badge badge-warning">Vàng &bull; -10%</span>
+                                        <span class="badge badge-warning">Vàng &bull; -4%</span>
                                     </c:when>
                                     <c:when test="${kh.hang == 'Bạc'}">
-                                        <span class="badge badge-neutral">Bạc &bull; -5%</span>
+                                        <span class="badge badge-neutral">Bạc &bull; -2%</span>
                                     </c:when>
                                     <c:otherwise>
                                         <span class="badge badge-neutral">Thường &bull; 0%</span>
@@ -156,7 +156,7 @@
                             <td class="text-center" style="font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;">
                                 ${kh.hanReset}
                             </td>
-                            <td>
+                            <td style="text-align: center;">
                                 <c:choose>
                                     <c:when test="${kh.trangThai == 'active'}">
                                         <span class="badge badge-success">Hoạt động</span>
@@ -231,44 +231,56 @@
 
     <%-- Quyền lợi Hội viên DUNA Club --%>
     <div class="panel" style="margin-top: 24px;">
-        <h3 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 700; color: var(--text-primary);">
-            Quy Định Thăng Hạng & Chu Kỳ Tích Lũy Hội Viên (24 Tháng)
-        </h3>
-        <p style="margin: 0 0 16px 0; color: var(--muted); font-size: 13px;">
-            Hệ thống tự động xét duyệt và nâng hạng hội viên theo số lượng sản phẩm thời trang đã tích lũy trong chu kỳ hiệu lực 2 năm:
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 4px; height: 16px; background: var(--brand-accent); border-radius: 2px;"></span>
+                Quy Định Thăng Hạng & Chu Kỳ Tích Lũy Hội Viên (3 Tháng Gia Hạn Cuốn Chiếu)
+            </h3>
+            <span class="badge badge-neutral" style="font-size: 11.5px; font-weight: 600;">Chu kỳ 3 tháng cuốn chiếu</span>
+        </div>
+        <p style="margin: 0 0 16px 0; color: var(--muted); font-size: 13px; line-height: 1.5;">
+            Hệ thống tự động xét duyệt thăng hạng theo <strong>số lượng sản phẩm thời trang đã mua</strong>. Thời hạn giữ hạng có hiệu lực <strong>3 tháng</strong> và được tự động <strong>gia hạn thêm 3 tháng</strong> mỗi khi khách hàng phát sinh đơn hàng mới:
         </p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px;">
-            <div class="panel" style="padding: 14px; background: var(--raised);">
-                <div style="margin-bottom: 8px;"><span class="badge badge-neutral">Thường &bull; 0%</span></div>
-                <div style="font-size: 12.5px; color: var(--text); line-height: 1.5;">
-                    &bull; Điều kiện: <strong>0 &ndash; 1 sản phẩm</strong><br>
-                    &bull; Quyền lợi: Giá niêm yết
+            <div class="panel" style="padding: 14px; background: var(--raised); border: 1px solid var(--border); border-radius: 8px;">
+                <div style="margin-bottom: 8px;"><span class="badge badge-neutral" style="font-size: 12px; font-weight: 700;">Thường &bull; 0%</span></div>
+                <div style="font-size: 12.5px; color: var(--text); line-height: 1.6;">
+                    &bull; Điều kiện: Mua <strong>0 &ndash; 4 sản phẩm</strong><br>
+                    &bull; Quyền lợi: <strong>Giá niêm yết (0%)</strong><br>
+                    &bull; Chu kỳ: Mặc định ban đầu hoặc khi bị reset
                 </div>
             </div>
-            <div class="panel" style="padding: 14px; background: var(--raised);">
-                <div style="margin-bottom: 8px;"><span class="badge badge-neutral">Bạc &bull; Giảm 5%</span></div>
-                <div style="font-size: 12.5px; color: var(--text); line-height: 1.5;">
-                    &bull; Điều kiện: Từ <strong>2 &ndash; 4 sản phẩm</strong><br>
-                    &bull; Quyền lợi: Chiết khấu <strong>5%</strong> trực tiếp
+            <div class="panel" style="padding: 14px; background: var(--raised); border: 1px solid var(--border); border-radius: 8px;">
+                <div style="margin-bottom: 8px;"><span class="badge badge-neutral" style="font-size: 12px; font-weight: 700;">Bạc &bull; Giảm 2%</span></div>
+                <div style="font-size: 12.5px; color: var(--text); line-height: 1.6;">
+                    &bull; Điều kiện: Tích lũy <strong>5 &ndash; 8 sản phẩm</strong><br>
+                    &bull; Quyền lợi: Chiết khấu <strong>2%</strong> trực tiếp<br>
+                    &bull; Giữ hạng: <strong>3 tháng</strong> kể từ đơn mua gần nhất
                 </div>
             </div>
-            <div class="panel" style="padding: 14px; background: var(--raised);">
-                <div style="margin-bottom: 8px;"><span class="badge badge-warning">Vàng &bull; Giảm 10%</span></div>
-                <div style="font-size: 12.5px; color: var(--text); line-height: 1.5;">
-                    &bull; Điều kiện: Từ <strong>5 &ndash; 9 sản phẩm</strong><br>
-                    &bull; Quyền lợi: Chiết khấu <strong>10%</strong> trực tiếp
+            <div class="panel" style="padding: 14px; background: var(--raised); border: 1px solid var(--border); border-radius: 8px;">
+                <div style="margin-bottom: 8px;"><span class="badge badge-warning" style="font-size: 12px; font-weight: 700;">Vàng &bull; Giảm 4%</span></div>
+                <div style="font-size: 12.5px; color: var(--text); line-height: 1.6;">
+                    &bull; Điều kiện: Tích lũy <strong>9 &ndash; 12 sản phẩm</strong><br>
+                    &bull; Quyền lợi: Chiết khấu <strong>4%</strong> trực tiếp<br>
+                    &bull; Giữ hạng: <strong>3 tháng</strong> kể từ đơn mua gần nhất
                 </div>
             </div>
-            <div class="panel" style="padding: 14px; background: var(--raised);">
-                <div style="margin-bottom: 8px;"><span class="badge" style="background: var(--brand-accent-tint); color: var(--brand-accent-ink); border: 1px solid var(--brand-accent);">VIP &bull; Giảm 15%</span></div>
-                <div style="font-size: 12.5px; color: var(--text); line-height: 1.5;">
-                    &bull; Điều kiện: Từ <strong>10 sản phẩm trở lên</strong><br>
-                    &bull; Quyền lợi: Chiết khấu cao cấp <strong>15%</strong>
+            <div class="panel" style="padding: 14px; background: var(--raised); border: 1px solid var(--border); border-radius: 8px;">
+                <div style="margin-bottom: 8px;"><span class="badge" style="background: var(--brand-accent-tint); color: var(--brand-accent-ink); border: 1px solid var(--brand-accent); font-size: 12px; font-weight: 700;">VIP &bull; Giảm 7%</span></div>
+                <div style="font-size: 12.5px; color: var(--text); line-height: 1.6;">
+                    &bull; Điều kiện: Từ <strong>13 sản phẩm trở lên</strong><br>
+                    &bull; Quyền lợi: Chiết khấu cao cấp <strong>7%</strong><br>
+                    &bull; Giữ hạng: <strong>3 tháng</strong> kể từ đơn mua gần nhất
                 </div>
             </div>
         </div>
-        <div style="font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px;">
-            * Chu kỳ 24 tháng giúp đảm bảo quyền lợi tích lũy và động lực mua sắm. Khi hết hạn chu kỳ, hệ thống sẽ tự động chuyển sang chu kỳ mới mà không làm ảnh hưởng đến lịch sử hóa đơn trong mục Quản lý hóa đơn.
+        <div style="font-size: 12.5px; color: var(--text); background: var(--surface); border: 1px dashed var(--border); border-radius: 6px; padding: 12px 14px; line-height: 1.6;">
+            <strong>💡 Quy tắc gia hạn cuốn chiếu & tự động reset:</strong>
+            <ul style="margin: 6px 0 0 18px; padding: 0;">
+                <li><strong>Gia hạn thêm 3 tháng:</strong> Khi khách hàng tiếp tục mua sắm trong thời hạn 3 tháng, hạn giữ hạng sẽ <strong>tự động gia hạn thêm 3 tháng</strong> kể từ ngày mua đơn hàng mới nhất và số lượng sản phẩm được cộng dồn tích lũy để thăng hạng (ví dụ: Khách đang hạng Bạc tiếp tục mua đơn mới sẽ được gia hạn thêm 3 tháng).</li>
+                <li><strong>Tự động Reset về Thường:</strong> Nếu quá 3 tháng (90 ngày) kể từ lần mua gần nhất mà khách hàng không phát sinh bất kỳ đơn hàng nào, hệ thống sẽ <strong>tự động hạ về hạng Thường (0%)</strong> và bắt đầu lại chu kỳ tích lũy mới cho lần mua kế tiếp.</li>
+            </ul>
         </div>
     </div>
 </div>

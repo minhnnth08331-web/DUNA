@@ -40,11 +40,14 @@ public class VoucherServlet extends HttpServlet {
 
             if ("toggleStatus".equals(action)) {
                 String idStr = request.getParameter("id");
-                if (idStr != null && !idStr.isEmpty()) {
-                    int id = Integer.parseInt(idStr);
-                    try (PreparedStatement ps = conn.prepareStatement("UPDATE Vouchers SET TrangThai = CASE WHEN ISNULL(TrangThai, 1) = 1 THEN 0 ELSE 1 END WHERE ID_Voucher = ?")) {
-                        ps.setInt(1, id);
-                        ps.executeUpdate();
+                if (idStr != null && !idStr.trim().isEmpty()) {
+                    int id = 0;
+                    try { id = Integer.parseInt(idStr.trim()); } catch (NumberFormatException nfe) { id = 0; }
+                    if (id > 0) {
+                        try (PreparedStatement ps = conn.prepareStatement("UPDATE Vouchers SET TrangThai = CASE WHEN ISNULL(TrangThai, 1) = 1 THEN 0 ELSE 1 END WHERE ID_Voucher = ?")) {
+                            ps.setInt(1, id);
+                            ps.executeUpdate();
+                        }
                     }
                 }
                 response.sendRedirect(request.getContextPath() + "/VoucherServlet?success=toggled");

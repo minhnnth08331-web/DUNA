@@ -651,22 +651,24 @@
             <div class="modal-header">
                 <h3 class="modal-title">Xác Thực Quyền Quản Lý</h3>
             </div>
-            <div class="modal-body">
-                <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 16px;">
-                    Nhập mật khẩu tài khoản Quản lý (Admin) để hiển thị mật khẩu của nhân sự này:
-                </p>
+            <form onsubmit="event.preventDefault(); submitAdminVerify();" style="margin: 0;">
+                <div class="modal-body">
+                    <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 16px;">
+                        Nhập mật khẩu tài khoản Quản lý (Admin) để hiển thị mật khẩu của nhân sự này:
+                    </p>
 
-                <div id="verifyErrorMsg" class="alert alert-danger" style="display: none;"></div>
+                    <div id="verifyErrorMsg" class="alert alert-danger" style="display: none;"></div>
 
-                <div class="form-group">
-                    <label for="modalAdminPassword">Mật khẩu Admin <span style="color:var(--negative)">*</span></label>
-                    <input type="password" id="modalAdminPassword" class="form-control" placeholder="Nhập mật khẩu Admin..." onkeypress="if(event.keyCode==13){ submitAdminVerify(); }">
+                    <div class="form-group">
+                        <label for="modalAdminPassword">Mật khẩu Admin <span style="color:var(--negative)">*</span></label>
+                        <input type="password" id="modalAdminPassword" class="form-control" placeholder="Nhập mật khẩu Admin..." autocomplete="current-password">
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeAdminVerifyModal()">Hủy bỏ</button>
-                <button type="button" class="btn btn-primary" id="btnSubmitVerify" onclick="submitAdminVerify()">Xác nhận</button>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeAdminVerifyModal()">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitVerify">Xác nhận</button>
+                </div>
+            </form>
         </div>
     </div>
 
