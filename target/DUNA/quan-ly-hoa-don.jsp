@@ -662,7 +662,7 @@
     <div class="orders-page-header">
         <div class="orders-title-group">
             <h1>Quản Lý Hóa Đơn & Lịch Sử Giao Dịch</h1>
-            <p>Theo dõi dòng tiền, đối soát giao dịch bán lẻ và hỗ trợ đổi size sản phẩm DUNA Men's Wear</p>
+            <p>Theo dõi dòng tiền, đối soát giao dịch bán lẻ và trạng thái đơn hàng DUNA Men's Wear</p>
         </div>
         <div>
             <a class="btn-create-order" href="${pageContext.request.contextPath}/OrderServlet?view=sell">
@@ -671,7 +671,6 @@
             </a>
         </div>
     </div>
-
     <!-- STATS OVERVIEW CARDS: Clear metric hierarchy, distinct color accents, generous gap -->
     <div class="orders-stats-grid">
         <div class="order-kpi-card kpi-total">
@@ -887,7 +886,6 @@
                 </div>
             </div>
         </c:if>
-    </div>
 </div>
 
 <jsp:include page="footer.jsp" />

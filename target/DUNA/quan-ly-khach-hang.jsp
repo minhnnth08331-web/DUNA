@@ -1,5 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <% if (request.getAttribute("listKH") == null) {
     response.sendRedirect(request.getContextPath() + "/CustomerServlet"); return;
 } %>
@@ -103,6 +105,11 @@
                     <option value="active" <c:if test="${p_status == 'active'}">selected</c:if>>Hoạt động</option>
                     <option value="locked" <c:if test="${p_status == 'locked'}">selected</c:if>>Đã khóa</option>
                 </select>
+                <select name="expiring" class="form-control" style="width:auto; min-width: 180px;">
+                    <option value="">Tất cả chu kỳ 3 tháng</option>
+                    <option value="14" <c:if test="${p_expiring == '14'}">selected</c:if>>⏰ Sắp hết hạn (&le; 14 ngày)</option>
+                    <option value="7"  <c:if test="${p_expiring == '7'}">selected</c:if>>🚨 Khẩn cấp (&le; 7 ngày)</option>
+                </select>
                 <div class="action-buttons">
                     <button type="submit" class="btn btn-primary btn-sm">Tìm kiếm</button>
                     <a href="${pageContext.request.contextPath}/CustomerServlet" class="btn btn-outline btn-sm">Làm mới</a>
@@ -154,7 +161,12 @@
                                 </c:choose>
                             </td>
                             <td class="text-center" style="font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;">
-                                ${kh.hanReset}
+                                <div>${kh.hanReset}</div>
+                                <c:if test="${not empty kh.daysLeft and kh.daysLeft >= 0 and kh.daysLeft <= 14 and kh.hang != 'Thường'}">
+                                    <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 11px; color: #d97706; border-color: #d97706; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="openOfflineReminderModal('${fn:escapeXml(kh.hoTen)}', '${kh.sdt}', '${kh.hang}', '${kh.daysLeft}')">
+                                        ⚠️ Nhắc tại quầy
+                                    </button>
+                                </c:if>
                             </td>
                             <td style="text-align: center;">
                                 <c:choose>
@@ -342,7 +354,53 @@
     </div>
 </div>
 
+<!-- MODAL KỊCH BẢN TƯ VẤN NHẮC TRỰC TIẾP TẠI QUẦY (OFFLINE REMINDER) -->
+<div class="modal-bg" id="modalOfflineReminder">
+    <div class="modal-box" style="max-width: 600px;">
+        <button class="close-btn" type="button" onclick="closeModal('modalOfflineReminder')">&times;</button>
+        <div style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+            <div class="page-title-eyebrow">DUNA CRM & Loyalty Offline</div>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: var(--text-primary);">Kịch Bản Nhắc Nhở Trực Tiếp Tại Quầy (Offline)</h3>
+        </div>
+        <div style="margin-bottom: 14px; font-size: 13px; color: var(--muted); line-height: 1.5;">
+            Sử dụng kịch bản này để nhân viên thu ngân / tư vấn nhắc nhở trực tiếp khách hàng khi đến mua sắm tại cửa hàng DUNA để gia hạn chu kỳ 3 tháng:
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="font-size: 12.5px; font-weight: 600;">Lời thoại nhân viên tư vấn trực tiếp:</label>
+            <textarea id="offlineReminderText" class="form-control" rows="5" readonly style="font-size: 13.5px; line-height: 1.6; background: var(--surface);"></textarea>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span id="copyToast" style="font-size: 12.5px; color: var(--positive); font-weight: 600; display: none;">✅ Đã sao chép kịch bản vào Clipboard!</span>
+            <div style="display: flex; gap: 10px; margin-left: auto;">
+                <button type="button" class="btn btn-outline" onclick="copyOfflineReminder()">📋 Sao Chép Kịch Bản</button>
+                <button type="button" class="btn btn-primary" onclick="closeModal('modalOfflineReminder')">Đã Nhắc Khách</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+function openOfflineReminderModal(hoTen, sdt, hang, daysLeft) {
+    var discount = (hang === 'VIP') ? '7%' : (hang === 'Vàng' ? '4%' : (hang === 'Bạc' ? '2%' : '0%'));
+    var msg = "Dạ em chào anh/chị " + hoTen + "! "
+        + "Hệ thống hội viên DUNA Club ghi nhận hạng thẻ " + hang + " (ưu đãi chiết khấu " + discount + " trực tiếp) của anh/chị chỉ còn " + daysLeft + " ngày nữa là đến hạn reset chu kỳ 3 tháng. "
+        + "Đơn hàng hôm nay của anh/chị sẽ tự động gia hạn thêm 3 tháng giữ hạng và cộng dồn số lượng sản phẩm để thăng hạng mới luôn ạ!";
+    
+    document.getElementById('offlineReminderText').value = msg;
+    openModal('modalOfflineReminder');
+}
+
+function copyOfflineReminder() {
+    var ta = document.getElementById('offlineReminderText');
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(function() {
+        var toast = document.getElementById('copyToast');
+        if (toast) {
+            toast.style.display = 'inline';
+            setTimeout(function() { toast.style.display = 'none'; }, 2500);
+        }
+    });
+}
 function openAdd(){
     document.getElementById('modalTitle').textContent='Thêm Khách Hàng Mới';
     document.getElementById('fAction').value='add'; document.getElementById('fId').value='';

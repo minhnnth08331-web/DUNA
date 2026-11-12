@@ -276,10 +276,16 @@
 
             <!-- CỘT BÊN PHẢI: BARCODE INPUT & BẢNG GIỎ HÀNG -->
             <div class="main-col">
+                <!-- BANNER CHẾ ĐỘ BÁN HÀNG NGOẠI TUYẾN (OFFLINE FALLBACK) -->
+                <div id="networkStatusBanner" style="display: none; padding: 10px 16px; margin-bottom: 14px; border-radius: 8px; font-size: 13px; font-weight: 600; justify-content: space-between; align-items: center;">
+                    <div id="networkStatusText" style="display: flex; align-items: center; gap: 8px;"></div>
+                    <div id="networkStatusActions" style="display: flex; gap: 8px;"></div>
+                </div>
+
                 <!-- THANH BẮN MÃ VẠCH & PHÍM TẮT -->
                 <section class="card" style="padding: 14px 18px;">
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <div style="flex: 1; position: relative;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 260px; position: relative;">
                             <input type="text" id="posBarcodeInput" class="form-control font-mono" placeholder="Bắn mã vạch sản phẩm hoặc gõ SKU... (Nhấn Enter)" autocomplete="off" autofocus onkeydown="handlePosBarcodeInput(event)" style="height: 42px; font-size: 14px; font-weight: 600; padding-left: 14px;">
                         </div>
                         <button type="button" class="btn btn-secondary no-print" onclick="openBarcodeScanner()" style="height: 42px; padding: 0 16px; white-space: nowrap;" title="Mở camera quét mã trực tiếp">Camera Barcode</button>
@@ -891,7 +897,7 @@ function saveVatConfig() {
 <script>
 var ALL_KH = [
     <c:forEach items="${listKH}" var="kh" varStatus="s">
-    {id:${kh.id},ten:'${fn:escapeXml(kh.ten)}',sdt:'${fn:escapeXml(kh.sdt)}',hang:'${fn:escapeXml(kh.hang)}',discountPct:${kh.discountPct}}${!s.last ? ',' : ''}
+    {id:${kh.id},ten:'${fn:escapeXml(kh.ten)}',sdt:'${fn:escapeXml(kh.sdt)}',hang:'${fn:escapeXml(kh.hang)}',discountPct:${kh.discountPct},daysLeft:${not empty kh.daysLeft ? kh.daysLeft : 'null'}}${!s.last ? ',' : ''}
     </c:forEach>
 ];
 </script>
@@ -958,11 +964,21 @@ function selectCustomer(kh) {
     if (sel) sel.value = kh.id;
     var infoEl = document.getElementById('khSelectedInfo');
     infoEl.style.display = 'block';
+
+    var offlineReminderHtml = '';
+    if (kh.hang && kh.hang !== 'Thường' && kh.daysLeft !== null && kh.daysLeft !== undefined && kh.daysLeft <= 14) {
+        offlineReminderHtml = '<div style="margin-top: 8px; padding: 8px 12px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 6px; font-size: 12.5px; color: #b45309; line-height: 1.5;">' +
+            '<strong>⚠️ NHẮC TRỰC TIẾP TẠI QUẦY (Offline):</strong> Hạng <b>' + escHtml(kh.hang) + '</b> của khách chỉ còn <b>' + kh.daysLeft + ' ngày</b> nữa là hết chu kỳ 3 tháng.<br>' +
+            '<span style="font-size: 11.5px; color: var(--color-text);">🗣️ <i>Gợi ý tư vấn:</i> "Dạ anh/chị ơi, hạng <b>' + escHtml(kh.hang) + '</b> (chiết khấu ' + currentDiscountPct + '%) của mình còn ' + kh.daysLeft + ' ngày nữa là đến hạn reset chu kỳ 3 tháng. Đơn hàng hôm nay của anh/chị sẽ tự động gia hạn thêm 3 tháng và tiếp tục tích lũy sản phẩm để thăng hạng mới ạ!"</span>' +
+            '</div>';
+    }
+
     infoEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">' +
         '<div><b>' + escHtml(kh.ten) + '</b> ' + rankBadge(kh.hang) +
         '<span style="color:var(--color-text-muted);margin-left:8px;">SĐT: ' + escHtml(kh.sdt||'-') + '</span>' +
         (currentDiscountPct > 0 ? ' &nbsp;|&nbsp; <span style="color:var(--color-success);font-weight:700">Ưu đãi hạng: ' + currentDiscountPct + '%</span>' : '') +
-        '</div><button type="button" class="btn btn-outline" onclick="clearCustomer()" style="font-size:11px;padding:2px 8px;color:var(--color-danger);border-color:var(--color-danger);">Bỏ chọn</button></div>';
+        '</div><button type="button" class="btn btn-outline" onclick="clearCustomer()" style="font-size:11px;padding:2px 8px;color:var(--color-danger);border-color:var(--color-danger);">Bỏ chọn</button></div>' +
+        offlineReminderHtml;
     calculateTotals();
     if (typeof appliedVoucherCode !== 'undefined' && appliedVoucherCode && appliedVoucherCode.toUpperCase().startsWith('VIP')) {
         setTimeout(function(){ applyVoucher(); }, 100);
@@ -1098,7 +1114,8 @@ function renderCart() {
         display.innerHTML = '<div class="cart-empty" style="text-align: center; padding: 90px 16px; color: var(--color-text-muted);"><div style="font-size: 16px; font-weight: 600; color: var(--color-text);">Giỏ hàng đang trống</div><div style="font-size: 13.5px; margin-top: 4px;">Dùng súng quét mã vạch hoặc bấm "Chọn Thủ Công" để nạp sản phẩm vào đơn.</div></div>';
         hidden.innerHTML = '';
         if (badge) badge.textContent = '0 sản phẩm';
-        calculateTotals(); return;
+        calculateTotals();
+        return;
     }
     if (badge) {
         var totQty = cart.reduce(function(s,i){return s+i.qty},0);
@@ -1131,6 +1148,70 @@ function renderCart() {
                '<input type="hidden" name="trongLuong[]" value="'+(item.trongLuong||'')+'">'+
                '<input type="hidden" name="donGia[]" value="'+item.gia+'">'; }).join('');
     calculateTotals();
+}
+
+// -------------------------------------------------------------
+// NHÓM 4: CHẾ ĐỘ BÁN HÀNG NGOẠI TUYẾN (OFFLINE POS FALLBACK)
+// -------------------------------------------------------------
+function initOfflinePOS() {
+    var banner = document.getElementById('networkStatusBanner');
+    var textEl = document.getElementById('networkStatusText');
+    var actionsEl = document.getElementById('networkStatusActions');
+    if (!banner || !textEl || !actionsEl) return;
+    
+    function updateOnlineStatus() {
+        var isOnline = navigator.onLine;
+        var offlineOrders = JSON.parse(localStorage.getItem('duna_offline_orders') || '[]');
+        if (!isOnline) {
+            banner.style.display = 'flex';
+            banner.style.background = '#fef3c7';
+            banner.style.color = '#92400e';
+            banner.style.border = '1px solid #f59e0b';
+            textEl.innerHTML = '⚠️ <b>MẤT KẾT NỐI INTERNET:</b> Đang bật Chế độ POS Ngoại Tuyến. Đơn hàng sẽ được lưu tạm tại trình duyệt và không làm gián đoạn bán hàng.';
+            actionsEl.innerHTML = '<span class="badge font-mono" style="background:#d97706;color:#fff;">' + offlineOrders.length + ' đơn chờ đồng bộ</span>';
+        } else if (offlineOrders.length > 0) {
+            banner.style.display = 'flex';
+            banner.style.background = '#ecfdf5';
+            banner.style.color = '#065f46';
+            banner.style.border = '1px solid #10b981';
+            textEl.innerHTML = '🟢 <b>ĐÃ CÓ MẠNG TRỞ LẠI:</b> Có <b>' + offlineOrders.length + '</b> đơn hàng lưu ngoại tuyến cần đồng bộ lên hệ thống.';
+            actionsEl.innerHTML = '<button type="button" class="btn btn-primary" style="padding:4px 12px; font-size:12px;" onclick="syncOfflineOrders()">Đồng Bộ Ngay (' + offlineOrders.length + ')</button>';
+        } else {
+            banner.style.display = 'none';
+        }
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+}
+
+function syncOfflineOrders() {
+    var offlineOrders = JSON.parse(localStorage.getItem('duna_offline_orders') || '[]');
+    if (!offlineOrders.length) {
+        alert('Không có đơn hàng ngoại tuyến nào cần đồng bộ!');
+        return;
+    }
+    if (!confirm('Đồng bộ ' + offlineOrders.length + ' đơn hàng ngoại tuyến lên máy chủ DUNA ngay bây giờ?')) return;
+    
+    var order = offlineOrders.shift();
+    localStorage.setItem('duna_offline_orders', JSON.stringify(offlineOrders));
+    
+    var formData = new FormData();
+    for (var k in order) formData.append(k, order[k]);
+    fetch('${pageContext.request.contextPath}/OrderServlet', {
+        method: 'POST',
+        body: new URLSearchParams(formData)
+    }).then(function() {
+        if (offlineOrders.length > 0) {
+            syncOfflineOrders();
+        } else {
+            alert('✅ Đã đồng bộ tất cả đơn hàng ngoại tuyến lên hệ thống DUNA thành công!');
+            location.reload();
+        }
+    }).catch(function(err) {
+        alert('Có lỗi khi đồng bộ đơn: ' + err.message);
+    });
 }
 
 function openManualProductModal() {
@@ -1347,6 +1428,40 @@ function updateQR(amount) {
 function submitInvoice(type) {
     calculateTotals();
     if (!cart.length) { alert('Giỏ hàng trống. Vui lòng chọn sản phẩm.'); return; }
+
+    if (!navigator.onLine) {
+        var offOrders = JSON.parse(localStorage.getItem('duna_offline_orders') || '[]');
+        var offCode = 'OFF-' + (Date.now() % 1000000);
+        var subtotal = cart.reduce(function(t,i){return t+i.gia*i.qty},0);
+        var disc = Math.round(subtotal * currentDiscountPct / 100);
+        var vat = Math.round(subtotal * VAT_PCT / 100);
+        var grand = subtotal - disc + vat;
+        var offOrder = {
+            action: 'create',
+            invoiceType: type,
+            idKH: document.getElementById('idKHPost').value || 0,
+            holdId: '0',
+            tenKH_input: (document.getElementById('khachHangSearchInput') ? document.getElementById('khachHangSearchInput').value : 'Khách vãng lai') || 'Khách vãng lai',
+            sdtKH_input: (document.getElementById('sdtKH') ? document.getElementById('sdtKH').value : '') || '',
+            thanhToan: currentPayMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
+            customerPaid: grand,
+            orderNote: 'Đơn lưu ngoại tuyến (Offline POS) #' + offCode
+        };
+        cart.forEach(function(item, idx) {
+            offOrder['idSP[' + idx + ']'] = item.id;
+            offOrder['qty[' + idx + ']'] = item.qty;
+            offOrder['mauSac[' + idx + ']'] = item.mauSac || '';
+            offOrder['trongLuong[' + idx + ']'] = item.trongLuong || '';
+            offOrder['donGia[' + idx + ']'] = item.gia;
+        });
+        offOrders.push(offOrder);
+        localStorage.setItem('duna_offline_orders', JSON.stringify(offOrders));
+        alert('⚠️ ĐANG MẤT MẠNG INTERNET:\n\nHóa đơn đã được lưu tạm an toàn vào bộ nhớ ngoại tuyến (Mã: ' + offCode + ').\n\nHệ thống sẽ tự động đồng bộ lên máy chủ DUNA ngay khi có mạng trở lại!');
+        cart = [];
+        renderCart();
+        initOfflinePOS();
+        return;
+    }
 
     var subtotal = cart.reduce(function(t,i){return t+i.gia*i.qty},0);
     var disc = Math.round(subtotal * currentDiscountPct / 100);
@@ -2023,6 +2138,7 @@ function updateCardBarcode(spId) {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
+    initOfflinePOS();
     document.querySelectorAll('[id^="vjson_"]').forEach(function(el) {
         var id = el.id.replace('vjson_', '');
         if (id) onColorChange(id);

@@ -96,6 +96,52 @@
 
 ---
 
+### 7. Triển Khai Trọn Bộ 4 Nhóm Tính Năng Đặc Thù Ngành Thời Trang Nam & Smart POS
+- **Bối cảnh & Phân công đội ngũ (AI Team):** Triển khai trọn vẹn 4 nhóm nghiệp vụ theo yêu cầu của Quản lý:
+  - **Nhóm 1 (Đặc thù ngành thời trang nam - Fashion Operations):**
+    - *Gợi Ý Phối Đồ Thông Minh Tại Quầy (Smart Mix & Match / Outfit Bundling):* Tích hợp trực tiếp tại POS `ban-hang.jsp`. Khi giỏ hàng có sản phẩm (Blazer, Sơ mi, Polo, Quần âu, Quần Khaki), hệ thống tự động hiển thị gợi ý trang phục và phụ kiện đi kèm chuẩn phong cách Sartorial / Smart Casual kèm nút `+ Thêm vào đơn` 1 chạm để gia tăng giá trị đơn hàng (AOV).
+    - *Quản Lý Phiếu Lên Gấu & Sửa Đồ (Alteration Management):* Tạo mới bảng CSDL `PhieuSuaDo` trong SQL Server `QuanLyBanHangDUNA`. Thêm tab `✂️ Sổ Phiếu Lên Gấu & Sửa Đồ` trên `quan-ly-hoa-don.jsp` kèm 4 thẻ KPI (Tổng phiếu, Chờ sửa, Đang sửa, Đã xong), bảng theo dõi số đo (cắt gấu, bóp eo, chỉnh tay áo), thợ may phụ trách, ngày hẹn và cập nhật nhanh trạng thái. Tích hợp Modal tạo phiếu sửa đồ liên kết đơn hàng.
+    - *Chính Sách Đổi Size Linh Hoạt & Tra Cứu Bảo Hành Đường May (Warranty Portal):* Thêm API `ajaxWarranty=1` trên `OrderServlet.java` và modal tra cứu theo SĐT tại POS, kiểm tra hạn bảo hành đường may/khuy áo 12 tháng miễn phí và lịch sử sửa đồ của khách.
+  - **Nhóm 2 (Quản trị kho & Ma trận biến thể - Smart Inventory):**
+    - *Lưới Ma Trận Size & Màu Trực Quan (Color-Size Matrix Grid):* Tích hợp trên `quan-ly-san-pham.jsp`. Thuật toán pivot mảng biến thể 1 chiều thành bảng 2 chiều (Màu sắc $\times$ Kích cỡ) trực quan.
+    - *Cảnh Báo Hết Hàng "Size Vàng" (Reorder Point):* Cảnh báo đỏ nổi bật khi size chủ lực (M, L / 30, 31, 39, 40) có tồn kho $\le 3$ chiếc, cảnh báo vàng khi $\le 1$ chiếc, tích hợp nút nạp nhanh số lượng tồn kho `+ Nhập`.
+  - **Nhóm 3 (Chăm sóc khách hàng & Loyalty 4.0):**
+    - *Cảnh Báo Trước Hạn Reset Chu Kỳ 3 Tháng (Cycle Expiration Alert):* Thêm bộ lọc `expiring=14` và `expiring=7` trên `CustomerServlet.java` & `quan-ly-khach-hang.jsp`.
+    - *Mẫu Tin Nhắn Chăm Sóc Zalo/SMS 1 Chạm:* Nút `💬 Nhắc Zalo/SMS` mở modal tạo tin nhắn cá nhân hóa theo tên khách, hạng thẻ, số ngày còn lại và gợi ý sản phẩm mua mới, kèm nút sao chép và liên kết mở trực tiếp Zalo chat (`zalo.me/{sdt}`).
+  - **Nhóm 4 (Công nghệ & Bán hàng ngoại tuyến - Tech & BI):**
+    - *Chế Độ Bán Hàng Offline (Offline Fallback POS):* Tự động phát hiện trạng thái mạng qua `navigator.onLine`. Khi rớt mạng, chuyển sang giao diện Offline Banner, lưu đơn nháp an toàn vào `localStorage` (`duna_offline_orders`) không làm gián đoạn thu ngân quầy. Khi có mạng trở lại, hiển thị thông báo và nút `Đồng Bộ Ngay` gửi toàn bộ đơn lên máy chủ SQL Server.
+- **Các file đã can thiệp & đồng bộ:**
+  - CSDL: Tạo bảng `PhieuSuaDo` trong SQL Server `QuanLyBanHangDUNA` (hỗ trợ lưu vết số đo, thợ may, hạn trả, chi phí).
+  - `OrderServlet.java`: Bổ sung xử lý `createAlteration`, `updateAlterationStatus`, `ajaxWarranty=1`, nạp danh sách `listPSD`.
+  - `CustomerServlet.java`: Bổ sung bộ lọc `expiring` (14 ngày, 7 ngày), tính toán cảnh báo chu kỳ 3 tháng.
+  - `ban-hang.jsp`: Tích hợp Smart Mix & Match, Tra cứu bảo hành đường may, Chế độ bán hàng Offline Fallback.
+  - `quan-ly-hoa-don.jsp`: Thêm Tab Sổ Phiếu Lên Gấu & Sửa Đồ, Modal Tạo Phiếu Sửa Đồ, Cập nhật trạng thái phiếu.
+  - `quan-ly-khach-hang.jsp`: Nhập taglib `fn:`, `fmt:`, dropdown lọc chu kỳ và Modal mẫu tin nhắn Zalo/SMS 1 chạm.
+  - `quan-ly-san-pham.jsp`: Nhập taglib `fn:`, nút và modal Lưới Ma Trận Size & Màu 2 chiều kèm cảnh báo Size Vàng.
+  - Biên dịch toàn bộ bằng `javac --release 8` chuẩn Bytecode 52.0 và đồng bộ `target/DUNA/`.
+
+---
+
+### 8. Loại Bỏ Toàn Bộ Nhóm 1 & Tinh Gọn Nhóm 3 Sang Cơ Chế Nhắc Nhở Offline Tại Quầy POS
+- **Yêu cầu người dùng:**
+  - Xóa bỏ triệt để Nhóm 1 (Đặc thù ngành thời trang nam): Gợi ý phối đồ (Smart Mix & Match), Quản lý phiếu lên gấu/sửa đồ (Alteration Management), và Tra cứu bảo hành đường may 12 tháng (Warranty Portal).
+  - Tinh gọn Nhóm 3 (Chăm sóc khách hàng & Chu kỳ 3 tháng): Không gửi tin nhắn trực tuyến (loại bỏ liên kết Chat Zalo, SMS online), chỉ giữ lại cơ chế **nhắc nhở trực tiếp tại quầy thu ngân (Offline Reminder)** khi khách hàng đến mua sắm tại cửa hàng.
+- **Chi tiết các hạng mục đã thực hiện:**
+  - **1. Dọn dẹp Nhóm 1 (Fashion-Specific Operations):**
+    - `OrderServlet.java`: Xóa bỏ luồng API `ajaxWarranty=1`, xóa truy vấn nạp bảng `PhieuSuaDo` trong `doGet`, xóa action `createAlteration` và `updateAlterationStatus` trong `doPost`.
+    - `quan-ly-hoa-don.jsp`: Xóa nút "✂️ Tạo Phiếu Sửa Đồ / Lên Gấu", xóa thanh Tab chuyển đổi (Sổ hóa đơn vs Sổ phiếu sửa đồ), xóa toàn bộ khối nội dung `#tailoringContent`, modal `#modalCreateAlteration` và các hàm JavaScript liên quan.
+    - `ban-hang.jsp`: Xóa nút "🛡️ Bảo Hành & Sửa Đồ", xóa khu vực gợi ý phối đồ `#smartOutfitSection`, xóa modal `#modalWarrantyLookup` cùng các hàm JS `renderSmartOutfitBundling()`, `addQuickBundle()`, `openWarrantyModal()`, `lookupWarranty()`.
+  - **2. Triển khai Cơ Chế Nhắc Offline Tại Quầy (Nhóm 3):**
+    - `OrderServlet.java` (`view=sell`): Tự động truy vấn ngày mua đơn hàng gần nhất (`NgayMuaCuoi`) của từng khách hàng và tính toán số ngày còn lại của chu kỳ 3 tháng (`daysLeft`), truyền sang giao diện POS.
+    - `ban-hang.jsp`: Khi nhân viên thu ngân chọn khách hàng tại quầy POS, nếu khách đang ở hạng hội viên (Bạc, Vàng, VIP) và chu kỳ 3 tháng sắp hết hạn ($\le 14$ ngày), hệ thống tự động hiển thị **Banner Nhắc Trực Tiếp Tại Quầy màu vàng nổi bật** kèm lời thoại mẫu giúp nhân viên thu ngân nhắc khách mua đơn hàng để được tự động gia hạn thêm 3 tháng và tiếp tục tích lũy sản phẩm.
+    - `quan-ly-khach-hang.jsp`: Đổi nút thao tác ở cột Hạn giữ hạng thành `⚠️ Nhắc tại quầy`; chuyển đổi modal thành `#modalOfflineReminder` (hiển thị kịch bản giao tiếp gợi ý cho nhân viên, hỗ trợ nút sao chép kịch bản, loại bỏ hoàn toàn link mở Chat Zalo / SMS online).
+- **3. Tuân thủ biên dịch & kiểm định:**
+  - Biên dịch toàn bộ mã Java bằng `javac --release 8` (chuẩn Bytecode version 52.0).
+  - Đồng bộ các file `.class` và JSP sang `target/DUNA/`.
+  - Kiểm thử trực tiếp trên máy chủ Tomcat 7: Tất cả các trang `/CustomerServlet`, `/OrderServlet?view=sell`, `/OrderServlet`, `/ProductServlet` đều hoạt động ổn định với HTTP 200 OK.
+
+---
+
 ## 📌 HƯỚNG DẪN DÀNH CHO CÁC LẦN CHỈNH SỬA TIẾP THEO
 Mỗi khi có yêu cầu chỉnh sửa hoặc thêm tính năng mới, AI Assistant và Lập trình viên bắt buộc phải:
 1. Ghi rõ **Thời gian**, **Mục đích thay đổi** và **Danh sách file bị tác động**.

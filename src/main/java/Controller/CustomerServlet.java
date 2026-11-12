@@ -20,6 +20,7 @@ public class CustomerServlet extends HttpServlet {
         String searchType = request.getParameter("searchType");
         String rank   = request.getParameter("rank");
         String status = request.getParameter("status");
+        String expiring = request.getParameter("expiring");
 
         HttpSession session = request.getSession();
         if (session.getAttribute("msgSuccess") != null) {
@@ -177,6 +178,7 @@ public class CustomerServlet extends HttpServlet {
 
                             java.sql.Timestamp tsLast = rs.getTimestamp("NgayMuaCuoi");
                             String hanResetStr = "Chưa mua đơn";
+                            Long daysLeftVal = null;
                             if (tsLast != null) {
                                 Calendar cal = Calendar.getInstance();
                                 cal.setTimeInMillis(tsLast.getTime());
@@ -185,16 +187,33 @@ public class CustomerServlet extends HttpServlet {
                                 java.util.Date now = new java.util.Date();
                                 long diffMillis = expireDate.getTime() - now.getTime();
                                 long daysLeft = diffMillis / (24L * 60 * 60 * 1000);
+                                daysLeftVal = daysLeft;
                                 
                                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
                                 if (daysLeft < 0) {
                                     hanResetStr = "<span style='color: var(--negative); font-weight:600;'>Đã hết hạn</span>";
+                                } else if (daysLeft <= 14) {
+                                    hanResetStr = "<span style='color: #d97706; font-weight:700;'>" + sdf.format(expireDate) + " (còn " + daysLeft + " ngày) ⚠️</span>";
                                 } else {
                                     hanResetStr = sdf.format(expireDate) + " <span style='font-size:11.5px; color:var(--muted);'>(còn " + daysLeft + " ngày)</span>";
                                 }
                             } else {
                                 hanResetStr = "<span style='color: var(--muted);'>3 tháng từ đơn đầu</span>";
                             }
+                            
+                            // Lọc theo cảnh báo chu kỳ sắp hết hạn
+                            String curHang = rs.getString("HangKhachHang");
+                            if ("14".equals(expiring)) {
+                                if (daysLeftVal == null || daysLeftVal > 14 || daysLeftVal < 0 || "Thường".equals(curHang)) {
+                                    continue;
+                                }
+                            } else if ("7".equals(expiring)) {
+                                if (daysLeftVal == null || daysLeftVal > 7 || daysLeftVal < 0 || "Thường".equals(curHang)) {
+                                    continue;
+                                }
+                            }
+
+                            m.put("daysLeft", daysLeftVal);
                             m.put("hanReset", hanResetStr);
 
                             listKH.add(m);
@@ -229,6 +248,7 @@ public class CustomerServlet extends HttpServlet {
         request.setAttribute("p_searchType", searchType != null ? searchType : "");
         request.setAttribute("p_rank",   rank   != null ? rank   : "");
         request.setAttribute("p_status", status != null ? status : "");
+        request.setAttribute("p_expiring", expiring != null ? expiring : "");
         request.getRequestDispatcher("quan-ly-khach-hang.jsp").forward(request, response);
     }
 

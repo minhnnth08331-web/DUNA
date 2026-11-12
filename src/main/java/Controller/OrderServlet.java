@@ -483,8 +483,11 @@ public class OrderServlet extends HttpServlet {
                 int currentVat = syncAndGetVAT(conn);
                 request.setAttribute("currentVat", currentVat);
                 ResultSet rsKH = conn.prepareStatement(
-                    "SELECT ID_KhachHang, HoTen, SoDienThoai, HangKhachHang FROM KhachHang WHERE TrangThai='active' ORDER BY HoTen"
+                    "SELECT k.ID_KhachHang, k.HoTen, k.SoDienThoai, k.HangKhachHang, " +
+                    "  (SELECT MAX(dh.NgayTao) FROM DonHang dh JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID=ttdh.TrangThaiDH_ID WHERE dh.ID_KhachHang=k.ID_KhachHang AND ttdh.TenTrangThai=N'Đã thanh toán') AS NgayMuaCuoi " +
+                    "FROM KhachHang k WHERE k.TrangThai='active' ORDER BY k.HoTen"
                 ).executeQuery();
+                java.util.Date now = new java.util.Date();
                 while (rsKH.next()) {
                     Map<String, Object> k = new HashMap<>();
                     k.put("id",   rsKH.getInt("ID_KhachHang"));
@@ -499,6 +502,21 @@ public class OrderServlet extends HttpServlet {
                     else if (hang.equals("Vàng")) discountPct = 4;
                     else if (hang.equals("VIP")) discountPct = 7;
                     k.put("discountPct", discountPct);
+
+                    // Nhóm 3: Tính số ngày còn lại của chu kỳ 3 tháng để nhắc offline tại quầy POS
+                    java.sql.Timestamp tsLast = rsKH.getTimestamp("NgayMuaCuoi");
+                    Long daysLeftVal = null;
+                    if (tsLast != null && !"Thường".equals(hang)) {
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTimeInMillis(tsLast.getTime());
+                        cal.add(Calendar.MONTH, 3);
+                        long diffMillis = cal.getTime().getTime() - now.getTime();
+                        long daysLeft = diffMillis / (24L * 60 * 60 * 1000);
+                        if (daysLeft >= 0) {
+                            daysLeftVal = daysLeft;
+                        }
+                    }
+                    k.put("daysLeft", daysLeftVal);
                     listKH.add(k);
                 }
                 ResultSet rsSP = conn.prepareStatement(
