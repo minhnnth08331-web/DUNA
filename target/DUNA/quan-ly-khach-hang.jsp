@@ -270,7 +270,7 @@
                 <div style="margin-bottom: 8px;"><span class="badge" style="background: var(--brand-accent-tint); color: var(--brand-accent-ink); border: 1px solid var(--brand-accent); font-size: 12px; font-weight: 700;">VIP &bull; Giảm 7%</span></div>
                 <div style="font-size: 12.5px; color: var(--text); line-height: 1.6;">
                     &bull; Điều kiện: Từ <strong>13 sản phẩm trở lên</strong><br>
-                    &bull; Quyền lợi: Chiết khấu cao cấp <strong>7%</strong><br>
+                    &bull; Quyền lợi: Chiết khấu VIP <strong>7%</strong><br>
                     &bull; Giữ hạng: <strong>3 tháng</strong> kể từ đơn mua gần nhất
                 </div>
             </div>

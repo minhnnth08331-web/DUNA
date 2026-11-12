@@ -1,6 +1,7 @@
 # AGENTS.md - Quy Tắc Dự Án DUNA (Project Directives & Constraints)
 
 > **Dự án:** DUNA Men's Wear POS Web Application  
+> **Định vị:** Thời trang nam tầm trung (phân khúc giá hợp lý, phổ thông, thanh lịch & hiện đại)  
 > **Công nghệ:** Java Servlet (`javax.servlet-api:4.0.1`), JSP/JSTL, Apache Tomcat 7 (`tomcat7-maven-plugin:2.2`), Microsoft SQL Server (`QuanLyBanHangDUNA`).
 
 ---
@@ -30,7 +31,9 @@
    - Mọi Servlet quản trị mới (`Add*`, `Update*`, `Toggle*`, `Change*`, `/ProductServlet`, `/EmployeeManagementServlet`, `/VoucherServlet`) bắt buộc phải được bảo vệ trong `AuthFilter.java` để ngăn chặn nhân viên `EMPLOYEE` leo quyền.
 3. **Phòng chống Crash 500:**
    - Mọi tham số ID từ URL hoặc Form (`request.getParameter("id")`) phải được kiểm tra `null`, rỗng và bọc trong khối `try-catch NumberFormatException`.
-4. **Nhất quán thương hiệu DUNA:**
-   - DUNA là cửa hàng thời trang nam cao cấp. Tuyệt đối không sao chép code hay nhầm lẫn với các ngành hàng khác (như "vợt & phụ kiện cầu lông").
+4. **Nhất quán thương hiệu DUNA (Phân khúc thời trang nam tầm trung):**
+   - DUNA là thương hiệu chuỗi cửa hàng thời trang nam **tầm trung** (mid-range: áo polo, sơ mi, quần âu, khaki, áo khoác... với phân khúc giá hợp lý, chất lượng vải tốt, thiết kế hiện đại, thanh lịch và phổ thông cho nam giới).
+   - Tuyệt đối không định vị nhầm lẫn sang hàng xa xỉ/luxury cao cấp hay sao chép code từ các ngành hàng khác (như "vợt & phụ kiện cầu lông").
+   - Mọi đề xuất tính năng, giao diện, bảng giá, phân loại sản phẩm và nội dung hiển thị phải luôn bám sát định vị phân khúc thời trang nam tầm trung này.
 5. **Ghi Nhận Lịch Sử Chỉnh Sửa:**
    - Bất cứ khi nào hoàn thành một lượt sửa lỗi, cập nhật logic hay thay đổi giao diện, bắt buộc phải cập nhật chi tiết nội dung thay đổi vào file `LICH_SU_CHINH_SUA.md` tại thư mục gốc.

@@ -848,7 +848,7 @@
             </div>
             <div>
                 <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.01em;">Quy Tắc Tài Chính: Cách Tính Doanh Thu & Lợi Nhuận</h3>
-                <div style="font-size: 13px; color: var(--muted); margin-top: 3px;">Phương pháp hạch toán sổ cái chuẩn chuỗi bán lẻ thời trang nam cao cấp DUNA</div>
+                <div style="font-size: 13px; color: var(--muted); margin-top: 3px;">Phương pháp hạch toán sổ cái chuẩn chuỗi bán lẻ thời trang nam tầm trung DUNA</div>
             </div>
         </div>
 

@@ -223,3 +223,9 @@
 0:0:0:0:0:0:0:1 - - [13/Nov/2026:05:08:28 +0700] "GET /DUNA/OrderServlet HTTP/1.1" 200 76109 http-bio-8080-exec-3 199
 0:0:0:0:0:0:0:1 - - [13/Nov/2026:05:08:34 +0700] "GET /DUNA/VoucherServlet HTTP/1.1" 200 40259 http-bio-8080-exec-8 128
 0:0:0:0:0:0:0:1 - - [13/Nov/2026:05:08:39 +0700] "GET /DUNA/CustomerServlet HTTP/1.1" 200 42158 http-bio-8080-exec-8 454
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:05:22:43 +0700] "GET /DUNA/CustomerServlet HTTP/1.1" 200 42158 http-bio-8080-exec-7 87
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:05:22:48 +0700] "GET /DUNA/OrderServlet?view=sell HTTP/1.1" 200 153422 http-bio-8080-exec-7 205
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:05:22:49 +0700] "GET /DUNA/CustomerServlet HTTP/1.1" 200 42158 http-bio-8080-exec-7 77
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:05:30:16 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 11753 http-bio-8080-exec-5 29
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:05:30:25 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 11753 http-bio-8080-exec-6 2
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:05:30:29 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 11753 http-bio-8080-exec-8 1

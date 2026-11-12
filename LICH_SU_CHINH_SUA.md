@@ -84,6 +84,18 @@
 
 ---
 
+### 6. Cập Nhật Định Vị Thương Hiệu Phân Khúc "Thời Trang Nam Tầm Trung"
+- **Yêu cầu:** Chuẩn hóa định vị sản phẩm của toàn bộ hệ thống DUNA Men's Wear sang phân khúc **thời trang nam tầm trung** (mid-range: áo polo, sơ mi, quần âu, khaki, áo khoác... giá cả hợp lý, dễ tiếp cận, thiết kế hiện đại, thanh lịch và phổ thông cho nam giới), loại bỏ các mô tả xa hoa, luxury hoặc cao cấp gây lệch hướng phát triển sản phẩm.
+- **Các file đã can thiệp & đồng bộ:**
+  - `AGENTS.md`: Cập nhật phần thông tin dự án và Điều khoản 4 trong Quy tắc bảo mật & nghiệp vụ, đưa định vị thời trang nam tầm trung thành nguyên tắc phát triển bắt buộc cho toàn bộ Agent, Lập trình viên và QA.
+  - `footer.jsp`: Đổi bản quyền hiển thị thành `DUNA Men's Wear — Hệ Thống Quản Lý Bán Lẻ Thời Trang Nam Tầm Trung`.
+  - `bao-cao-thong-ke.jsp`: Chuẩn hóa mô tả trong modal quy tắc tài chính thành `Phương pháp hạch toán sổ cái chuẩn chuỗi bán lẻ thời trang nam tầm trung DUNA`.
+  - `quan-ly-khach-hang.jsp`: Cập nhật nhãn quyền lợi hội viên hạng VIP thành `Chiết khấu VIP 7%` (thay cho "Chiết khấu cao cấp 7%").
+  - `quan-ly-san-pham.jsp`: Cập nhật placeholder mô tả sản phẩm sang `chất liệu vải...`.
+  - Đồng bộ tức thì toàn bộ file JSP sang thư mục triển khai máy chủ Tomcat `target/DUNA/`.
+
+---
+
 ## 📌 HƯỚNG DẪN DÀNH CHO CÁC LẦN CHỈNH SỬA TIẾP THEO
 Mỗi khi có yêu cầu chỉnh sửa hoặc thêm tính năng mới, AI Assistant và Lập trình viên bắt buộc phải:
 1. Ghi rõ **Thời gian**, **Mục đích thay đổi** và **Danh sách file bị tác động**.

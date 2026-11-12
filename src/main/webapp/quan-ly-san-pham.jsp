@@ -259,7 +259,7 @@
                     </div>
                     <div class="full">
                         <label for="fDesc">Mô tả sản phẩm</label>
-                        <textarea name="moTa" id="fDesc" class="form-control" placeholder="Mô tả chi tiết kiểu dáng, thông số giặt ủi, chất liệu cao cấp..."></textarea>
+                        <textarea name="moTa" id="fDesc" class="form-control" placeholder="Mô tả chi tiết kiểu dáng, thông số giặt ủi, chất liệu vải..."></textarea>
                     </div>
 
                     <%-- Biến thể ban đầu khi tạo mới --%>

@@ -21,7 +21,7 @@
                 </div>
             </div>
             <div class="footer-copyright">
-                &copy; 2026 DUNA Men's Wear &mdash; Hệ Thống Quản Lý Bán Lẻ Thời Trang Nam Cao Cấp
+                &copy; 2026 DUNA Men's Wear &mdash; Hệ Thống Quản Lý Bán Lẻ Thời Trang Nam Tầm Trung
             </div>
         </div>
     </footer>
