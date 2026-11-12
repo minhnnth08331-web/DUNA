@@ -14,10 +14,15 @@ public class EmployeeDetailServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if ("1".equals(request.getParameter("ajaxVerifyAdmin"))) {
             response.setContentType("application/json;charset=UTF-8");
+            HttpSession currentSession = request.getSession(false);
+            if (currentSession == null || !"MANAGER".equals(currentSession.getAttribute("role"))) {
+                response.getWriter().write("{\"success\":false,\"message\":\"Truy cập bị từ chối! Yêu cầu quyền Quản lý.\"}");
+                return;
+            }
             String adminPass = request.getParameter("adminPass");
             String targetId  = request.getParameter("targetId");
-            if (adminPass == null || adminPass.trim().isEmpty()) {
-                response.getWriter().write("{\"success\":false,\"message\":\"Vui lòng nhập mật khẩu Admin!\"}");
+            if (adminPass == null || adminPass.trim().isEmpty() || targetId == null || targetId.trim().isEmpty()) {
+                response.getWriter().write("{\"success\":false,\"message\":\"Vui lòng nhập đầy đủ thông tin xác thực!\"}");
                 return;
             }
             try (Connection conn = new connectService().myConnection()) {

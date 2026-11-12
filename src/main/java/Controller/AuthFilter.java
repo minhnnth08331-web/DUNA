@@ -29,7 +29,21 @@ public class AuthFilter implements Filter {
             if (loggedIn && "EMPLOYEE".equals(session.getAttribute("role"))) {
                 boolean isReport = requestURI.contains("OrderServlet") && "report".equals(request.getParameter("view"));
                 boolean isProductAdmin = (requestURI.contains("ProductServlet") && !"1".equals(request.getParameter("ajaxDetailAll"))) || requestURI.contains("quan-ly-san-pham");
-                if (isProductAdmin || requestURI.contains("EmployeeManagementServlet") || requestURI.contains("VoucherServlet") || requestURI.contains("quan-ly-voucher") || isReport || requestURI.contains("add-employee.jsp") || requestURI.contains("employee-management.jsp") || requestURI.contains("CustomerServlet") || requestURI.contains("quan-ly-khach-hang")) {
+                boolean isAdminOnly = isProductAdmin 
+                        || requestURI.contains("EmployeeManagementServlet") 
+                        || requestURI.contains("ToggleEmployeeStatusServlet")
+                        || requestURI.contains("AddEmployeeServlet")
+                        || requestURI.contains("UpdateEmployeeServlet")
+                        || requestURI.contains("ChangeCredentialsServlet")
+                        || requestURI.contains("VoucherServlet") 
+                        || requestURI.contains("quan-ly-voucher") 
+                        || isReport 
+                        || requestURI.contains("add-employee.jsp") 
+                        || requestURI.contains("employee-management.jsp") 
+                        || requestURI.contains("admin-dashboard.html")
+                        || requestURI.contains("CustomerServlet") 
+                        || requestURI.contains("quan-ly-khach-hang");
+                if (isAdminOnly) {
                     response.sendRedirect(request.getContextPath() + "/OrderServlet?view=sell");
                     return;
                 }

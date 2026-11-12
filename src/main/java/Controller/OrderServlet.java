@@ -57,6 +57,17 @@ public class OrderServlet extends HttpServlet {
         if ("1".equals(ajaxDetail)) {
             String idParam = request.getParameter("id");
             response.setContentType("application/json;charset=UTF-8");
+            if (idParam == null || idParam.trim().isEmpty()) {
+                response.getWriter().write("{\"success\":false,\"message\":\"Thiếu ID đơn hàng!\"}");
+                return;
+            }
+            int idDonHang;
+            try {
+                idDonHang = Integer.parseInt(idParam.trim());
+            } catch (NumberFormatException nfe) {
+                response.getWriter().write("{\"success\":false,\"message\":\"ID đơn hàng không hợp lệ!\"}");
+                return;
+            }
             StringBuilder json = new StringBuilder("{");
             try (Connection conn = new connectService().myConnection()) {
                 PreparedStatement ps = conn.prepareStatement(
@@ -64,7 +75,7 @@ public class OrderServlet extends HttpServlet {
                     "dh.TongTien, dh.PhuongThucThanhToan, ttdh.TenTrangThai AS TrangThai, dh.GhiChu, dh.TenNhanVien, FORMAT(dh.NgayTao, 'dd/MM/yyyy HH:mm:ss') as NgayTao " +
                     "FROM DonHang dh JOIN TrangThaiDonHang ttdh ON dh.TrangThaiDH_ID = ttdh.TrangThaiDH_ID LEFT JOIN KhachHang kh ON dh.ID_KhachHang = kh.ID_KhachHang " +
                     "WHERE dh.ID_DonHang=?");
-                ps.setInt(1, Integer.parseInt(idParam));
+                ps.setInt(1, idDonHang);
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
                     json.append("\"maDH\":\"").append(escape(rs.getString("MaDonHang"))).append("\"");
@@ -93,7 +104,7 @@ public class OrderServlet extends HttpServlet {
                     // Chi tiết sản phẩm
                     json.append(",\"chiTiet\":[");
                     PreparedStatement ps2 = conn.prepareStatement("SELECT ID_ChiTiet, ID_SanPham, ID_BienThe, TenSP, SoLuong, DonGia, ThanhTien FROM ChiTietDonHang WHERE ID_DonHang=?");
-                    ps2.setInt(1, Integer.parseInt(idParam));
+                    ps2.setInt(1, idDonHang);
                     ResultSet rs2 = ps2.executeQuery();
                     boolean first = true;
                     while (rs2.next()) {
@@ -1889,7 +1900,7 @@ public class OrderServlet extends HttpServlet {
         try {
             try {
                 conn.createStatement().execute("IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vouchers') AND name = 'TenChungTrinh') EXEC sp_rename 'Vouchers.TenChungTrinh', 'TenChuongTrinh', 'COLUMN'");
-                conn.createStatement().execute("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vouchers') AND name = 'TenChuongTrinh') ALTER TABLE Vouchers ADD TenChuongTrinh NVARCHAR(100) DEFAULT N'Voucher trợ giá vợt & phụ kiện'");
+                conn.createStatement().execute("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vouchers') AND name = 'TenChuongTrinh') ALTER TABLE Vouchers ADD TenChuongTrinh NVARCHAR(100) DEFAULT N'Voucher tri ân khách hàng DUNA Men'");
                 conn.createStatement().execute("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vouchers') AND name = 'DonHangSuDung') ALTER TABLE Vouchers ADD DonHangSuDung NVARCHAR(100) NULL");
                 conn.createStatement().execute("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vouchers') AND name = 'TrangThai') ALTER TABLE Vouchers ADD TrangThai INT NOT NULL DEFAULT 1");
                 conn.createStatement().execute("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vouchers') AND name = 'DonToiThieu') ALTER TABLE Vouchers ADD DonToiThieu BIGINT NOT NULL DEFAULT 0");
@@ -2220,7 +2231,7 @@ public class OrderServlet extends HttpServlet {
             }
 
             // =========================================================================
-            // SHEET 3: TỒN KHO THEO PHÂN LOẠI VỢT
+            // SHEET 3: TỒN KHO THEO DANH MỤC THỜI TRANG DUNA
             // =========================================================================
             Sheet sheet3 = workbook.createSheet("Tồn Kho Danh Mục Thời Trang");
             sheet3.setDisplayGridlines(true);
@@ -2314,7 +2325,7 @@ public class OrderServlet extends HttpServlet {
                     int stt = item.get("stt") != null ? ((Number) item.get("stt")).intValue() : 0;
                     String maSP = item.get("maSP") != null ? item.get("maSP").toString() : "";
                     String tenSP = item.get("tenSP") != null ? item.get("tenSP").toString() : "";
-                    String phanLoai = item.get("phanLoai") != null ? item.get("phanLoai").toString() : "Vợt cầu lông thường";
+                    String phanLoai = item.get("phanLoai") != null ? item.get("phanLoai").toString() : "Thời trang nam DUNA";
                     String thoiGian = item.get("thoiGian") != null ? item.get("thoiGian").toString() : "";
                     int soLuong = item.get("soLuong") != null ? ((Number) item.get("soLuong")).intValue() : 0;
                     long thanhTien = item.get("thanhTien") != null ? ((Number) item.get("thanhTien")).longValue() : 0L;

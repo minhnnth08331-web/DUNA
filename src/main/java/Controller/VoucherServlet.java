@@ -60,7 +60,7 @@ public class VoucherServlet extends HttpServlet {
             if (trangThaiFilter == null) trangThaiFilter = "";
 
             // Xây dựng truy vấn danh sách
-            StringBuilder sql = new StringBuilder("SELECT ID_Voucher, MaVoucher, ISNULL(TenChuongTrinh, N'Voucher trợ giá vợt & phụ kiện') AS TenChuongTrinh, GiamGia, ISNULL(DonToiThieu, GiamGia * 5) AS DonToiThieu, SoLuong, DaSuDung, ISNULL(DonHangSuDung, '') AS DonHangSuDung, ISNULL(TrangThai, 1) AS TrangThai, NgayTao FROM Vouchers WHERE 1=1 ");
+            StringBuilder sql = new StringBuilder("SELECT ID_Voucher, MaVoucher, ISNULL(TenChuongTrinh, N'Voucher tri ân khách hàng DUNA Men') AS TenChuongTrinh, GiamGia, ISNULL(DonToiThieu, GiamGia * 5) AS DonToiThieu, SoLuong, DaSuDung, ISNULL(DonHangSuDung, '') AS DonHangSuDung, ISNULL(TrangThai, 1) AS TrangThai, NgayTao FROM Vouchers WHERE 1=1 ");
             List<Object> params = new ArrayList<>();
 
             if (!search.trim().isEmpty()) {

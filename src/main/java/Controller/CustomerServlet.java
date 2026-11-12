@@ -224,6 +224,19 @@ public class CustomerServlet extends HttpServlet {
         try (Connection conn = db.myConnection()) {
             if (conn != null) {
                 if ("add".equals(action)) {
+                    if (sdtParam == null || !sdtParam.matches("^0[0-9]{8,10}$")) {
+                        response.sendRedirect(request.getContextPath() + "/CustomerServlet?error=" + java.net.URLEncoder.encode("Số điện thoại không hợp lệ! Vui lòng nhập từ 9-11 chữ số bắt đầu bằng 0.", "UTF-8"));
+                        return;
+                    }
+                    try (PreparedStatement psCheck = conn.prepareStatement("SELECT ID_KhachHang FROM KhachHang WHERE SoDienThoai = ?")) {
+                        psCheck.setString(1, sdtParam);
+                        try (ResultSet rsCheck = psCheck.executeQuery()) {
+                            if (rsCheck.next()) {
+                                response.sendRedirect(request.getContextPath() + "/CustomerServlet?error=" + java.net.URLEncoder.encode("Số điện thoại này đã được đăng ký cho khách hàng khác!", "UTF-8"));
+                                return;
+                            }
+                        }
+                    }
                     String sql = "INSERT INTO KhachHang (HoTen, SoDienThoai, Email, GioiTinh, NgaySinh, HangKhachHang, DiaChi, TrangThai, NgayTao, NgayCapNhat, NgayBatDauChuKy) VALUES (?, ?, ?, ?, ?, N'Thường', ?, 'active', GETDATE(), GETDATE(), GETDATE())";
                     try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                         ps.setString(1, request.getParameter("hoTen"));

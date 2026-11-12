@@ -44,25 +44,17 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("username", user);
 
                 String rememberMe = request.getParameter("rememberMe");
-                if ("true".equals(rememberMe)) {
-                    Cookie cUser = new Cookie("yn_user", user);
-                    Cookie cPass = new Cookie("yn_pass", pass);
-                    cUser.setMaxAge(30 * 24 * 60 * 60); // 30 ngày
-                    cPass.setMaxAge(30 * 24 * 60 * 60);
-                    cUser.setPath("/");
-                    cPass.setPath("/");
-                    response.addCookie(cUser);
-                    response.addCookie(cPass);
-                } else {
-                    Cookie cUser = new Cookie("yn_user", "");
-                    Cookie cPass = new Cookie("yn_pass", "");
-                    cUser.setMaxAge(0);
-                    cPass.setMaxAge(0);
-                    cUser.setPath("/");
-                    cPass.setPath("/");
-                    response.addCookie(cUser);
-                    response.addCookie(cPass);
-                }
+                Cookie cUser = new Cookie("yn_user", "true".equals(rememberMe) ? user : "");
+                cUser.setMaxAge("true".equals(rememberMe) ? 30 * 24 * 60 * 60 : 0);
+                cUser.setPath("/");
+                cUser.setHttpOnly(true);
+                response.addCookie(cUser);
+
+                // Bảo mật: Xóa triệt để cookie lưu mật khẩu thô yn_pass nếu tồn tại trước đây
+                Cookie cPassClear = new Cookie("yn_pass", "");
+                cPassClear.setMaxAge(0);
+                cPassClear.setPath("/");
+                response.addCookie(cPassClear);
 
                 if ("MANAGER".equals(rs.getString("Quyen"))) {
                     response.sendRedirect("EmployeeManagementServlet");
