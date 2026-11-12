@@ -1,0 +1,64 @@
+1	Quản lý Danh mục thời trang nam (Áo sơ mi, Polo, Quần âu, Blazer)	True	True	True	True	True	Trung bình	4-5 Bảng	False	False	False	Nguyễn Ngọc Minh	12.7
+2	Quản lý Thuộc tính Chất liệu vải may mặc (Cotton, Kaki, Denim)	True	True	True	True	True	Chuẩn	2-3 Bảng	False	False	False	Nguyễn Ngọc Minh	8.6
+3	Quản lý Thuộc tính Form dáng trang phục (Slimfit, Regular, Oversize)	True	True	True	True	True	Trung bình	2-3 Bảng	False	False	False	Nguyễn Ngọc Minh	10.3
+4	Kiểm tra ràng buộc toàn vẹn khóa ngoại khi thao tác Danh mục	True	True	False	True	True	Chuẩn	4-5 Bảng	True	False	False	Nguyễn Ngọc Minh	10.8
+5	Danh sách sản phẩm thời trang & Bộ lọc danh mục, trạng thái	True	True	True	True	False	Trung bình	4-5 Bảng	False	False	True	Nguyễn Ngọc Minh	13.8
+6	Tìm kiếm nâng cao sản phẩm theo Mã SP, Tên, Chất liệu, Form dáng	True	True	True	False	False	Chuẩn	4-5 Bảng	False	False	False	Nguyễn Ngọc Minh	6.7
+7	Thêm mới sản phẩm thời trang nam (Giao diện CSS Grid 2 cột)	True	True	True	True	False	Trung bình	4-5 Bảng	False	False	True	Nguyễn Ngọc Minh	13.8
+8	Cập nhật thông tin chi tiết, hình ảnh & Mô tả giặt ủi sản phẩm	True	True	False	True	False	Trung bình	4-5 Bảng	False	False	True	Nguyễn Ngọc Minh	9.7
+9	Quản lý Giá vốn nhập hàng (COGS) để tính toán biên lợi nhuận gộp	True	True	True	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Ngọc Minh	16.1
+10	Cấu hình Giá niêm yết bán lẻ & Thiết lập tỷ lệ thuế VAT 8%	True	True	True	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Ngọc Minh	16.1
+11	Quản lý trạng thái kinh doanh sản phẩm (Còn hàng / Ngừng bán)	True	True	False	True	True	Chuẩn	4-5 Bảng	True	False	False	Nguyễn Ngọc Minh	10.8
+12	Xem chi tiết danh sách Biến thể Màu sắc & Kích cỡ (modalVariants)	True	True	True	False	False	Trung bình	4-5 Bảng	False	False	True	Nguyễn Ngọc Minh	9.7
+13	Thêm mới biến thể Size/Màu kèm ràng buộc duy nhất (Unique DB)	True	True	True	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Ngọc Minh	16.1
+14	Cập nhật Giá bán riêng & Số lượng tồn kho theo từng biến thể	True	True	True	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Ngọc Minh	16.1
+15	Xóa biến thể sản phẩm & Tự động đồng bộ số lượng tồn kho cha	True	True	False	True	True	Trung bình	4-5 Bảng	True	False	False	Nguyễn Ngọc Minh	12.9
+16	Bảng tra cứu tư vấn Size thông minh theo Chiều cao - Cân nặng	True	True	True	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Ngọc Minh	16.1
+17	Đăng nhập hệ thống & Xác thực tài khoản đa vai trò (LoginServlet)	True	False	True	True	False	Chuẩn	2-3 Bảng	False	False	False	Nguyễn Đức Anh	6.2
+18	Ghi nhớ trạng thái phiên đăng nhập qua Cookie an toàn (Remember Me)	True	False	True	True	False	Chuẩn	2-3 Bảng	False	False	False	Nguyễn Đức Anh	6.2
+19	Bộ lọc kiểm soát quyền truy cập URL theo vai trò (AuthFilter RBAC)	True	True	False	True	False	Chuẩn	4-5 Bảng	True	False	False	Nguyễn Đức Anh	9.4
+20	Đổi mật khẩu tài khoản người dùng đang đăng nhập (ChangeCredentials)	True	False	False	True	False	Chuẩn	2-3 Bảng	False	False	False	Nguyễn Đức Anh	3.9
+21	Tự động sinh mã Barcode định danh biến thể (SPxxx-MAU-SIZE)	True	True	True	True	False	Chuẩn	4-5 Bảng	True	True	False	Nguyễn Đức Anh	20.2
+22	Xem trước thẻ bài & In tem mác Barcode DUNA (JsBarcode Engine)	True	True	True	False	False	Trung bình	2-3 Bảng	False	True	True	Nguyễn Đức Anh	11.8
+23	Giao diện bán hàng POS 1 chạm (Thiết kế 2 cột chuẩn UX DUNA)	True	True	True	True	True	Trung bình	> 5 Bảng	False	False	False	Nguyễn Đức Anh	15.8
+24	Tìm kiếm nhanh sản phẩm tại quầy bằng Auto-complete siêu tốc	True	True	False	False	False	Trung bình	4-5 Bảng	False	False	False	Nguyễn Đức Anh	4.6
+25	Tích hợp súng bắn mã vạch Barcode USB quét hàng siêu tốc tại quầy	True	True	True	True	False	Chuẩn	> 5 Bảng	False	True	False	Nguyễn Đức Anh	18.0
+26	Quét mã vạch sản phẩm trực tiếp qua Camera WebRTC tại quầy thu ngân	True	True	True	True	False	Trung bình	4-5 Bảng	False	True	False	Nguyễn Đức Anh	17.3
+27	Quản lý giỏ hàng POS (Thêm món, chỉnh số lượng, xóa món)	True	True	True	True	True	Trung bình	> 5 Bảng	False	False	False	Nguyễn Đức Anh	15.8
+28	Kiểm tra & Cảnh báo tồn kho thời gian thực khi đưa hàng vào giỏ	True	True	False	True	False	Chuẩn	> 5 Bảng	True	False	False	Nguyễn Đức Anh	11.8
+29	Quản lý nhiều đơn hàng chờ cùng lúc tại quầy (Pending Order Tabs)	True	True	True	True	True	Trung bình	> 5 Bảng	True	False	False	Nguyễn Đức Anh	22.2
+30	Tiếp nhận & Mở giao diện Đổi Size / Đổi Màu sản phẩm (modalExchange)	True	True	False	False	False	Trung bình	> 5 Bảng	True	False	False	Nguyễn Đức Anh	8.1
+31	Tự động tính bù trừ tiền chênh lệch khi khách đổi Size/Mẫu khác	True	True	False	True	False	Chuẩn	> 5 Bảng	True	False	False	Nguyễn Đức Anh	11.8
+32	Cập nhật kho hàng tự động khi đổi hàng (Cộng kho cũ, Trừ kho mới)	True	True	True	True	False	Chuẩn	> 5 Bảng	True	False	False	Nguyễn Đức Anh	16.8
+33	Tra cứu khách hàng thành viên bằng SĐT (+84) tại màn hình POS	True	True	True	False	False	Trung bình	4-5 Bảng	False	False	False	Lê Minh Bách	8.1
+34	Thêm nhanh khách hàng mới trực tiếp tại quầy thu ngân (modalAddKH)	True	True	True	True	False	Trung bình	4-5 Bảng	True	False	False	Lê Minh Bách	16.1
+35	Tự động áp dụng chiết khấu hạng VIP vào giỏ hàng POS	True	True	False	True	False	Chuẩn	> 5 Bảng	True	False	False	Lê Minh Bách	11.8
+36	Tra cứu, kiểm tra điều kiện & Áp dụng mã Voucher tại quầy	True	True	True	True	False	Trung bình	> 5 Bảng	True	False	False	Lê Minh Bách	20.2
+37	Tự động tính toán tổng hóa đơn (Tiền hàng, giảm VIP, Voucher, VAT)	True	True	False	True	False	Trung bình	> 5 Bảng	True	False	False	Lê Minh Bách	14.1
+38	Tính tiền thối tự động khi khách thanh toán bằng Tiền mặt	True	False	True	True	False	Chuẩn	> 5 Bảng	False	False	False	Lê Minh Bách	9.6
+39	Sinh mã VietQR thanh toán động hiển thị chính xác số tiền đơn	True	True	True	True	False	Trung bình	4-5 Bảng	False	True	True	Lê Minh Bách	20.7
+40	Xác nhận thanh toán Chuyển khoản QR tức thì trên Mobile (QR-Mobile)	True	True	False	True	False	Trung bình	> 5 Bảng	True	True	False	Lê Minh Bách	21.2
+41	In hóa đơn thanh toán nhiệt khổ K80/K57 tại quầy thu ngân	True	True	True	False	False	Trung bình	> 5 Bảng	False	False	True	Lê Minh Bách	12.1
+42	Danh sách toàn bộ hóa đơn bán hàng & Lọc theo khoảng ngày	True	True	True	False	False	Trung bình	> 5 Bảng	False	False	False	Lê Minh Bách	10.1
+43	Xem chi tiết hóa đơn (Từng món, Size/Màu, Giá bán, Chiết khấu, VAT)	True	True	False	False	False	Trung bình	> 5 Bảng	False	False	False	Lê Minh Bách	5.8
+44	In lại hóa đơn bán hàng cho khách khi có khiếu nại (Re-print)	True	True	False	False	False	Chuẩn	> 5 Bảng	False	False	True	Lê Minh Bách	5.8
+45	Xuất dữ liệu danh sách hóa đơn bán hàng ra file Excel (POI)	True	True	False	False	False	Trung bình	> 5 Bảng	False	False	True	Lê Minh Bách	6.9
+46	Thống kê Doanh thu thuần, Tổng giá vốn & Lợi nhuận gộp Hôm nay	True	True	False	False	False	Chuẩn	> 5 Bảng	True	False	False	Lê Minh Bách	6.7
+47	Thống kê Doanh thu, Tổng giá vốn & Lợi nhuận gộp theo Tháng/Năm	True	True	True	False	False	Chuẩn	> 5 Bảng	True	False	False	Lê Minh Bách	11.8
+48	Biểu đồ trực quan so sánh Doanh thu & Lợi nhuận qua Chart.js	True	True	True	False	False	Trung bình	> 5 Bảng	False	True	True	Lê Minh Bách	18.1
+49	Xem danh sách khách hàng & Phân hạng thành viên (Đồng -> KC)	True	True	True	False	False	Trung bình	4-5 Bảng	False	False	False	Nguyễn Kiều An	8.1
+50	Tìm kiếm khách hàng theo Tên, Số điện thoại và Lọc theo Hạng VIP	True	True	False	False	False	Trung bình	4-5 Bảng	False	False	False	Nguyễn Kiều An	4.6
+51	Thêm mới hồ sơ khách hàng chuẩn hóa đầu số (+84)	True	True	True	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Kiều An	16.1
+52	Cập nhật thông tin khách hàng, ngày sinh và địa chỉ liên lạc	True	True	False	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Kiều An	11.3
+53	Xem lịch sử mua sắm chi tiết & Tổng chi tiêu tích lũy của khách	True	True	True	False	False	Trung bình	> 5 Bảng	False	False	False	Nguyễn Kiều An	10.1
+54	Tự động tích lũy chi tiêu và thăng hạng thành viên VIP	True	True	False	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Kiều An	11.3
+55	Chính sách chu kỳ Reset hạng khách hàng sau 2 năm (Countdown)	True	True	False	True	False	Chuẩn	> 5 Bảng	True	False	False	Nguyễn Kiều An	11.8
+56	Bảng tổng quan 4 chỉ số thống kê Voucher (Phát hành, Còn lại, Đã dùng)	True	True	True	False	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Kiều An	11.3
+57	Tạo Voucher VIP lẻ với mã ngẫu nhiên tự sinh (Giảm % hoặc Tiền mặt)	True	True	True	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Kiều An	16.1
+58	Cấu hình điều kiện kích hoạt Voucher (Đơn tối thiểu, Hạn dùng, Lượt dùng)	True	True	False	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Kiều An	11.3
+59	Tạo lô Voucher tự động hàng loạt (Batch Generation) cho sự kiện	True	True	True	False	False	Trung bình	> 5 Bảng	True	False	True	Nguyễn Kiều An	16.9
+60	Danh sách nhân viên bán hàng & Quản lý kèm trạng thái hoạt động	True	True	True	False	False	Trung bình	> 5 Bảng	False	False	False	Nguyễn Kiều An	10.1
+61	Xem chi tiết hồ sơ nhân sự đầy đủ (CCCD 12 số, Quê quán, Địa chỉ)	True	True	True	False	False	Trung bình	> 5 Bảng	False	False	False	Nguyễn Kiều An	10.1
+62	Thêm mới nhân viên, kiểm tra trùng CCCD & Tự sinh tài khoản (QLxxx/NVxxx)	True	True	True	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Kiều An	16.1
+63	Khóa tài khoản nhân viên tức thời & Bắt buộc nhập Lý do khóa	True	True	False	True	False	Trung bình	4-5 Bảng	True	False	False	Nguyễn Kiều An	11.3
+64	Xuất toàn bộ báo cáo tài chính & Biểu đồ ra file Excel (POI)	True	True	True	True	False	Trung bình	> 5 Bảng	True	False	True	Nguyễn Kiều An	24.2
