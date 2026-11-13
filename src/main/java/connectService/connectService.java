@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class connectService {
     // Cấu hình kết nối cơ sở dữ liệu Microsoft SQL Server (QuanLyBanHang)
-    private final String URL = "jdbc:sqlserver://localhost:1433;databaseName=QuanLyBanHangDUNA;encrypt=true;trustServerCertificate=true;sendStringParametersAsUnicode=true";
+    private final String URL = "jdbc:sqlserver://localhost:1433;databaseName=DUNA;encrypt=true;trustServerCertificate=true;sendStringParametersAsUnicode=true";
     private final String USER = "sa";
     private final String PASSWORD = "123";
 

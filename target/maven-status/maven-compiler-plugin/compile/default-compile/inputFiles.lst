@@ -13,3 +13,10 @@ D:\fpt\DUNA\src\main\java\Controller\QRConfirmServlet.java
 D:\fpt\DUNA\src\main\java\Controller\ToggleEmployeeStatusServlet.java
 D:\fpt\DUNA\src\main\java\Controller\UpdateEmployeeServlet.java
 D:\fpt\DUNA\src\main\java\Controller\VoucherServlet.java
+D:\fpt\DUNA\src\main\java\model\BienTheSanPham.java
+D:\fpt\DUNA\src\main\java\model\ChiTietDonHang.java
+D:\fpt\DUNA\src\main\java\model\DanhMuc.java
+D:\fpt\DUNA\src\main\java\model\DonHang.java
+D:\fpt\DUNA\src\main\java\model\KhachHang.java
+D:\fpt\DUNA\src\main\java\model\NhanVien.java
+D:\fpt\DUNA\src\main\java\model\SanPham.java

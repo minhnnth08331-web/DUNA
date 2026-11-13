@@ -174,6 +174,130 @@
 
 ---
 
+### 10. Kiểm Toán & Chuẩn Hóa File Excel Ma Trận Effort (64 Use Cases) & Phân Công Nhóm 6
+- **Mục đích:**
+  - Thẩm định, giải thích chi tiết 10 tham số kỹ thuật ước lượng Effort trong file Excel của nhóm (`Nhom6_64_usecase.xlsx`).
+  - Đối chiếu sơ đồ 5 phân hệ kiến trúc trên bảng với danh sách 4 thành viên nhóm (Nguyễn Ngọc Minh, Nguyễn Đức Anh, Lê Minh Bách, Nguyễn Kiều An).
+  - Khắc phục các lỗi sai kỹ thuật (đánh dấu nhầm 3rd Party API, Job ngầm, sai cờ CRUD, sai tên hạng hội viên DUNA).
+  - Dọn dẹp toàn bộ dữ liệu rác (dòng trống 69-334 và Sheet3) và xuất file Excel chuẩn hóa kèm Báo cáo thẩm định.
+- **Chi tiết các hạng mục đã hoàn thành:**
+  - **1. Giải thích tường tận 10 tham số:**
+    - Phân tích cơ sở khoa học của trọng số CRUD cơ bản: `Read` (1.0h), `Search` (1.0h), `Create` (1.5h), `Update` (1.5h), `Delete` (0.5h).
+    - Phân tích các hệ số nhân: `Độ phức tạp UI` (1.0 - 1.2 - 1.5), `Số Bảng DB` (1.0 - 1.3 - 1.6 - 2.0), `Job ngầm` (1.4), `3rd Party API` (1.5), `Media/Export` (1.2) và Hệ số dự phòng rủi ro `Buffer` (1.2).
+  - **2. Khắc phục 5 lỗi sai kỹ thuật & nghiệp vụ:**
+    - *3rd Party API:* Đính chính việc đánh dấu sai tại 5 usecase (UC 21, 22, 25, 26, 48); khẳng định chỉ duy nhất UC 39 (Sinh mã VietQR chuyển khoản Napas) là gọi API ngoài.
+    - *Job ngầm:* Đính chính UC 4 (khóa ngoại) và UC 19 (AuthFilter) là tác vụ đồng bộ; khẳng định Job ngầm thực sự là UC 55 (TimerTask quét reset hạng hội viên 3 tháng cuốn chiếu vào lúc 00:00 hàng ngày).
+    - *CRUD:* Sửa lại cờ Create sai tại UC 6, UC 12, UC 16; sửa lỗi UC 38 (tính tiền thối là phép trừ client, không ghi CSDL > 5 bảng).
+    - *Nghiệp vụ DUNA:* Sửa tên hạng hội viên tại UC 49 thành **Thường (0%) -> Bạc (2%) -> Vàng (4%) -> VIP (7%)**; sửa chu kỳ tại UC 55 thành **3 tháng cuốn chiếu (Rolling 3 months)**.
+    - *Dữ liệu rác:* Xóa sạch 266 dòng trống thừa từ dòng 69 đến 334 ở Sheet `Phân Công`; xóa hoàn toàn Sheet3 chứa 390 dòng usecase rác copy từ sàn TMĐT.
+  - **3. Xác nhận tính hợp lý phân công 4 thành viên (Cân đối 800h = 100 MD = 5 MM):**
+    - Nguyễn Ngọc Minh: 16 UC, 200.3h (25.0%) - Phụ trách Phân hệ Sản phẩm & Biến thể.
+    - Nguyễn Đức Anh: 16 UC, 199.9h (25.0%) - Phụ trách Bảo mật & POS Giai đoạn 1 (Barcode, Giỏ hàng, Đổi hàng).
+    - Lê Minh Bách: 16 UC, 199.1h (24.9%) - Phụ trách POS Giai đoạn 2 (VietQR, In bill K80) & Báo cáo Chart.js.
+    - Nguyễn Kiều An: 16 UC, 200.7h (25.1%) - Phụ trách CRM Khách hàng (Loyalty 3 tháng), Voucher & Nhân sự.
+  - **4. Tệp tin bàn giao:**
+    - File Excel chuẩn hóa: `c:\Users\Administrator\Downloads\Nhom6_64_usecase_CHUAN_HOA_DUNA.xlsx` và `d:\fpt\DUNA\Nhom6_64_usecase_CHUAN_HOA_DUNA.xlsx`.
+    - Báo cáo thẩm định chi tiết: [bao_cao_kiem_toan_effort_duna.md](file:///C:/Users/Administrator/.gemini/antigravity/brain/88cdaf8f-cd93-42f2-b856-4e589eb83c92/bao_cao_kiem_toan_effort_duna.md).
+
+---
+
+### 11. Nâng Cấp CSDL DATN.sql: Mở Rộng Quy Mô 100 Sản Phẩm & 100 Khách Hàng Chuẩn Thời Trang Nam DUNA
+- **Mục đích:**
+  - Nâng cấp file kịch bản SQL `c:\Users\Administrator\Downloads\DATN.sql` và `d:\fpt\DUNA\DATN.sql` theo đúng yêu cầu: mở rộng quy mô lên **100 sản phẩm** và **100 khách hàng**.
+  - Bám sát định vị phân khúc thời trang nam tầm trung của DUNA (Áo Polo, Sơ mi, Quần âu, Khaki, Jeans, Blazer, Jacket, Phụ kiện, Giày da).
+  - Tự động sinh đầy đủ các bảng dữ liệu phụ thuộc: Biến thể màu x size, mã vạch Barcode, ảnh media, kho hàng tồn kho, sổ địa chỉ giao hàng và phân hạng hội viên.
+- **Chi tiết các hạng mục đã hoàn thành:**
+  - **1. Mở rộng 100 Khách hàng DUNA Club (`KH-00001` đến `KH-00100`):**
+    - Đầy đủ họ tên thật phong phú của Việt Nam, số điện thoại di động hợp lệ (đầu số 09x, 08x, 07x, 03x không trùng lặp) và email cá nhân riêng biệt.
+    - 100 bản ghi phân quyền trong `user_roles` (role_id = 3 / CUSTOMER).
+    - 100 bản ghi sổ địa chỉ trong `shipping_addresses` trải dài khắp các tỉnh thành (Hà Nội, TP.HCM, Đà Nẵng, Hải Phòng, Cần Thơ, Bắc Ninh, Quảng Ninh, Bình Dương, Đồng Nai, Huế, Nghệ An, Thanh Hóa...).
+    - 100 bản ghi hội viên trong `user_memberships` gắn liền với chính sách 4 cấp bậc (Thường, Bạc, Vàng, VIP) và chu kỳ 3 tháng cuốn chiếu.
+  - **2. Mở rộng 100 Sản phẩm Thời Trang Nam Tầm Trung (`SP001` đến `SP100`):**
+    - Phân bổ cân đối vào 11 danh mục hàng hóa:
+      + 15 Áo Sơ Mi Nam (Oxford, Poplin, Sợi tre Bamboo, Cổ trụ Grandad, Denim, Flannel, Kẻ sọc...)
+      + 15 Áo Polo Nam (Pima Cotton, Cổ dệt, Len dệt kim, Mercerized, Zip modern, Waffle tổ ong, Thể thao QuickDry...)
+      + 10 Áo Thun & T-Shirt (Supima Cotton, Modal gỗ sồi, Oversize street style, Graphic minimal, Cổ tim, Henley...)
+      + 10 Quần Âu Nam (Slimfit cạp tăng giảm, Xếp ly Pleated kiểu Ý, Cạp cao Gurkha, Kẻ Glen Plaid, Lưng thun ẩn...)
+      + 10 Quần Khaki & Chinos (Cotton Twill, Cạp co giãn 360 độ, Vàng cát Sand, Xanh rêu Olive, Wash mềm...)
+      + 10 Quần Jean Nam (Indigo Wash, Đen tuyết, Xanh nhạt Light Blue, Ống suông Straight, Co giãn 4 chiều...)
+      + 10 Quần Short Nam (Short Khaki dạo phố, Short Đũi Linen đi biển, Short Tây âu, Short Nỉ thể thao, Cargo túi hộp...)
+      + 08 Áo Blazer & Suit Nam (Blazer kiểu Ý Wool Blend, Kẻ caro Glen Plaid, Linen không đệm vai, Navy lịch lãm, Tuxedo...)
+      + 08 Áo Khoác & Jacket (Gió trượt nước 2 lớp, Bomber lót lụa, Măng tô dạ ép, Trucker 4 túi, Da PU sinh học, Phao siêu nhẹ...)
+      + 02 Phụ Kiện Nam (Thắt lưng da bò thật khóa tự động Milano, Ví da bifold compact)
+      + 02 Giày Da & Loafers (Giày lười Penny Loafer khâu Blake, Sneaker da trắng Minimalist)
+    - Định vị giá bán chuẩn phân khúc tầm trung: Giá vốn từ 75.000đ - 680.000đ; Giá bán lẻ từ 180.000đ - 1.450.000đ.
+    - Ràng buộc form dáng tuân thủ đúng CHECK constraint (`Slim Fit`, `Regular Fit`, `Oversize`, `Tailored Fit`).
+  - **3. Tự động sinh 340 Biến thể sản phẩm (`product_variants` & `inventories`):**
+    - 340 biến thể Màu sắc (14 màu) $\times$ Kích cỡ (23 size) theo chuẩn ngành hàng (áo S/M/L/XL; quần 29/30/31/32; giày 40/41/42/43; phụ kiện FREESIZE).
+    - Mã vạch Barcode chuẩn format `SPxxx-MAU-SIZE`.
+    - 340 bản ghi tồn kho `inventories` từ 15 đến 50 sản phẩm/biến thể.
+    - 340 bản ghi nhật ký nhập kho khởi tạo `inventory_logs`.
+    - 100 bản ghi ảnh đại diện sản phẩm `product_media`.
+  - **4. Kiểm định thực thi trực tiếp trên SQL Server:**
+    - Nạp toàn bộ script `DATN.sql` mới vào Microsoft SQL Server thành công 100% với 0 lỗi cú pháp hay ràng buộc:
+      + `users`: 108 bản ghi (8 nhân viên + 100 khách hàng).
+      + `products`: 100 bản ghi.
+      + `product_variants`: 340 bản ghi.
+      + `inventories`: 340 bản ghi.
+      + `orders`: 25 hóa đơn mẫu, 44 chi tiết hóa đơn `order_items` và 25 giao dịch thanh toán `payments`.
+    - Kiểm thử hệ thống web trực tiếp: Tất cả các Servlet (`/ProductServlet`, `/CustomerServlet`, `/OrderServlet`, `/OrderServlet?view=sell`) đều hoạt động ổn định và trả về HTTP 200 OK.
+
+---
+
+### 12. Xuất Sơ Đồ Tổng Quan Hệ Thống Ra File Draw.io XML Chuẩn Hóa
+- **Mục đích:**
+  - Chuyển thể trực quan mô hình kiến trúc phân rã hệ thống trên bảng vẽ của nhóm (`«System» Hệ thống Bán hàng` với 5 phân hệ kết nối CSDL trung tâm) thành file sơ đồ `draw.io` chuyên nghiệp.
+  - Cung cấp mã XML chuẩn để người dùng copy-paste trực tiếp vào trang web `app.diagrams.net` hoặc mở file offline.
+- **Chi tiết các hạng mục đã hoàn thành:**
+  - **1. Xây dựng cấu trúc hình học & Tọa độ Draw.io XML:**
+    - Khung bao hệ thống `«System» Hệ thống Quản Lý Bán Hàng Thời Trang Nam DUNA (DUNA POS)` viền nét đứt.
+    - 5 Phân hệ (`«Subsystem»`) dạng Swimlane/Container có tiêu đề và màu sắc nhận diện riêng:
+      + `Subsystem 1 (Top Left)`: Hệ thống QL Khách Hàng (Member 1 / Kiều An) - 3 Oval Use cases.
+      + `Subsystem 2 (Bottom Left)`: Hệ thống QL Phiếu Giảm Giá (Member 2 / Kiều An) - 3 Oval Use cases.
+      + `Subsystem 3 (Center Top)`: Hệ thống QL Nhân Viên & Phân Quyền (Member 3 / Đức Anh & Kiều An) - 3 Oval Use cases.
+      + `Subsystem 4 (Top Right)`: Hệ thống QL Sản Phẩm & Biến Thể (Member 4 / Ngọc Minh) - 3 Oval Use cases.
+      + `Subsystem 5 (Bottom Right)`: Hệ thống POS Bán Hàng Tại Quầy (Member 5 / Đức Anh & Minh Bách) - 3 Oval Use cases.
+    - Cơ sở dữ liệu trung tâm hình trụ `CƠ SỞ DỮ LIỆU DUNA (MS SQL Server)` với 19 bảng và giao dịch ACID.
+    - 5 đường mũi tên hai chiều `<-->` kết nối trực tiếp từ 5 Subsystem vào CSDL trung tâm đúng như trên bảng vẽ.
+  - **2. Tệp tin bàn giao:**
+    - File draw.io dự án: [tong_quan_he_thong_duna.drawio](file:///d:/fpt/DUNA/tong_quan_he_thong_duna.drawio).
+    - File draw.io Downloads: [tong_quan_he_thong_duna.drawio](file:///c:/Users/Administrator/Downloads/tong_quan_he_thong_duna.drawio).
+    - Báo cáo và tài liệu hướng dẫn: [tong_quan_he_thong_duna.md](file:///C:/Users/Administrator/.gemini/antigravity/brain/88cdaf8f-cd93-42f2-b856-4e589eb83c92/tong_quan_he_thong_duna.md).
+
+---
+
+### 13. Xây Dựng Hệ Thống Thực Thể (Entity Models), Bộ Mapper & Lớp DAO Chuẩn MVC
+- **Bối cảnh & Mục đích:**
+  - Chuẩn hóa toàn bộ tầng dữ liệu của dự án DUNA từ mô hình JDBC thủ công + `Map<String, Object>` sang mô hình **MVC hướng đối tượng (OOP)** với đầy đủ các lớp Thực thể (Entity POJO), Bộ ánh xạ (Data Mapper) và Lớp truy vấn (DAO).
+  - Đảm bảo tính tương thích ngược 100% với giao diện JSP và JSTL EL hiện tại (hỗ trợ chuyển đổi 2 chiều linh hoạt: `ResultSet` $\leftrightarrow$ `Entity` $\leftrightarrow$ `Map<String, Object>`).
+- **Các thành phần đã triển khai:**
+  - **1. Package Thực Thể (`model`):**
+    - `SanPham.java`: Thực thể Sản phẩm thời trang nam DUNA (đầy đủ thuộc tính, mã SP, phân loại danh mục, giá nhập, giá bán, tồn kho, chất liệu, form dáng, ngày tạo).
+    - `BienTheSanPham.java`: Thực thể Biến thể thời trang (màu sắc, kích cỡ size S/M/L/XL/XXL, tồn kho theo biến thể, mã barcode).
+    - `DanhMuc.java`: Thực thể Danh mục hàng hóa.
+    - `KhachHang.java`: Thực thể Khách hàng & Hạng hội viên DUNA Club (Thường, Bạc, Vàng, VIP, chu kỳ 3 tháng cuốn chiếu, chiết khấu tích lũy).
+    - `DonHang.java`: Thực thể Đơn hàng / Hóa đơn bán hàng POS tại quầy.
+    - `ChiTietDonHang.java`: Thực thể Chi tiết đơn hàng.
+    - `NhanVien.java`: Thực thể Nhân sự & Tài khoản hệ thống (phân quyền Admin/Manager vs Employee).
+    - `Voucher.java`: Thực thể Khuyến mãi / Mã giảm giá.
+  - **2. Package Ánh Xạ Dữ Liệu (`mapper`):**
+    - `RowMapper.java`: Generic interface quy định 2 phương thức cốt lõi: `mapRow(ResultSet rs)` và `toMap(T entity)`.
+    - Các Mapper chuyên biệt: `SanPhamMapper.java`, `BienTheSanPhamMapper.java`, `DanhMucMapper.java`, `KhachHangMapper.java`, `DonHangMapper.java`, `ChiTietDonHangMapper.java`, `NhanVienMapper.java`, `VoucherMapper.java`. Tự động kiểm tra cột an toàn (`hasColumn`) chống lỗi truy vấn thiếu trường.
+  - **3. Package Truy Vấn Dữ Liệu (`dao`):**
+    - `SanPhamDAO.java`: Tìm kiếm, lọc theo danh mục, trạng thái; lấy chi tiết sản phẩm và danh sách biến thể; cung cấp cả hàm trả về `List<SanPham>` và `List<Map<String, Object>>`.
+    - `KhachHangDAO.java`: Truy vấn danh sách khách hàng, tổng chi tiêu, tổng sản phẩm mua và tìm kiếm theo số điện thoại.
+    - `DonHangDAO.java`: Lấy danh sách hóa đơn POS và chi tiết đơn hàng.
+    - `NhanVienDAO.java`: Tìm kiếm nhân sự, xác thực theo tài khoản và phân quyền.
+    - `VoucherDAO.java`: Tìm kiếm voucher, tra cứu mã và bật/tắt trạng thái khuyến mãi.
+  - **4. Refactor Controller Minh Họa (`ProductServlet.java`):**
+    - Rút gọn 73 dòng code SQL + ResultSet lặp phức tạp thành lệnh gọi gọn gàng qua `SanPhamDAO.search(...)` và `SanPhamDAO.searchAsMap(...)`.
+  - **5. Kiểm Thử Độc Lập & Biên Dịch Khóa Chuẩn Java 8 Bytecode (52.0):**
+    - Tạo bộ kiểm thử đơn vị `EntityMapperTest.java`: Kiểm tra 5 kịch bản ánh xạ 2 chiều giữa Entity và Map cho SanPham, BienTheSanPham, KhachHang, DonHang, Voucher $\rightarrow$ Kết quả: **5/5 test cases PASSED** (0.012s).
+    - Chạy kiểm thử hồi quy `DUNAFunctionalTest.java` $\rightarrow$ Kết quả: **4/4 test cases PASSED** (0.01s).
+    - Biên dịch toàn bộ bằng `javac --release 8` chuẩn Bytecode 52.0 và đồng bộ sang `target/DUNA/WEB-INF/classes/`.
+
+---
+
 ## 📌 HƯỚNG DẪN DÀNH CHO CÁC LẦN CHỈNH SỬA TIẾP THEO
 Mỗi khi có yêu cầu chỉnh sửa hoặc thêm tính năng mới, AI Assistant và Lập trình viên bắt buộc phải:
 1. Ghi rõ **Thời gian**, **Mục đích thay đổi** và **Danh sách file bị tác động**.

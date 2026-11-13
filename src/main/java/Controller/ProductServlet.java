@@ -1,6 +1,8 @@
 package Controller;
 
 import connectService.connectService;
+import dao.SanPhamDAO;
+import model.SanPham;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
@@ -21,79 +23,13 @@ public class ProductServlet extends HttpServlet {
         String cat    = request.getParameter("cat");
         String status = request.getParameter("status");
 
-        List<Map<String, Object>> listSP = new ArrayList<>();
-        connectService db = new connectService();
+        SanPhamDAO sanPhamDAO = new SanPhamDAO();
+        List<SanPham> listSPEntities = sanPhamDAO.search(search, cat, status);
+        List<Map<String, Object>> listSP = sanPhamDAO.searchAsMap(search, cat, status);
 
-        try (Connection conn = db.myConnection()) {
-            StringBuilder sql = new StringBuilder(
-                "SELECT sp.ID_SanPham, sp.MaSP, sp.TenSP, dm.TenDanhMuc, " +
-                "sp.ThuongHieu, sp.GiaBan, sp.GiaNhap, " +
-                "ISNULL((SELECT SUM(bt.SoLuong) FROM BienTheSanPham bt WHERE bt.ID_SanPham = sp.ID_SanPham), sp.TongSoLuong) AS TongSoLuong, " +
-                "sp.TrangThai, sp.ChatLieu, sp.FormDang, sp.HinhAnh, sp.MoTa, sp.NgayTao, sp.NgayCapNhat " +
-                "FROM SanPham sp " +
-                "INNER JOIN DanhMuc dm ON sp.ID_DanhMuc = dm.ID_DanhMuc " +
-                "WHERE 1=1 "
-            );
-            List<Object> params = new ArrayList<>();
-
-            if (search != null && !search.trim().isEmpty()) {
-                sql.append("AND (sp.TenSP LIKE ? OR sp.MaSP LIKE ? OR sp.ChatLieu LIKE ? OR sp.FormDang LIKE ?) ");
-                String kw = "%" + search.trim() + "%";
-                params.add(kw);
-                params.add(kw);
-                params.add(kw);
-                params.add(kw);
-            }
-            if (cat != null && !cat.trim().isEmpty()) {
-                sql.append("AND dm.TenDanhMuc = ? ");
-                params.add(cat.trim());
-            }
-            if (status != null && !status.trim().isEmpty()) {
-                sql.append("AND sp.TrangThai = ? ");
-                params.add(status.trim());
-            }
-            sql.append("ORDER BY sp.ID_SanPham DESC");
-
-            PreparedStatement ps = conn.prepareStatement(sql.toString());
-            for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
-
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Map<String, Object> m = new HashMap<>();
-                m.put("id",          rs.getInt("ID_SanPham"));
-                m.put("maSP",        rs.getString("MaSP"));
-                m.put("tenSP",       rs.getString("TenSP"));
-                m.put("danhMuc",     rs.getString("TenDanhMuc"));
-                m.put("thuongHieu",  rs.getString("ThuongHieu"));
-                m.put("giaBan",      rs.getLong("GiaBan"));
-                m.put("giaNhap",     rs.getLong("GiaNhap"));
-                m.put("soLuong",     rs.getInt("TongSoLuong"));
-                m.put("trangThai",   rs.getString("TrangThai"));
-                m.put("chatLieu",    rs.getString("ChatLieu") != null ? rs.getString("ChatLieu") : "");
-                m.put("formDang",    rs.getString("FormDang") != null ? rs.getString("FormDang") : "");
-                m.put("hinhAnh",     rs.getString("HinhAnh") != null ? rs.getString("HinhAnh") : "");
-                m.put("moTa",        rs.getString("MoTa") != null ? rs.getString("MoTa") : "");
-
-                String ntStr = "", ncnStr = "";
-                try {
-                    java.sql.Timestamp ts1 = rs.getTimestamp("NgayTao");
-                    if (ts1 != null) ntStr = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(ts1);
-                    java.sql.Timestamp ts2 = rs.getTimestamp("NgayCapNhat");
-                    if (ts2 != null) ncnStr = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(ts2);
-                } catch (Exception exDate) {
-                    ntStr = rs.getString("NgayTao") != null ? rs.getString("NgayTao").replace(".000", "").replace(".0", "") : "";
-                    ncnStr = rs.getString("NgayCapNhat") != null ? rs.getString("NgayCapNhat").replace(".000", "").replace(".0", "") : "";
-                }
-                m.put("ngayTao",     ntStr);
-                m.put("ngayCapNhat", ncnStr);
-
-                listSP.add(m);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            request.setAttribute("error", "Lỗi CSDL: " + e.getMessage());
-        }
+        // Lưu cả 2 định dạng: listSPEntities (chuẩn Entity) và listSP (chuẩn Map tương thích JSP)
+        request.setAttribute("listSPEntities", listSPEntities);
+        request.setAttribute("listSP", listSP);
 
         // AJAX: trả JSON biến thể
         String ajaxVariant = request.getParameter("ajaxVariant");
