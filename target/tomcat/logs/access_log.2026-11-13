@@ -326,3 +326,17 @@
 0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:49:26 +0700] "GET /DUNA HTTP/1.1" 302 - http-bio-8080-exec-1 0
 0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:49:26 +0700] "GET /DUNA/ HTTP/1.1" 302 - http-bio-8080-exec-2 15
 0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:49:26 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 12045 http-bio-8080-exec-3 113
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:55:07 +0700] "GET /DUNA HTTP/1.1" 302 - http-bio-8080-exec-1 0
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:55:07 +0700] "GET /DUNA/ HTTP/1.1" 302 - http-bio-8080-exec-2 11
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:55:07 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 12045 http-bio-8080-exec-3 112
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:55:07 +0700] "GET /DUNA/theme.css?v=duna_v4 HTTP/1.1" 304 - http-bio-8080-exec-4 5
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:55:07 +0700] "GET /DUNA/style.css?v=duna_v4 HTTP/1.1" 304 - http-bio-8080-exec-5 1
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:55:07 +0700] "GET /DUNA/img/duna-logo.png HTTP/1.1" 304 - http-bio-8080-exec-7 0
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:55:09 +0700] "POST /DUNA/LoginServlet HTTP/1.1" 200 - http-bio-8080-exec-8 427
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:55:09 +0700] "GET /favicon.ico HTTP/1.1" 404 - http-bio-8080-exec-9 0
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:55:15 +0700] "POST /DUNA/LoginServlet HTTP/1.1" 200 - http-bio-8080-exec-10 22
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:57:34 +0700] "GET /DUNA HTTP/1.1" 302 - http-bio-8080-exec-1 0
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:57:34 +0700] "GET /DUNA/ HTTP/1.1" 302 - http-bio-8080-exec-2 12
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:57:34 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 12045 http-bio-8080-exec-3 108
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:57:36 +0700] "POST /DUNA/LoginServlet HTTP/1.1" 200 - http-bio-8080-exec-4 447
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:58:48 +0700] "POST /DUNA/LoginServlet HTTP/1.1" 200 - http-bio-8080-exec-7 36
