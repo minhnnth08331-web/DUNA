@@ -99,16 +99,21 @@ public class ProductServlet extends HttpServlet {
         String ajaxVariant = request.getParameter("ajaxVariant");
         if ("1".equals(ajaxVariant)) {
             String idSP = request.getParameter("idSP");
+            int parsedIdSP = parseInt(idSP);
             response.setContentType("application/json;charset=UTF-8");
+            if (parsedIdSP <= 0) {
+                response.getWriter().write("[]");
+                return;
+            }
             StringBuilder json = new StringBuilder("[");
             try (Connection conn2 = new connectService().myConnection()) {
                 PreparedStatement psMaSP = conn2.prepareStatement("SELECT ISNULL(MaSP, 'SP' + CAST(ID_SanPham AS VARCHAR)) FROM SanPham WHERE ID_SanPham=?");
-                psMaSP.setInt(1, Integer.parseInt(idSP));
+                psMaSP.setInt(1, parsedIdSP);
                 ResultSet rsMaSP = psMaSP.executeQuery();
-                String spCode = rsMaSP.next() ? rsMaSP.getString(1) : ("SP" + idSP);
+                String spCode = rsMaSP.next() ? rsMaSP.getString(1) : ("SP" + parsedIdSP);
 
                 PreparedStatement psBT = conn2.prepareStatement("SELECT ID_BienThe, MauSac, TrongLuong, GiaNhap, GiaBan, SoLuong, Barcode, MaBienThe FROM BienTheSanPham WHERE ID_SanPham=? ORDER BY ID_BienThe");
-                psBT.setInt(1, Integer.parseInt(idSP));
+                psBT.setInt(1, parsedIdSP);
                 ResultSet rsBT = psBT.executeQuery();
                 boolean first = true;
                 while (rsBT.next()) {
@@ -141,17 +146,22 @@ public class ProductServlet extends HttpServlet {
         String ajaxDetailAll = request.getParameter("ajaxDetailAll");
         if ("1".equals(ajaxDetailAll)) {
             String idSP = request.getParameter("idSP");
+            int parsedIdSP = parseInt(idSP);
             response.setContentType("application/json;charset=UTF-8");
+            if (parsedIdSP <= 0) {
+                response.getWriter().write("{\"variants\":[],\"specs\":[]}");
+                return;
+            }
             StringBuilder json = new StringBuilder("{");
             try (Connection conn3 = new connectService().myConnection()) {
                 json.append("\"variants\":[");
                 PreparedStatement psMaSP = conn3.prepareStatement("SELECT ISNULL(MaSP, 'SP' + CAST(ID_SanPham AS VARCHAR)) FROM SanPham WHERE ID_SanPham=?");
-                psMaSP.setInt(1, Integer.parseInt(idSP));
+                psMaSP.setInt(1, parsedIdSP);
                 ResultSet rsMaSP = psMaSP.executeQuery();
-                String spCode = rsMaSP.next() ? rsMaSP.getString(1) : ("SP" + idSP);
+                String spCode = rsMaSP.next() ? rsMaSP.getString(1) : ("SP" + parsedIdSP);
 
                 PreparedStatement psBT = conn3.prepareStatement("SELECT ID_BienThe, MauSac, TrongLuong, GiaNhap, GiaBan, SoLuong, Barcode, MaBienThe FROM BienTheSanPham WHERE ID_SanPham=? ORDER BY ID_BienThe");
-                psBT.setInt(1, Integer.parseInt(idSP));
+                psBT.setInt(1, parsedIdSP);
                 ResultSet rsBT = psBT.executeQuery();
                 boolean first = true;
                 while (rsBT.next()) {
@@ -276,7 +286,11 @@ public class ProductServlet extends HttpServlet {
             } else if ("edit".equals(action)) {
                 String catName = request.getParameter("cat");
                 int idDM = getDanhMucId(conn, catName);
-                int id = Integer.parseInt(request.getParameter("id"));
+                int id = parseInt(request.getParameter("id"));
+                if (id <= 0) {
+                    response.sendRedirect(request.getContextPath() + "/ProductServlet");
+                    return;
+                }
 
                 long giaBan = parseLong(request.getParameter("giaBan"));
                 long giaNhap = parseLong(request.getParameter("giaNhap"));
@@ -411,7 +425,11 @@ public class ProductServlet extends HttpServlet {
                 return;
 
             } else if ("deleteVariant".equals(action)) {
-                int idBT = Integer.parseInt(request.getParameter("idBT"));
+                int idBT = parseInt(request.getParameter("idBT"));
+                if (idBT <= 0) {
+                    response.sendRedirect(request.getContextPath() + "/ProductServlet");
+                    return;
+                }
                 int idSP = 0;
                 try (PreparedStatement psSel = conn.prepareStatement("SELECT ID_SanPham FROM BienTheSanPham WHERE ID_BienThe=?")) {
                     psSel.setInt(1, idBT);
@@ -445,8 +463,12 @@ public class ProductServlet extends HttpServlet {
                 return;
 
             } else if ("editVariant".equals(action)) {
-                int idBT = Integer.parseInt(request.getParameter("idBT"));
-                int idSP = Integer.parseInt(request.getParameter("idSP"));
+                int idBT = parseInt(request.getParameter("idBT"));
+                int idSP = parseInt(request.getParameter("idSP"));
+                if (idBT <= 0 || idSP <= 0) {
+                    response.sendRedirect(request.getContextPath() + "/ProductServlet");
+                    return;
+                }
                 String mauSac = request.getParameter("mauSac");
                 String size = request.getParameter("trongLuong");
                 long giaBan = parseLong(request.getParameter("giaBan"));

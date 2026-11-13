@@ -116,16 +116,27 @@ public class QRConfirmServlet extends HttpServlet {
 
     private void handleConfirm(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String token = request.getParameter("token");
-        QRData data = (token != null) ? qrSessions.get(token) : null;
+        QRData data = (token != null && !token.trim().isEmpty()) ? qrSessions.get(token.trim()) : null;
         boolean success = false;
+        String message = "Thao tác thành công";
+
         if (data != null) {
-            data.setStatus("CONFIRMED");
-            success = true;
+            long now = System.currentTimeMillis();
+            // Mã QR chỉ có hiệu lực tối đa trong 15 phút (900.000 ms)
+            if (now - data.getCreatedAt() > 15 * 60 * 1000) {
+                data.setStatus("EXPIRED");
+                message = "Mã QR đã hết hạn hiệu lực!";
+            } else {
+                data.setStatus("CONFIRMED");
+                success = true;
+            }
+        } else {
+            message = "Không tìm thấy phiên giao dịch QR hợp lệ!";
         }
 
         response.setContentType("application/json; charset=UTF-8");
         PrintWriter out = response.getWriter();
-        out.write("{\"status\": \"CONFIRMED\", \"success\": " + success + "}");
+        out.write("{\"status\": \"" + (data != null ? data.getStatus() : "INVALID") + "\", \"success\": " + success + ", \"message\": \"" + message + "\"}");
         out.flush();
     }
 

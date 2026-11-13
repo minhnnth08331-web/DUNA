@@ -23,13 +23,25 @@ public class AuthFilter implements Filter {
         String requestURI = request.getRequestURI();
 
         boolean loggedIn = session != null && session.getAttribute("role") != null;
-        boolean loginRequest = requestURI.equals(loginURI) || requestURI.equals(loginServletURI) || requestURI.endsWith(".css") || requestURI.endsWith(".js") || requestURI.endsWith(".png") || requestURI.endsWith(".jpg") || requestURI.contains("QRConfirmServlet") || requestURI.contains("qr-mobile.jsp");
+        boolean loginRequest = requestURI.equals(loginURI) || requestURI.equals(loginServletURI) || requestURI.endsWith(".css") || requestURI.endsWith(".js") || requestURI.endsWith(".png") || requestURI.endsWith(".jpg") || requestURI.endsWith(".ico") || requestURI.contains("QRConfirmServlet") || requestURI.contains("qr-mobile.jsp");
 
         if (loggedIn || loginRequest) {
             if (loggedIn && "EMPLOYEE".equals(session.getAttribute("role"))) {
                 boolean isReport = requestURI.contains("OrderServlet") && "report".equals(request.getParameter("view"));
                 boolean isProductAdmin = (requestURI.contains("ProductServlet") && !"1".equals(request.getParameter("ajaxDetailAll"))) || requestURI.contains("quan-ly-san-pham");
-                if (isProductAdmin || requestURI.contains("EmployeeManagementServlet") || requestURI.contains("VoucherServlet") || requestURI.contains("quan-ly-voucher") || isReport || requestURI.contains("add-employee.jsp") || requestURI.contains("employee-management.jsp") || requestURI.contains("CustomerServlet") || requestURI.contains("quan-ly-khach-hang")) {
+                boolean isAdminOnly = isProductAdmin 
+                        || requestURI.contains("EmployeeManagementServlet") 
+                        || requestURI.contains("ToggleEmployeeStatusServlet")
+                        || requestURI.contains("AddEmployeeServlet")
+                        || requestURI.contains("UpdateEmployeeServlet")
+                        || requestURI.contains("ChangeCredentialsServlet")
+                        || requestURI.contains("VoucherServlet") 
+                        || requestURI.contains("quan-ly-voucher") 
+                        || isReport 
+                        || requestURI.contains("add-employee.jsp") 
+                        || requestURI.contains("employee-management.jsp") 
+                        || requestURI.contains("admin-dashboard.html");
+                if (isAdminOnly) {
                     response.sendRedirect(request.getContextPath() + "/OrderServlet?view=sell");
                     return;
                 }

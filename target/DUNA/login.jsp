@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng Nhập — DUNA Men's Wear</title>
+    <link rel="shortcut icon" href="${pageContext.request.contextPath}/img/duna-logo.png" type="image/png">
+    <link rel="icon" href="${pageContext.request.contextPath}/img/duna-logo.png" type="image/png">
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/theme.css?v=duna_v4">
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/style.css?v=duna_v4">
     <script>if (localStorage.getItem('duna_theme') === 'dark') document.documentElement.classList.add('dark-mode');</script>
@@ -25,13 +27,13 @@
                 
                 <div class="form-group">
                     <label for="password">Mật khẩu</label>
-                    <input type="password" id="password" name="password" class="form-control" required placeholder="Nhập mật khẩu..." autocomplete="current-password" value="${not empty cookie.yn_pass ? cookie.yn_pass.value : ''}">
+                    <input type="password" id="password" name="password" class="form-control" required placeholder="Nhập mật khẩu..." autocomplete="current-password">
                 </div>
 
                 <div class="form-group" style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 4px;">
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; text-transform: none; letter-spacing: normal;">
                         <input type="checkbox" name="rememberMe" value="true" id="rememberMe" ${not empty cookie.yn_user ? 'checked' : ''}>
-                        Ghi nhớ tài khoản & mật khẩu
+                        Ghi nhớ tài khoản đăng nhập
                     </label>
                 </div>
 
@@ -56,17 +58,18 @@
 
         document.addEventListener("DOMContentLoaded", function() {
             var u = document.getElementById("username");
-            var p = document.getElementById("password");
             var cb = document.getElementById("rememberMe");
             
-            // Tự động điền tài khoản và mật khẩu nếu đã được ghi nhớ trước đó
+            // Xóa triệt để mật khẩu thô trong LocalStorage nếu đã bị lưu trước đây
+            try {
+                localStorage.removeItem("yn_pass");
+                document.cookie = "yn_pass=; Max-Age=0; path=/;";
+            } catch(e) {}
+
+            // Tự động điền tên tài khoản nếu đã ghi nhớ
             var savedUser = getCookie("yn_user") || localStorage.getItem("yn_user");
-            var savedPass = getCookie("yn_pass") || localStorage.getItem("yn_pass");
             if (savedUser && !u.value) {
                 u.value = savedUser;
-                if (savedPass && !p.value) {
-                    p.value = savedPass;
-                }
                 if (cb) cb.checked = true;
             }
         });
@@ -77,11 +80,13 @@
             var p = document.getElementById("password").value;
             var form = document.getElementById("loginForm");
 
+            // Bảo mật: Tuyệt đối không lưu mật khẩu thô vào LocalStorage / Cookie
+            localStorage.removeItem("yn_pass");
+
             if (rememberCb && rememberCb.checked) {
                 localStorage.setItem("yn_user", u);
-                localStorage.setItem("yn_pass", p);
 
-                // Kích hoạt thông báo lưu mật khẩu gốc của trình duyệt web (Chrome, CocCoc, Edge,...)
+                // Cho phép trình duyệt web (Chrome, Edge, Safari...) lưu thông tin qua Credential API an toàn
                 if (window.PasswordCredential && navigator.credentials && navigator.credentials.store) {
                     try {
                         var cred = new PasswordCredential(form);
@@ -95,7 +100,6 @@
                 }
             } else {
                 localStorage.removeItem("yn_user");
-                localStorage.removeItem("yn_pass");
             }
             return true;
         }

@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%-- Redirect sang Servlet nếu truy cập JSP trực tiếp --%>
 <% if (request.getAttribute("listSP") == null) {
     response.sendRedirect(request.getContextPath() + "/ProductServlet"); return;
@@ -60,6 +61,9 @@
             <p class="page-subtitle">Danh mục áo sơ mi, polo, quần âu, blazer, biến thể màu sắc & size, in tem mác barcode chuẩn xuất xưởng</p>
         </div>
         <div class="action-buttons">
+            <button type="button" class="btn btn-secondary" onclick="openProductMatrixModal('${not empty listSP[0] ? listSP[0].id : 1}', '${not empty listSP[0] ? fn:escapeXml(listSP[0].tenSP) : 'Sản phẩm DUNA'}', '${not empty listSP[0] ? listSP[0].maSP : 'SP001'}')" style="display: inline-flex; align-items: center; gap: 8px;">
+                🔲 Ma Trận Size & Màu (Smart Inventory)
+            </button>
             <button type="button" class="btn btn-primary" onclick="openAdd()">
                 + Thêm Sản Phẩm Mới
             </button>
@@ -147,6 +151,7 @@
                         </td>
                         <td class="text-center">
                             <div style="display:inline-flex; gap:4px; align-items:center;">
+                                <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px; font-weight: 600; color: #c5a059; border-color: #c5a059;" onclick="openProductMatrixModal('${sp.id}','${fn:escapeXml(sp.tenSP)}','${sp.maSP}')" title="Xem ma trận tồn kho Size & Màu">Ma trận</button>
                                 <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px;" onclick="openVariants('${sp.id}','${sp.tenSP}')" title="Quản lý biến thể size/màu">Biến thể</button>
                                 <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px;" onclick="openPrintTagModal('${sp.id}','${sp.maSP}','${sp.tenSP}','${sp.giaBan}')" title="In tem mác barcode">In tem</button>
                                 <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px;" onclick="openEdit('${sp.id}','${sp.tenSP}','${sp.danhMuc}','${sp.thuongHieu}','${sp.giaBan}','${sp.giaNhap}','${sp.soLuong}','${sp.trangThai}','${sp.chatLieu}','${sp.formDang}','${sp.hinhAnh}','${sp.moTa}')" title="Sửa thông tin">Sửa</button>
@@ -259,7 +264,7 @@
                     </div>
                     <div class="full">
                         <label for="fDesc">Mô tả sản phẩm</label>
-                        <textarea name="moTa" id="fDesc" class="form-control" placeholder="Mô tả chi tiết kiểu dáng, thông số giặt ủi, chất liệu cao cấp..."></textarea>
+                        <textarea name="moTa" id="fDesc" class="form-control" placeholder="Mô tả chi tiết kiểu dáng, thông số giặt ủi, chất liệu vải..."></textarea>
                     </div>
 
                     <%-- Biến thể ban đầu khi tạo mới --%>
@@ -452,6 +457,42 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-outline" onclick="closeModal('modalPrintTag')">Đóng</button>
             <button type="button" class="btn btn-primary" onclick="window.print()">In Tem Mác Ngay</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL LƯỚI MA TRẬN SIZE & MÀU (SMART INVENTORY MATRIX GRID) -->
+<div class="modal-bg" id="modalMatrixGrid">
+    <div class="modal-box wide" style="max-width: 980px;">
+        <button class="close-btn" type="button" onclick="closeModal('modalMatrixGrid')">&times;</button>
+        <div style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+            <div class="page-title-eyebrow">DUNA Smart Inventory Matrix</div>
+            <h3 id="matrixTitle" style="margin: 0; font-size: 18px; font-weight: 700; color: var(--text-primary);">Ma Trận Quản Trị Tồn Kho: Màu Sắc & Kích Cỡ</h3>
+            <div id="matrixSub" style="font-size: 13px; color: var(--muted); margin-top: 4px;">Kiểm soát phân bố tồn kho theo 2 chiều và cảnh báo điểm đặt hàng lại (Reorder Point)</div>
+        </div>
+
+        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px;">
+                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: #ef4444;"></span>
+                <b>Size Vàng &le; 3 SP:</b> <span style="color: var(--negative); font-weight: 600;">Cháy hàng chủ lực, cần nhập gấp!</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px;">
+                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: #f59e0b;"></span>
+                <b>Sắp hết &le; 1 SP:</b> <span style="color: #d97706; font-weight: 600;">Cảnh báo bổ sung</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px;">
+                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: #10b981;"></span>
+                <b>Tồn an toàn &gt; 3 SP</b>
+            </div>
+        </div>
+
+        <div id="matrixContainer" style="overflow-x: auto; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px;">
+            <div style="text-align: center; padding: 40px; color: var(--muted);">Đang tải cấu trúc ma trận biến thể...</div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 12px; color: var(--muted);">💡 <b>Ghi chú nghiệp vụ:</b> Size M và L (hoặc 30, 31, 39, 40) là các "Size Vàng" chiếm hơn 65% doanh số chuỗi thời trang nam DUNA.</div>
+            <button type="button" class="btn btn-outline" onclick="closeModal('modalMatrixGrid')">Đóng lại</button>
         </div>
     </div>
 </div>
@@ -670,6 +711,116 @@ function renderTagPreviewSingle(barcode, color, size, price) {
             margin: 4
         });
     } catch(e) {}
+}
+
+// -------------------------------------------------------------
+// NHÓM 2: LƯỚI MA TRẬN SIZE & MÀU TRỰC QUAN (SMART INVENTORY)
+// -------------------------------------------------------------
+function openProductMatrixModal(idSP, tenSP, maSP) {
+    document.getElementById('matrixTitle').innerHTML = 'Ma Trận Tồn Kho: <span style="color:#c5a059;">' + (maSP ? maSP + ' — ' : '') + tenSP + '</span>';
+    openModal('modalMatrixGrid');
+    var container = document.getElementById('matrixContainer');
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">Đang tải dữ liệu biến thể ma trận...</div>';
+    
+    fetch('${pageContext.request.contextPath}/ProductServlet?ajaxDetailAll=1&idSP=' + idSP)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var vars = data.variants || [];
+            if (!vars.length) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">Sản phẩm này chưa được thiết lập biến thể màu/size.</div>';
+                return;
+            }
+            
+            var sizeSet = {}, colorSet = {};
+            vars.forEach(function(v) {
+                var s = (v.trongLuong || 'Tiêu chuẩn').trim();
+                var c = (v.mauSac || 'Mặc định').trim();
+                sizeSet[s] = true;
+                colorSet[c] = true;
+            });
+            var sizes = Object.keys(sizeSet);
+            var colors = Object.keys(colorSet);
+            
+            var map = {};
+            vars.forEach(function(v) {
+                var s = (v.trongLuong || 'Tiêu chuẩn').trim();
+                var c = (v.mauSac || 'Mặc định').trim();
+                if (!map[c]) map[c] = {};
+                map[c][s] = v;
+            });
+            
+            var html = '<table class="styled-table" style="width: 100%; border-collapse: collapse; text-align: center; font-size: 13px;">';
+            html += '<thead><tr style="background: var(--surface);">';
+            html += '<th style="text-align: left; padding: 12px 16px; border-right: 2px solid var(--border);">Màu Sắc \\ Kích Cỡ</th>';
+            sizes.forEach(function(s) {
+                var isGoldSize = s.indexOf('M') >= 0 || s.indexOf('L') >= 0 || s.indexOf('30') >= 0 || s.indexOf('31') >= 0 || s.indexOf('39') >= 0 || s.indexOf('40') >= 0;
+                var goldTag = isGoldSize ? ' <span style="color:#d97706; font-size:10px;">★ Vàng</span>' : '';
+                html += '<th style="padding: 12px 14px; font-family: var(--font-mono);">' + s + goldTag + '</th>';
+            });
+            html += '<th style="padding: 12px 14px; background: rgba(15,23,42,0.03);">Tổng Theo Màu</th>';
+            html += '</tr></thead><tbody>';
+            
+            colors.forEach(function(c) {
+                html += '<tr>';
+                html += '<td style="text-align: left; font-weight: 700; padding: 12px 16px; border-right: 2px solid var(--border); background: var(--surface);">' + c + '</td>';
+                var colorTotal = 0;
+                sizes.forEach(function(s) {
+                    var v = map[c] ? map[c][s] : null;
+                    if (v) {
+                        var sl = Number(v.soLuong || 0);
+                        colorTotal += sl;
+                        var isGold = s.indexOf('M') >= 0 || s.indexOf('L') >= 0 || s.indexOf('30') >= 0 || s.indexOf('31') >= 0 || s.indexOf('39') >= 0 || s.indexOf('40') >= 0;
+                        var cellBg = '#ecfdf5', cellColor = '#065f46', badgeText = 'Đủ hàng';
+                        if (isGold && sl <= 3) {
+                            cellBg = '#fef2f2'; cellColor = '#991b1b'; badgeText = 'Nhập gấp!';
+                        } else if (sl <= 1) {
+                            cellBg = '#fef3c7'; cellColor = '#92400e'; badgeText = 'Sắp hết';
+                        }
+                        html += '<td style="padding: 10px; background: ' + cellBg + '; border: 1px solid var(--border);">'
+                             + '<div class="font-mono font-bold" style="font-size: 15px; color: ' + cellColor + ';">' + sl + '</div>'
+                             + '<div style="font-size: 10px; font-weight: 700; color: ' + cellColor + '; margin-top: 2px;">' + badgeText + '</div>'
+                             + '<button type="button" class="btn btn-outline" style="font-size: 10px; padding: 1px 6px; margin-top: 5px; height: 20px; background: #fff;" onclick="promptRefillStock(' + v.id + ', ' + sl + ', ' + idSP + ', \'' + encodeURIComponent(tenSP) + '\')">+ Nhập</button>'
+                             + '</td>';
+                    } else {
+                        html += '<td style="padding: 10px; color: var(--muted); background: var(--raised); border: 1px solid var(--border); font-size: 11px;">Chưa tạo</td>';
+                    }
+                });
+                html += '<td class="font-mono font-bold" style="font-size: 14px; background: rgba(15,23,42,0.03);">' + colorTotal + ' SP</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }).catch(function(err) {
+            container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--negative);">Lỗi nạp ma trận: ' + err.message + '</div>';
+        });
+}
+
+function promptRefillStock(idBT, currentSL, idSP, encodedTenSP) {
+    var addStr = prompt('Nhập số lượng hàng bổ sung vào biến thể này (Số nguyên dương):', '10');
+    if (!addStr) return;
+    var addVal = parseInt(addStr.trim(), 10);
+    if (isNaN(addVal) || addVal <= 0) {
+        alert('Số lượng nhập không hợp lệ!');
+        return;
+    }
+    var newSL = currentSL + addVal;
+    
+    var formData = new URLSearchParams();
+    formData.append('action', 'editVariant');
+    formData.append('idBT', idBT);
+    formData.append('idSP', idSP);
+    formData.append('soLuong', newSL);
+    
+    fetch('${pageContext.request.contextPath}/ProductServlet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+    }).then(function() {
+        alert('✅ Đã cập nhật tồn kho biến thể thành công (' + currentSL + ' -> ' + newSL + ' SP)!');
+        openProductMatrixModal(idSP, decodeURIComponent(encodedTenSP), '');
+    }).catch(function(e) {
+        alert('Lỗi cập nhật kho: ' + e.message);
+    });
 }
 </script>
 <jsp:include page="footer.jsp" />
