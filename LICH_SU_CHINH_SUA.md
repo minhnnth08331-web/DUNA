@@ -142,6 +142,38 @@
 
 ---
 
+### 9. Cập Nhật Script CSDL Mới (`DATN.sql`): Đổi Tên Thành DUNA & Mở Rộng Dữ Liệu Người Dùng, Sản Phẩm
+- **Yêu cầu người dùng:**
+  - File kịch bản CSDL mới `c:\Users\Administrator\Downloads\DATN.sql` phải đổi tên CSDL thành `DUNA` để thuận tiện kết nối (`CREATE DATABASE [DUNA]`, `USE [DUNA]`).
+  - Mở rộng phong phú bộ dữ liệu mẫu về người dùng (nhân sự & khách hàng) và sản phẩm thời trang nam tầm trung.
+- **Chi tiết các hạng mục đã thực hiện trên `c:\Users\Administrator\Downloads\DATN.sql`:**
+  - **1. Chuẩn hóa tên CSDL `DUNA`:**
+    - Cập nhật lệnh kiểm tra và xóa CSDL cũ: `IF EXISTS (SELECT name FROM sys.databases WHERE name = N'DUNA') ... DROP DATABASE [DUNA]`.
+    - Tạo CSDL và trỏ ngữ cảnh làm việc: `CREATE DATABASE [DUNA]; GO USE [DUNA]; GO`.
+  - **2. Mở rộng dữ liệu Người dùng & Phân quyền (28 Người dùng):**
+    - Đội ngũ Quản lý & Nhân sự (8 người):
+      - 2 Quản lý: `admin` (Tổng Quản lý) & `manager02` (Cửa hàng trưởng Trần Hoàng Nam).
+      - 6 Nhân viên: `nv01` (Triệu Lân Việt), `nv02` (Nguyễn Danh Khánh), `nv03` (Nguyễn Ngọc Minh), `nv04` (Trịnh Minh Đức), `nv05` (Vũ Đức Thắng), `nv06` (Phạm Thị Thảo).
+      - Mật khẩu mặc định: `123` (Mã băm SHA-256 an toàn `a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3`).
+      - Khởi tạo đầy đủ 8 hồ sơ nhân sự `employee_profiles` (CCCD 12 số, ngày cấp, quê quán, địa chỉ).
+    - Khách hàng thành viên DUNA Club (20 khách hàng `KH-00001` đến `KH-00020`):
+      - Đầy đủ họ tên, số điện thoại thật, email, ngày sinh, giới tính.
+      - Khởi tạo đầy đủ 20 bản ghi sổ địa chỉ giao hàng `shipping_addresses` (Hà Nội, TP.HCM, Đà Nẵng, Hải Phòng, Quảng Ninh, Bắc Ninh...).
+      - Khởi tạo và đồng bộ 20 bản ghi hạng thành viên `user_memberships` (STANDARD, SILVER, GOLD, VIP).
+  - **3. Mở rộng Danh mục & Sản phẩm Thời Trang Nam Tầm Trung:**
+    - 11 Danh mục: Áo Sơ Mi Nam, Áo Polo Nam, Áo Thun & T-Shirt, Quần Âu Nam, Quần Khaki & Chinos, Quần Jean Nam, Quần Short Nam, Áo Blazer & Suit, Áo Khoác & Jacket, Phụ Kiện Nam, Giày Da & Loafers.
+    - 14 Màu sắc nam tính, sang trọng & 23 Kích thước chuẩn (S, M, L, XL, XXL, 3XL, 28-34, 46-52, 39-43, FREESIZE).
+    - 25 Sản phẩm chính `SP001` - `SP025`: Đầy đủ giá vốn (`cost_price`), giá bán (`base_price`), chất liệu vải, form dáng và hướng dẫn sử dụng chuẩn định vị thời trang nam tầm trung DUNA.
+    - 118 Biến thể sản phẩm `BT001` - `BT118` (Màu sắc $\times$ Kích cỡ) kèm mã vạch Barcode chuẩn.
+    - 118 Bản ghi tồn kho `inventories` (15 - 50 chiếc/biến thể) & 118 nhật ký nhập kho khởi tạo `inventory_logs`.
+    - 7 Mã Voucher ưu đãi (`DUNA10`, `DUNA50K`, `DUNA100K`, `VIP15P`, `SUMMER20`, `WELCOME50`, `MENSDAY`).
+    - 18 Hóa đơn mẫu `HD-001` - `HD-018` với 34 chi tiết đơn hàng (lưu giá vốn `unit_cost` để hạch toán lợi nhuận gộp) và 18 bản ghi thanh toán `payments` (Tiền mặt, Chuyển khoản, VNPAY, Thẻ).
+- **4. Kiểm định thực thi trực tiếp trên SQL Server:**
+  - Chạy thử nghiệm thành công file script qua `sqlcmd -S localhost -U sa -P 123 -i c:\Users\Administrator\Downloads\DATN.sql`.
+  - CSDL `DUNA` được tạo lập hoàn chỉnh, 19 bảng và toàn bộ 28 users, 25 sản phẩm, 118 biến thể và 18 đơn hàng được nạp chuẩn xác 100%, không phát sinh bất kỳ lỗi ràng buộc hay chỉ mục nào.
+
+---
+
 ## 📌 HƯỚNG DẪN DÀNH CHO CÁC LẦN CHỈNH SỬA TIẾP THEO
 Mỗi khi có yêu cầu chỉnh sửa hoặc thêm tính năng mới, AI Assistant và Lập trình viên bắt buộc phải:
 1. Ghi rõ **Thời gian**, **Mục đích thay đổi** và **Danh sách file bị tác động**.

@@ -299,3 +299,5 @@
 0:0:0:0:0:0:0:1 - - [13/Nov/2026:06:36:54 +0700] "GET /DUNA/CustomerServlet?search=&searchType=&rank=&status=&expiring=7 HTTP/1.1" 200 28048 http-bio-8080-exec-5 118
 0:0:0:0:0:0:0:1 - - [13/Nov/2026:06:36:57 +0700] "GET /DUNA/CustomerServlet?search=&searchType=&rank=&status=&expiring= HTTP/1.1" 200 45957 http-bio-8080-exec-5 67
 0:0:0:0:0:0:0:1 - - [13/Nov/2026:06:37:10 +0700] "GET /DUNA/CustomerServlet HTTP/1.1" 200 45957 http-bio-8080-exec-5 115
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:38:07 +0700] "GET /DUNA/OrderServlet?view=sell HTTP/1.1" 302 - http-bio-8080-exec-4 1
+0:0:0:0:0:0:0:1 - - [13/Nov/2026:07:38:07 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 11753 http-bio-8080-exec-4 2
