@@ -1,4 +1,4 @@
-package Controller;
+// Default package for root test
 
 import junit.framework.TestCase;
 

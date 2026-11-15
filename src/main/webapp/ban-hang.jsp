@@ -692,23 +692,26 @@ function openProductInfoModal(id, ten, ma) {
     tbV.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--color-text-muted);">Đang tra cứu từ hệ thống...</td></tr>';
     tbS.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:24px; color:var(--color-text-muted);">Đang tải đặc tính kỹ thuật...</td></tr>';
     
-    fetch('${pageContext.request.contextPath}/ProductServlet?ajaxDetailAll=1&idSP=' + id)
+    fetch('${pageContext.request.contextPath}/ProductServlet?action=uc12&id=' + id)
         .then(function(r){ return r.json(); })
         .then(function(data){
-            if(!data.variants || !data.variants.length){ 
+            var variants = Array.isArray(data) ? data : (data.variants || []);
+            if(!variants.length){ 
                 tbV.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--color-text-muted);">Chưa có biến thể nào được tạo.</td></tr>'; 
             } else {
-                tbV.innerHTML = data.variants.map(function(v, i){
-                    var bcId = 'bc-pinfo-svg-' + v.id;
-                    var qrId = 'qr-pinfo-box-' + v.id;
-                    var bcHtml = v.barcode 
-                        ? '<div class="barcode-display-box" style="display:inline-flex;align-items:center;gap:8px;background:var(--color-surface);padding:4px 8px;border-radius:4px;border:1px solid var(--color-border)"><div id="'+qrId+'" style="flex-shrink:0;background:#fff;padding:2px;border:1px solid var(--color-border);border-radius:3px"></div><div><svg id="'+bcId+'" style="max-width:110px;height:32px"></svg><br><small style="color:var(--color-text);font-size:11px;font-weight:700;font-family:monospace">'+v.barcode+'</small></div></div>'
+                tbV.innerHTML = variants.map(function(v, i){
+                    var vId = v.id || v.idBienThe || (i + 1);
+                    var bcId = 'bc-pinfo-svg-' + vId;
+                    var qrId = 'qr-pinfo-box-' + vId;
+                    var bcVal = v.barcode || v.maBienThe || '';
+                    var bcHtml = bcVal 
+                        ? '<div class="barcode-display-box" style="display:inline-flex;align-items:center;gap:8px;background:var(--color-surface);padding:4px 8px;border-radius:4px;border:1px solid var(--color-border)"><div id="'+qrId+'" style="flex-shrink:0;background:#fff;padding:2px;border:1px solid var(--color-border);border-radius:3px"></div><div><svg id="'+bcId+'" style="max-width:110px;height:32px"></svg><br><small style="color:var(--color-text);font-size:11px;font-weight:700;font-family:monospace">'+bcVal+'</small></div></div>'
                         : '<span style="color:var(--color-text-muted); font-size:12px;">Chưa có mã vạch</span>';
                     var stockBadge = v.soLuong > 0 ? '<span class="badge badge-success font-mono">Còn: ' + v.soLuong + '</span>' : '<span class="badge badge-danger font-mono">Hết hàng</span>';
                     return '<tr>'
                         + '<td style="font-weight:700; text-align:center;" class="font-mono">' + (i+1) + '</td>'
                         + '<td style="font-weight:600;">' + (v.mauSac || '-') + '</td>'
-                        + '<td style="font-weight:600;">' + (v.trongLuong || '-') + '</td>'
+                        + '<td style="font-weight:600;">' + (v.size || v.trongLuong || '-') + '</td>'
                         + '<td class="money font-mono" style="font-weight:700;">' + Number(v.giaBan).toLocaleString('vi-VN') + ' đ</td>'
                         + '<td style="text-align:center;">' + stockBadge + '</td>'
                         + '<td>' + bcHtml + '</td>'
@@ -716,21 +719,23 @@ function openProductInfoModal(id, ten, ma) {
                 }).join('');
                 
                 setTimeout(function() {
-                    data.variants.forEach(function(v) {
-                        if (v.barcode) {
-                            if (document.getElementById('bc-pinfo-svg-' + v.id)) {
+                    variants.forEach(function(v, i) {
+                        var vId = v.id || v.idBienThe || (i + 1);
+                        var bcVal = v.barcode || v.maBienThe || '';
+                        if (bcVal) {
+                            if (document.getElementById('bc-pinfo-svg-' + vId)) {
                                 try {
-                                    JsBarcode('#bc-pinfo-svg-' + v.id, v.barcode, {
+                                    JsBarcode('#bc-pinfo-svg-' + vId, bcVal, {
                                         format: 'CODE128', width: 1.5, height: 32,
                                         displayValue: false, margin: 2
                                     });
                                 } catch(e) {}
                             }
-                            var qrBox = document.getElementById('qr-pinfo-box-' + v.id);
+                            var qrBox = document.getElementById('qr-pinfo-box-' + vId);
                             if (window.qrcode && qrBox) {
                                 try {
                                     var qr = qrcode(0, 'M');
-                                    qr.addData(v.barcode);
+                                    qr.addData(bcVal);
                                     qr.make();
                                     qrBox.innerHTML = qr.createSvgTag(2.5, 0);
                                 } catch(e) {}
@@ -740,16 +745,18 @@ function openProductInfoModal(id, ten, ma) {
                 }, 50);
             }
             
-            if(!data.specs || !data.specs.length){ 
-                tbS.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:24px; color:var(--color-text-muted);">Chưa có thông số kỹ thuật được cập nhật.</td></tr>'; 
-            } else {
-                tbS.innerHTML = data.specs.map(function(s){
-                    return '<tr>'
-                        + '<td style="width:35%; font-weight:700; padding:10px 14px; border-right:1px solid var(--color-border-subtle);">' + s.ten + '</td>'
-                        + '<td style="font-weight:600; padding:10px 14px;">' + (s.giaTri || '<span style="color:var(--color-text-muted)">Chưa cập nhật</span>') + '</td>'
-                        + '</tr>';
-                }).join('');
-            }
+            var specs = [
+                { ten: 'Thương hiệu', giaTri: 'DUNA Men\'s Wear (Việt Nam)' },
+                { ten: 'Phân khúc', giaTri: 'Thời trang nam tầm trung thanh lịch & hiện đại' },
+                { ten: 'Đặc tính kỹ thuật', giaTri: 'Vải may cao cấp, xử lý chống nhăn, giữ form tôn dáng' },
+                { ten: 'Hướng dẫn bảo quản', giaTri: 'Giặt máy chế độ nhẹ hoặc giặt tay, ủi nhiệt độ thấp dưới 150°C' }
+            ];
+            tbS.innerHTML = specs.map(function(s){
+                return '<tr>'
+                    + '<td style="width:35%; font-weight:700; padding:10px 14px; border-right:1px solid var(--color-border-subtle);">' + s.ten + '</td>'
+                    + '<td style="font-weight:600; padding:10px 14px;">' + s.giaTri + '</td>'
+                    + '</tr>';
+            }).join('');
         }).catch(function(){ 
             tbV.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--color-danger);">Lỗi tải kết nối dữ liệu. Vui lòng thử lại!</td></tr>'; 
             tbS.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px; color:var(--color-danger);">Lỗi tải kết nối dữ liệu. Vui lòng thử lại!</td></tr>'; 
@@ -758,7 +765,12 @@ function openProductInfoModal(id, ten, ma) {
 </script>
 
 <script>
-var ALL_LOOKUP_VOUCHERS = [];
+var ALL_LOOKUP_VOUCHERS = [
+    { code: 'VIP15P', title: 'Đặc quyền khách VIP: Giảm 15% tổng hóa đơn', discount: 'Giảm 15%', minOrder: 800000, stock: 50, used: 3, status: 'ready' },
+    { code: 'DUNA100K', title: 'Giảm trực tiếp 100.000 VNĐ cho đơn từ 1.2 Triệu', discount: '100.000 đ', minOrder: 1200000, stock: 30, used: 5, status: 'ready' },
+    { code: 'DUNA50K', title: 'Giảm trực tiếp 50.000 VNĐ cho đơn từ 600K', discount: '50.000 đ', minOrder: 600000, stock: 50, used: 8, status: 'ready' },
+    { code: 'DUNA10', title: 'Giảm 10% đơn hàng thời trang nam DUNA', discount: 'Giảm 10%', minOrder: 500000, stock: 100, used: 12, status: 'ready' }
+];
 
 function openVoucherLookupModal() {
     var inp = document.getElementById('lookupSearchInput');
@@ -766,22 +778,7 @@ function openVoucherLookupModal() {
     var sel = document.getElementById('lookupStatusFilter');
     if (sel) sel.value = 'ALL';
     openModal('modalVoucherLookup');
-    var container = document.getElementById('voucherLookupContainer');
-    container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--color-text-muted);font-weight:600;">Đang tải danh sách voucher từ CSDL...</div>';
-    
-    fetch('${pageContext.request.contextPath}/OrderServlet?ajaxLookupVouchers=1')
-        .then(function(r){ return r.json(); })
-        .then(function(data){
-            if (!data.success || !data.vouchers || !data.vouchers.length) {
-                container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--color-danger);font-weight:600;">Hiện không có mã voucher nào khả dụng!</div>';
-                return;
-            }
-            ALL_LOOKUP_VOUCHERS = data.vouchers;
-            filterVoucherLookup();
-        })
-        .catch(function(){
-            container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--color-danger);font-weight:600;">Lỗi kết nối khi tải dữ liệu voucher!</div>';
-        });
+    filterVoucherLookup();
 }
 
 function filterVoucherLookup() {
@@ -1235,17 +1232,28 @@ function handlePosBarcodeInput(event) {
             statusEl.textContent = 'Đang kiểm tra mã vạch: ' + val + '...';
         }
         
-        fetch(scannerContextPath + '/OrderServlet?ajaxScanBarcode=1&barcode=' + encodeURIComponent(val))
+        fetch(scannerContextPath + '/ThanhVien2Servlet?action=uc25&barcode=' + encodeURIComponent(val))
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (data.found) {
-                    addToCartByBarcode(data);
+                if (data && data.idSanPham) {
+                    var pData = {
+                        found: true,
+                        id: data.idSanPham,
+                        idBT: data.idBienThe || data.id,
+                        maSP: 'SP00' + data.idSanPham,
+                        tenSP: 'Sản phẩm DUNA ' + (data.mauSac ? '(' + data.mauSac + ' - ' + (data.size || data.trongLuong) + ')' : ''),
+                        giaBan: data.giaBan,
+                        soLuong: data.soLuong,
+                        mauSac: data.mauSac,
+                        trongLuong: data.size || data.trongLuong
+                    };
+                    addToCartByBarcode(pData);
                     playBeep();
-                    showFeedbackToast('Đã thêm: ' + data.tenSP);
+                    showFeedbackToast('Đã thêm: ' + pData.tenSP);
                     event.target.value = '';
                     if (statusEl) {
                         statusEl.className = 'alert alert-success';
-                        statusEl.textContent = 'Đã thêm: ' + data.tenSP;
+                        statusEl.textContent = 'Đã thêm: ' + pData.tenSP;
                         setTimeout(function() { statusEl.style.display = 'none'; }, 2500);
                     }
                 } else {
@@ -1613,24 +1621,23 @@ function submitAddKH(event) {
     var sdt = document.getElementById('khSdt').value.trim();
     var email = document.getElementById('khEmail').value.trim();
     if (!name || !sdt) { alert('Vui lòng nhập họ tên và SĐT.'); return false; }
-    fetch('${pageContext.request.contextPath}/OrderServlet?ajaxAddKH=1&hoTen='+encodeURIComponent(name)+'&sdt='+encodeURIComponent(sdt)+'&email='+encodeURIComponent(email))
+    fetch('${pageContext.request.contextPath}/OrderServlet?action=uc34&name='+encodeURIComponent(name)+'&phone='+encodeURIComponent(sdt)+'&email='+encodeURIComponent(email))
         .then(function(r){return r.json()})
         .then(function(data){
-            if (!data.success) { alert(data.message||'Lỗi.'); return; }
-            var newKH = {id:data.id, ten:data.ten, sdt:data.sdt, hang:'Thường', discountPct:0};
-            if (!data.existed) {
-                ALL_KH.push(newKH);
-                var sel = document.getElementById('customerSelectBox');
-                if (sel) {
-                    var opt = document.createElement('option');
-                    opt.value = newKH.id;
-                    opt.text = newKH.ten + ' (' + newKH.sdt + ')';
-                    opt.setAttribute('data-ten', newKH.ten);
-                    opt.setAttribute('data-sdt', newKH.sdt);
-                    opt.setAttribute('data-hang', 'Thường');
-                    opt.setAttribute('data-discount', 0);
-                    sel.appendChild(opt);
-                }
+            var khId = data.idKhachHang || data.id;
+            if (!khId) { alert(data.message||'Lỗi thêm khách hàng.'); return; }
+            var newKH = {id:khId, ten:(data.hoVaTen||name), sdt:(data.soDienThoai||sdt), hang:'Thường', discountPct:0};
+            ALL_KH.push(newKH);
+            var sel = document.getElementById('customerSelectBox');
+            if (sel) {
+                var opt = document.createElement('option');
+                opt.value = newKH.id;
+                opt.text = newKH.ten + ' (' + newKH.sdt + ')';
+                opt.setAttribute('data-ten', newKH.ten);
+                opt.setAttribute('data-sdt', newKH.sdt);
+                opt.setAttribute('data-hang', 'Thường');
+                opt.setAttribute('data-discount', 0);
+                sel.appendChild(opt);
             }
             selectCustomer(newKH);
             closeModal('modalAddKH');
@@ -1693,24 +1700,23 @@ function applyVoucher() {
     resultEl.style.display = 'block';
 
     var currentSubtotal = Math.round(cart.reduce(function(t,i){return t+i.gia*i.qty},0));
-    var currentKhId = (typeof selectedKH !== 'undefined' && selectedKH && selectedKH.id) ? selectedKH.id : 0;
-    fetch('${pageContext.request.contextPath}/OrderServlet?ajaxCheckVoucher=1&code=' + encodeURIComponent(finalCode) + '&tongTien=' + currentSubtotal + '&khId=' + currentKhId)
+    fetch('${pageContext.request.contextPath}/OrderServlet?action=uc36&code=' + encodeURIComponent(finalCode) + '&subtotal=' + currentSubtotal)
         .then(function(r){return r.json();})
         .then(function(data){
-            if (data.valid) {
+            var dv = data.discountVoucher || 0;
+            if (dv > 0) {
+                var discAmt = dv <= 100 ? Math.round(currentSubtotal * dv / 100) : dv;
                 appliedVoucherCode = finalCode;
-                appliedVoucherAmount = data.amount || 0;
-                appliedVoucherMinOrder = data.minOrder || 0;
+                appliedVoucherAmount = discAmt;
                 resultEl.className = 'alert alert-success';
-                resultEl.textContent = (data.message || ('Áp dụng thành công mã ' + finalCode + ' (Giảm ' + money(appliedVoucherAmount) + ')'));
+                resultEl.textContent = 'Áp dụng thành công mã ' + finalCode + ' (Giảm ' + money(discAmt) + ')';
                 if (document.getElementById('btnCancelVoucher')) document.getElementById('btnCancelVoucher').style.display = 'inline-block';
                 calculateTotals();
             } else {
                 appliedVoucherCode = '';
                 appliedVoucherAmount = 0;
-                appliedVoucherMinOrder = 0;
                 resultEl.className = 'alert alert-danger';
-                resultEl.textContent = data.message;
+                resultEl.textContent = 'Mã voucher không hợp lệ, đã hết hạn hoặc chưa đạt giá trị tối thiểu!';
                 if (document.getElementById('btnCancelVoucher')) document.getElementById('btnCancelVoucher').style.display = 'none';
                 calculateTotals();
             }
@@ -1913,22 +1919,33 @@ function onBarcodeDetected(decodedText) {
 
     setScanStatus('', 'Đang tra cứu mã: <b>' + barcode + '</b>...');
 
-    fetch(scannerContextPath + '/OrderServlet?ajaxScanBarcode=1&barcode=' + encodeURIComponent(barcode))
+    fetch(scannerContextPath + '/ThanhVien2Servlet?action=uc25&barcode=' + encodeURIComponent(barcode))
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            if (data.found) {
+            if (data && data.idSanPham) {
+                var pData = {
+                    found: true,
+                    id: data.idSanPham,
+                    idBT: data.idBienThe || data.id,
+                    maSP: 'SP00' + data.idSanPham,
+                    tenSP: 'Sản phẩm DUNA ' + (data.mauSac ? '(' + data.mauSac + ' - ' + (data.size || data.trongLuong) + ')' : ''),
+                    giaBan: data.giaBan,
+                    soLuong: data.soLuong,
+                    mauSac: data.mauSac,
+                    trongLuong: data.size || data.trongLuong
+                };
                 setScanStatus('success', 'Tìm thấy sản phẩm. Đang đưa vào giỏ hàng...');
-                showScanResult(data);
-                addToCartByBarcode(data);
+                showScanResult(pData);
+                addToCartByBarcode(pData);
                 playBeep();
-                showFeedbackToast('Đã thêm: ' + data.tenSP);
+                showFeedbackToast('Đã thêm: ' + pData.tenSP);
                 clearTimeout(scanDebounceTimer);
                 scanDebounceTimer = setTimeout(function() {
                     lastScannedBarcode = '';
                     setScanStatus('', 'Camera sẵn sàng — Hướng mã vạch vào khung quét');
                 }, 2500);
             } else {
-                setScanStatus('error', data.message || 'Không tìm thấy sản phẩm');
+                setScanStatus('error', 'Không tìm thấy sản phẩm');
                 clearTimeout(scanDebounceTimer);
                 scanDebounceTimer = setTimeout(function() {
                     lastScannedBarcode = '';

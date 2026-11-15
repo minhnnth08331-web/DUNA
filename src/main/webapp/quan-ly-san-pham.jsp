@@ -440,14 +440,14 @@
         <div id="printableTagArea" style="display:flex; justify-content:center; margin: 10px 0;">
             <div class="tag-preview-card">
                 <div class="tag-brand">DUNA</div>
-                <div class="tag-sub">MEN'S WEAR &bull; PREMIUM BESPOKE</div>
+                <div class="tag-sub">MEN'S WEAR &bull; SMART CASUAL & ELEGANT</div>
                 <div class="tag-name" id="tagPrevName">Áo Sơ Mi Nam Oxford DUNA</div>
-                <div style="background: #f1f5f9; padding: 6px; border-radius: 4px; font-size: 12.5px; margin-bottom: 12px;">
+                <div style="background: #f1f5f9; padding: 6px 10px; border-radius: 4px; font-size: 12.5px; margin-bottom: 12px;">
                     MÀU: <strong id="tagPrevColor">Trắng</strong> &nbsp;|&nbsp; SIZE: <strong id="tagPrevSize" style="color:var(--brand-navy); font-size:14px;">L</strong>
                 </div>
-                <div style="margin: 8px 0;">
-                    <svg id="tagBarcodeSvg" style="max-width:220px; height:50px;"></svg>
-                    <div id="tagBarcodeText" class="tag-sku">SP001BT01</div>
+                <div class="tag-barcode" style="margin: 10px 0; overflow: hidden; display: flex; flex-direction: column; align-items: center;">
+                    <svg id="tagBarcodeSvg" style="max-width:100%; height:44px; display:block; margin:0 auto;"></svg>
+                    <div id="tagBarcodeText" class="tag-sku" style="margin-top: 4px;">SP001BT01</div>
                 </div>
                 <div class="tag-price" id="tagPrevPrice">450.000 VNĐ</div>
                 <div style="font-size: 11px; color: #64748b;">(Đã bao gồm thuế GTGT)</div>
@@ -570,10 +570,10 @@ function openVariants(id, ten) {
     document.getElementById('variantForm').style.display = 'none';
     document.getElementById('variantEditForm').style.display = 'none';
 
-    fetch('${pageContext.request.contextPath}/ProductServlet?ajaxVariant=1&idSP=' + id)
+    fetch('${pageContext.request.contextPath}/ProductServlet?action=uc12&id=' + id)
         .then(function(r){ return r.json(); })
         .then(function(data){
-            window.currentVariants = data || [];
+            window.currentVariants = Array.isArray(data) ? data : (data.variants || []);
             var tb = document.getElementById('variantBody');
             if (!data || data.length === 0) {
                 tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">Chưa có biến thể nào.</td></tr>';
@@ -652,10 +652,10 @@ function openPrintTagModal(id, maSP, tenSP, giaBan) {
     var sel = document.getElementById('tagSelectVariant');
     sel.innerHTML = '<option value="">Đang tải danh sách size/màu...</option>';
 
-    fetch('${pageContext.request.contextPath}/ProductServlet?ajaxVariant=1&idSP=' + id)
+    fetch('${pageContext.request.contextPath}/ProductServlet?action=uc12&id=' + id)
         .then(function(r){ return r.json(); })
         .then(function(data){
-            window.currentVariants = data || [];
+            window.currentVariants = Array.isArray(data) ? data : (data.variants || []);
             if (!data || data.length === 0) {
                 sel.innerHTML = '<option value="">Sản phẩm chưa có biến thể size/màu cụ thể</option>';
                 renderTagPreviewSingle(maSP, 'Tiêu chuẩn', 'L', Number(giaBan));
@@ -689,11 +689,19 @@ function renderTagPreview() {
     try {
         JsBarcode('#tagBarcodeSvg', v.barcode || (currentSpData.maSP + 'BT' + v.id), {
             format: 'CODE128',
-            width: 1.8,
-            height: 48,
+            width: 1.35,
+            height: 44,
             displayValue: false,
-            margin: 4
+            margin: 2
         });
+        var svgEl = document.getElementById('tagBarcodeSvg');
+        if (svgEl) {
+            svgEl.style.maxWidth = '100%';
+            svgEl.style.height = 'auto';
+            svgEl.style.maxHeight = '48px';
+            svgEl.style.display = 'block';
+            svgEl.style.margin = '0 auto';
+        }
     } catch(e) {}
 }
 
@@ -705,11 +713,19 @@ function renderTagPreviewSingle(barcode, color, size, price) {
     try {
         JsBarcode('#tagBarcodeSvg', barcode, {
             format: 'CODE128',
-            width: 1.8,
-            height: 48,
+            width: 1.35,
+            height: 44,
             displayValue: false,
-            margin: 4
+            margin: 2
         });
+        var svgEl = document.getElementById('tagBarcodeSvg');
+        if (svgEl) {
+            svgEl.style.maxWidth = '100%';
+            svgEl.style.height = 'auto';
+            svgEl.style.maxHeight = '48px';
+            svgEl.style.display = 'block';
+            svgEl.style.margin = '0 auto';
+        }
     } catch(e) {}
 }
 
@@ -722,10 +738,10 @@ function openProductMatrixModal(idSP, tenSP, maSP) {
     var container = document.getElementById('matrixContainer');
     container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">Đang tải dữ liệu biến thể ma trận...</div>';
     
-    fetch('${pageContext.request.contextPath}/ProductServlet?ajaxDetailAll=1&idSP=' + idSP)
+    fetch('${pageContext.request.contextPath}/ProductServlet?action=uc12&id=' + idSP)
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            var vars = data.variants || [];
+            var vars = Array.isArray(data) ? data : (data.variants || []);
             if (!vars.length) {
                 container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">Sản phẩm này chưa được thiết lập biến thể màu/size.</div>';
                 return;
@@ -806,9 +822,9 @@ function promptRefillStock(idBT, currentSL, idSP, encodedTenSP) {
     var newSL = currentSL + addVal;
     
     var formData = new URLSearchParams();
-    formData.append('action', 'editVariant');
-    formData.append('idBT', idBT);
-    formData.append('idSP', idSP);
+    formData.append('action', 'uc14');
+    formData.append('idBienThe', idBT);
+    formData.append('idSanPham', idSP);
     formData.append('soLuong', newSL);
     
     fetch('${pageContext.request.contextPath}/ProductServlet', {

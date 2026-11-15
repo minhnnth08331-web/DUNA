@@ -46,6 +46,14 @@
                 <div class="login-btn-container">
                     <button type="submit" class="btn btn-primary">ĐĂNG NHẬP HỆ THỐNG</button>
                 </div>
+
+                <div style="margin-top: 18px; padding: 12px 14px; background: rgba(197, 160, 89, 0.08); border: 1px dashed var(--brand-accent, #c5a059); border-radius: 8px; font-size: 12.5px; color: var(--color-text, #333); text-align: left; line-height: 1.6;">
+                    <div style="font-weight: 600; color: #b45309; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                        <span>🔑</span> <span>Tài khoản kiểm thử hệ thống DUNA:</span>
+                    </div>
+                    <div>• <b>Quản lý (Manager):</b> <code>admin</code> | Mật khẩu: <code>123</code> (hoặc <code>admin</code>)</div>
+                    <div>• <b>Nhân viên (POS):</b> <code>nv01</code> | Mật khẩu: <code>123</code></div>
+                </div>
             </form>
         </div>
     </div>

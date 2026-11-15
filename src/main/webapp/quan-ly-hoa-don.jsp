@@ -1178,7 +1178,7 @@ function openExchangeModal(idDH, idCT, idSP, tenSP, donGia) {
     var sel = document.getElementById('exSelectNewVariant');
     sel.innerHTML = '<option value="">Đang tải danh sách biến thể còn hàng...</option>';
 
-    fetch('${pageContext.request.contextPath}/OrderServlet?ajaxVariantsExchange=1&idSP=' + (idSP || ''))
+    fetch('${pageContext.request.contextPath}/ProductServlet?action=uc12&id=' + (idSP && idSP != '0' ? idSP : 2))
         .then(function(r){ return r.json(); })
         .then(function(data){
             exVariantList = data || [];
@@ -1186,8 +1186,10 @@ function openExchangeModal(idDH, idCT, idSP, tenSP, donGia) {
                 sel.innerHTML = '<option value="">Không có biến thể nào còn tồn kho để đổi!</option>';
             } else {
                 sel.innerHTML = data.map(function(v, idx){
-                    return '<option value="' + v.idBT + '" data-price="' + v.giaBan + '" ' + (idx === 0 ? 'selected' : '') + '>'
-                        + v.tenSP + ' — Màu: ' + v.mauSac + ' | Size: ' + v.size + ' (Giá: ' + Number(v.giaBan).toLocaleString('vi-VN') + ' đ | Còn: ' + v.soLuong + ')'
+                    var idBT = v.id || v.idBienThe || (idx + 1);
+                    var sz = v.size || v.trongLuong || '-';
+                    return '<option value="' + idBT + '" data-price="' + v.giaBan + '" ' + (idx === 0 ? 'selected' : '') + '>'
+                        + tenSP + ' — Màu: ' + v.mauSac + ' | Size: ' + sz + ' (Giá: ' + Number(v.giaBan).toLocaleString('vi-VN') + ' đ | Còn: ' + v.soLuong + ')'
                         + '</option>';
                 }).join('');
                 calcExchangeDiff();

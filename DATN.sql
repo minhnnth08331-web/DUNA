@@ -2,23 +2,23 @@
 -- DATABASE CREATION: HỆ THỐNG QUẢN LÝ BÁN HÀNG THỜI TRANG NAM DUNA - DUNA MEN'S WEAR (19 BẢNG)
 -- Core Features: Sản phẩm - Biến thể (Màu/Size), Tồn kho, Bán hàng tại quầy (POS), Voucher & Hạng thành viên
 -- Target RDBMS: SQL Server 2016+ / Azure SQL Database
--- Database Name: DUNA
+-- Database Name: QUANLYBANHANGQUANAONAMDUNA
 -- ============================================================================
 
 USE [master];
 GO
 
-IF EXISTS (SELECT name FROM sys.databases WHERE name = N'DUNA')
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'QUANLYBANHANGQUANAONAMDUNA')
 BEGIN
-    ALTER DATABASE [DUNA] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE [DUNA];
+    ALTER DATABASE [QUANLYBANHANGQUANAONAMDUNA] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [QUANLYBANHANGQUANAONAMDUNA];
 END
 GO
 
-CREATE DATABASE [DUNA];
+CREATE DATABASE [QUANLYBANHANGQUANAONAMDUNA];
 GO
 
-USE [DUNA];
+USE [QUANLYBANHANGQUANAONAMDUNA];
 GO
 
 -- Bắt buộc bật để dùng Filtered Index (UNIQUE cho các cột cho phép NULL)
@@ -1789,7 +1789,7 @@ LEFT JOIN (
 GO
 
 PRINT N'====================================================================';
-PRINT N'✅ ĐÃ KHỞI TẠO CƠ SỞ DỮ LIỆU [DUNA] VÀ NẠP DỮ LIỆU MẪU THÀNH CÔNG!';
+PRINT N'✅ ĐÃ KHỞI TẠO CƠ SỞ DỮ LIỆU [QUANLYBANHANGQUANAONAMDUNA] VÀ NẠP DỮ LIỆU MẪU THÀNH CÔNG!';
 PRINT N'   - 19 Bảng chuẩn hóa quan hệ & tối ưu Index';
 PRINT N'   - 8 Tài khoản quản trị & nhân sự DUNA (Mật khẩu: 123)';
 PRINT N'   - 100 Khách hàng thành viên DUNA Club đầy đủ địa chỉ giao hàng';
