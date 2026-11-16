@@ -147,6 +147,43 @@
 
 ---
 
+### 7. Bổ Sung Cột Câu Lệnh Truy Vấn SQL Vào Tài Liệu ULNL (Lab 4.1) & Xác Nhận Chuẩn Hóa CSDL Cho Thành Viên 1 (Nguyễn Ngọc Minh - TH08331)
+- **Yêu cầu nhiệm vụ (Lab 4.1 - Dự án Java 1):**
+  - Trong tài liệu Ước lượng Năng lực (ULNL) `Nhom6_64_usecase_CHUAN_HOA_DUNA.xlsx`, bổ sung thêm cột **"Câu lệnh truy vấn (SQL)"** tại sheet *Phân Công*.
+  - Viết đầy đủ và chuẩn xác các câu lệnh SQL truy vấn tương ứng với từng chức năng cá nhân phụ trách (Nguyễn Ngọc Minh - MSSV: TH08331 phụ trách UC 01 -> UC 16) và toàn bộ 64 Use Case của nhóm 6.
+  - Kiểm tra, thẩm định và xác nhận tính đúng đắn của các câu lệnh SQL trên CSDL SQL Server `QUANLYBANHANGQUANAONAMDUNA`.
+- **Nội dung thực hiện:**
+  1. **Bổ sung Cột 15 vào sheet "Phân Công":**
+     - Đặt tên cột: `Câu lệnh truy vấn (SQL)` (Merge ô `O3:O4`, nền cam `FFFF9900`, chữ in đậm Times New Roman 12pt đồng bộ với toàn bộ bảng tính).
+     - Mở rộng tiêu đề bảng `A1:O1` (Title: *MA TRẬN CHI TIẾT USECASE & PHÂN CÔNG THỰC HIỆN*).
+     - Thiết lập độ rộng cột `O = 75` kèm định dạng `Wrap text` tự động xuống dòng và căn lề trái chuẩn tài liệu báo cáo.
+  2. **Viết câu lệnh SQL chi tiết cho 16 Use Case cá nhân của Nguyễn Ngọc Minh (UC 01 -> UC 16):**
+     - Khớp 100% với cấu trúc bảng thực tế: `DanhMuc`, `SanPham`, `BienTheSanPham`.
+     - Bao phủ đầy đủ các thao tác: Tra cứu danh mục, kiểm tra toàn vẹn khóa ngoại (UC 04), lọc & tính tồn kho tổng từ biến thể (UC 05), tìm kiếm nâng cao (UC 06), thêm/sửa sản phẩm (UC 07, 08), tính giá vốn & biên lợi nhuận gộp COGS (UC 09), cấu hình thuế VAT 8% (UC 10), toggle trạng thái kinh doanh (UC 11), kiểm tra trùng tổ hợp Màu/Size duy nhất (UC 13), đồng bộ tồn kho cha khi xóa biến thể bằng Transaction (UC 15), tra cứu tư vấn Size thông minh (UC 16).
+  3. **Mở rộng đồng bộ SQL cho toàn bộ 64 Use Case (Nhóm 6):**
+     - Điền đầy đủ câu lệnh truy vấn cho cả 4 thành viên (UC 01 -> UC 64), bao gồm các phân hệ POS, Quét Barcode, Thanh toán VietQR, In hóa đơn K80, Thống kê Doanh thu, Khách hàng VIP, Voucher và Nhân sự.
+  4. **Thẩm định & Xác nhận "SQL tôi dùng đúng chưa?":**
+     - Đã xác nhận: Toàn bộ bảng, tên cột và kiểu dữ liệu hoàn toàn trùng khớp với CSDL thực tế đang chạy trên SQL Server (`QUANLYBANHANGQUANAONAMDUNA`).
+     - Xuất đồng bộ sang cả định dạng `Nhom6_64_usecase_CHUAN_HOA_DUNA.xlsx` và `Nhom6_64_usecase_CHUAN_HOA_DUNA.csv`.
+
+---
+
+### 8. Khắc Phục Lỗi Biên Dịch "package connectService does not exist" Do File Trùng Lặp Cũ
+- **Vấn đề phát sinh (User gửi ảnh màn hình lỗi IntelliJ IDEA):**
+  - Khi chạy `mvn tomcat7:run` hoặc Build trên IntelliJ IDEA, hệ thống báo lỗi:
+    `[ERROR] LoginServlet.java src/main/java/Controller [3,22] package connectService does not exist`
+    `[ERROR] cannot find symbol :28 class connectService`
+- **Nguyên nhân kỹ thuật:**
+  - Sau lượt pull/merge git từ nhánh remote, một file mã nguồn cũ đã bị nạp vào: `src/main/java/Controller/LoginServlet.java`.
+  - File này sử dụng đường dẫn package cũ không còn tồn tại (`import connectService.connectService;`), trong khi toàn bộ hệ thống đã được chuẩn hóa theo chuẩn kiến trúc `com.duna.common.connection.connectService`.
+  - Hơn nữa, toàn bộ nghiệp vụ xác thực đăng nhập đã được điều phối chuẩn mực và an toàn tại `ThanhVien2Servlet.java` (`com.duna.thanhvien2_ducanh.controller.ThanhVien2Servlet` phụ trách UC 17 -> UC 32) với đầy đủ hỗ trợ URL pattern `/LoginServlet`.
+- **Giải pháp xử lý:**
+  - Xóa bỏ triệt để file trùng lặp cũ `src/main/java/Controller/LoginServlet.java` và thư mục `Controller/`.
+  - Biên dịch lại toàn bộ dự án (`mvn compile`): 98 source files compiled with javac [debug target 1.8], **BUILD SUCCESS**.
+  - Chạy toàn bộ kiểm thử Unit & Integration Test (`mvn test`): 8/8 tests pass tuyệt đối (0 failures, 0 errors). Hệ thống Tomcat 7 khởi động bình thường.
+
+---
+
 ## 📅 CẬP NHẬT TRƯỚC: 15/11/2026
 
 ---

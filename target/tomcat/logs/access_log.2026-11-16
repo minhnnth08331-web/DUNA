@@ -251,3 +251,13 @@
 0:0:0:0:0:0:0:1 - - [16/Nov/2026:06:04:33 +0700] "GET /DUNA/ProductServlet?action=uc12&id=20 HTTP/1.1" 200 711 http-bio-8080-exec-9 18
 0:0:0:0:0:0:0:1 - - [16/Nov/2026:06:04:38 +0700] "GET /DUNA/CustomerServlet HTTP/1.1" 200 208268 http-bio-8080-exec-9 30
 0:0:0:0:0:0:0:1 - - [16/Nov/2026:06:04:47 +0700] "GET /DUNA/OrderServlet?view=sell HTTP/1.1" 200 563520 http-bio-8080-exec-9 78
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:03 +0700] "GET /DUNA HTTP/1.1" 302 - http-bio-8080-exec-2 0
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:03 +0700] "GET /DUNA/ HTTP/1.1" 302 - http-bio-8080-exec-3 9
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:04 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 12569 http-bio-8080-exec-4 167
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:07 +0700] "POST /DUNA/LoginServlet HTTP/1.1" 302 - http-bio-8080-exec-5 444
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:08 +0700] "GET /DUNA/EmployeeManagementServlet HTTP/1.1" 200 21434 http-bio-8080-exec-6 980
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:10 +0700] "GET /DUNA/CustomerServlet HTTP/1.1" 200 208268 http-bio-8080-exec-7 282
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:19 +0700] "GET /DUNA/EmployeeManagementServlet HTTP/1.1" 200 21434 http-bio-8080-exec-8 55
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:21 +0700] "GET /DUNA/OrderServlet?view=sell HTTP/1.1" 200 563520 http-bio-8080-exec-9 151
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:22 +0700] "GET /DUNA/OrderServlet HTTP/1.1" 200 81594 http-bio-8080-exec-10 391
+0:0:0:0:0:0:0:1 - - [16/Nov/2026:07:53:23 +0700] "GET /DUNA/OrderServlet?view=report HTTP/1.1" 200 94396 http-bio-8080-exec-10 413
