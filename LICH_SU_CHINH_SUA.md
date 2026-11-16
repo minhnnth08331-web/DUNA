@@ -639,6 +639,38 @@ epository (KhachHangDAO, VoucherDAO, NhanVienDAO).
 
 ---
 
+## 18. [2026-11-16] MỞ RỘNG CƠ SỞ DỮ LIỆU: BỔ SUNG 50 KHÁCH HÀNG & 70 SẢN PHẨM THỜI TRANG NAM KÈM 251 BIẾN THỂ
+
+- **Người thực hiện:** AI Assistant & Nhóm 6 DUNA
+- **Mục tiêu & Yêu cầu:**
+  1. Mở rộng dữ liệu thực tế cho CSDL `QUANLYBANHANGQUANAONAMDUNA` theo đúng phân khúc thời trang nam tầm trung DUNA (giá 90.000đ - 1.650.000đ, mẫu mã thanh lịch, phổ thông cho nam giới).
+  2. Bổ sung danh sách đủ 50 khách hàng thành viên (`KhachHang`):
+     - Chuẩn hóa mã KH từ `KH-00001` đến `KH-00050`.
+     - Đầy đủ thông tin: Họ tên tiếng Việt, số điện thoại 10 số hợp lệ (`09...`, `03...`, `08...`, `07...`), email, giới tính Nam, ngày sinh, địa chỉ tại các thành phố lớn (Hà Nội, TP.HCM, Đà Nẵng, Hải Phòng, Cần Thơ, v.v.).
+     - Phân tầng hạng thành viên chuẩn nghiệp vụ: Thường (19 khách: 0 - 1.750.000đ), Bạc (12 khách: 2.400.000đ - 4.500.000đ), Vàng (11 khách: 5.800.000đ - 9.100.000đ), VIP (8 khách: 14.500.000đ - 28.000.000đ).
+  3. Bổ sung đủ 70 sản phẩm thời trang nam (`SanPham`):
+     - Chuẩn hóa mã SP từ `SP001` đến `SP070`.
+     - Phân bổ cân đối theo 6 danh mục cốt lõi của DUNA:
+       - Danh mục 1 (Áo Sơ Mi Nam): 15 sản phẩm (`SP001`, `SP007` -> `SP020`) - Tổng tồn 1.335 SP.
+       - Danh mục 2 (Áo Polo Nam): 15 sản phẩm (`SP002`, `SP021` -> `SP034`) - Tổng tồn 1.345 SP.
+       - Danh mục 3 (Quần Âu Nam): 12 sản phẩm (`SP003`, `SP035` -> `SP045`) - Tổng tồn 885 SP.
+       - Danh mục 4 (Quần Khaki Nam): 10 sản phẩm (`SP005`, `SP046` -> `SP054`) - Tổng tồn 740 SP.
+       - Danh mục 5 (Áo Blazer & Suit): 10 sản phẩm (`SP004`, `SP055` -> `SP063`) - Tổng tồn 363 SP.
+       - Danh mục 6 (Phụ Kiện Nam): 8 sản phẩm (`SP006`, `SP064` -> `SP070`) - Tổng tồn 360 SP.
+       - **Tổng tồn kho toàn chuỗi:** 5.028 sản phẩm.
+  4. Tạo 251 biến thể sản phẩm chi tiết (`BienTheSanPham`):
+     - Đầy đủ kích cỡ (S, M, L, XL, 2XL, 29, 30, 31, 32, 48, 50, 52, Freesize) và màu sắc (Trắng, Đen, Xanh Navy, Xanh Baby, Xám Ghi, Vàng Khaki, Rêu, Be Sáng, Nâu Tây).
+     - Sinh mã Barcode chuẩn mực `SPxxx-COLOR-SIZE` (ví dụ `SP007-WHT-M`, `SP021-BLK-L`, `SP046-KHK-30`).
+     - Tự động đồng bộ `TongSoLuong` và `SoLuong` của sản phẩm cha bằng đúng tổng tồn kho các biến thể con.
+  5. Đã kiểm thử giao diện & xác minh qua Chrome DevTools MCP:
+     - `http://localhost:8080/DUNA/ProductServlet`: Hiển thị trọn vẹn 70 sản phẩm, bộ lọc danh mục và chức năng mở ma trận tồn kho 2 chiều (L, M, S) hoạt động mượt mà.
+     - `http://localhost:8080/DUNA/CustomerServlet`: Hiển thị đầy đủ 50 khách hàng, phân hạng VIP và chi tiêu tích lũy rõ ràng.
+     - `http://localhost:8080/DUNA/OrderServlet?view=sell`: Nạp đủ 70 sản phẩm và 50 khách hàng vào hộp chọn thu ngân.
+  6. Kết quả kiểm thử Maven:
+     - `mvn test`: 8/8 test cases Passed (BUILD SUCCESS), không có lỗi hồi quy.
+
+---
+
 ## 📌 HƯỚNG DẪN DÀNH CHO CÁC LẦN CHỈNH SỬA TIẾP THEO
 Mỗi khi có yêu cầu chỉnh sửa hoặc thêm tính năng mới, AI Assistant và Lập trình viên bắt buộc phải:
 1. Ghi rõ **Thời gian**, **Mục đích thay đổi** và **Danh sách file bị tác động**.

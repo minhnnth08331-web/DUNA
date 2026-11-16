@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="DUNAFunctionalTest" time="0.024" tests="4" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="DUNAFunctionalTest" time="0.015" tests="4" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -15,7 +15,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="US"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk-17\bin"/>
-    <property name="sun.java.command" value="C:\Users\Administrator\AppData\Local\Temp\surefire4667298198797285888\surefirebooter-20261116054213661_3.jar C:\Users\Administrator\AppData\Local\Temp\surefire4667298198797285888 2026-11-16T05-42-13_479-jvmRun1 surefire-20261116054213661_1tmp surefire_0-20261116054213661_2tmp"/>
+    <property name="sun.java.command" value="C:\Users\Administrator\AppData\Local\Temp\surefire2878509903930412814\surefirebooter-20261116060329810_3.jar C:\Users\Administrator\AppData\Local\Temp\surefire2878509903930412814 2026-11-16T06-03-29_672-jvmRun1 surefire-20261116060329810_1tmp surefire_0-20261116060329810_2tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="D:\fpt\DUNA\target\test-classes;D:\fpt\DUNA\target\classes;C:\Users\Administrator\.m2\repository\junit\junit\3.8.1\junit-3.8.1.jar;C:\Users\Administrator\.m2\repository\javax\servlet\javax.servlet-api\4.0.1\javax.servlet-api-4.0.1.jar;C:\Users\Administrator\.m2\repository\javax\servlet\jstl\1.2\jstl-1.2.jar;C:\Users\Administrator\.m2\repository\com\microsoft\sqlserver\mssql-jdbc\12.6.1.jre11\mssql-jdbc-12.6.1.jre11.jar;C:\Users\Administrator\.m2\repository\org\apache\poi\poi\4.1.2\poi-4.1.2.jar;C:\Users\Administrator\.m2\repository\commons-codec\commons-codec\1.13\commons-codec-1.13.jar;C:\Users\Administrator\.m2\repository\org\apache\commons\commons-collections4\4.4\commons-collections4-4.4.jar;C:\Users\Administrator\.m2\repository\org\apache\commons\commons-math3\3.6.1\commons-math3-3.6.1.jar;C:\Users\Administrator\.m2\repository\com\zaxxer\SparseBitSet\1.2\SparseBitSet-1.2.jar;C:\Users\Administrator\.m2\repository\org\apache\poi\poi-ooxml\4.1.2\poi-ooxml-4.1.2.jar;C:\Users\Administrator\.m2\repository\org\apache\poi\poi-ooxml-schemas\4.1.2\poi-ooxml-schemas-4.1.2.jar;C:\Users\Administrator\.m2\repository\org\apache\xmlbeans\xmlbeans\3.1.0\xmlbeans-3.1.0.jar;C:\Users\Administrator\.m2\repository\org\apache\commons\commons-compress\1.19\commons-compress-1.19.jar;C:\Users\Administrator\.m2\repository\com\github\virtuald\curvesapi\1.06\curvesapi-1.06.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -30,7 +30,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\Administrator\AppData\Local\Temp\surefire4667298198797285888\surefirebooter-20261116054213661_3.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\Administrator\AppData\Local\Temp\surefire2878509903930412814\surefirebooter-20261116060329810_3.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="17.0.12+8-LTS-286"/>
@@ -56,8 +56,8 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="61.0"/>
   </properties>
-  <testcase name="testVoucherDiscountLimit" classname="DUNAFunctionalTest" time="0.002"/>
-  <testcase name="testPhoneNumberSanitization" classname="DUNAFunctionalTest" time="0.0"/>
+  <testcase name="testCustomerTierCalculation" classname="DUNAFunctionalTest" time="0.001"/>
   <testcase name="testOrderVATCalculation" classname="DUNAFunctionalTest" time="0.0"/>
-  <testcase name="testCustomerTierCalculation" classname="DUNAFunctionalTest" time="0.0"/>
+  <testcase name="testPhoneNumberSanitization" classname="DUNAFunctionalTest" time="0.0"/>
+  <testcase name="testVoucherDiscountLimit" classname="DUNAFunctionalTest" time="0.0"/>
 </testsuite>
