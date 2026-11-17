@@ -48,7 +48,7 @@ public class WarehouseInventoryServlet extends BaseServlet {
         }
         req.setAttribute("warehouses", service.listWarehouses(""));
         req.setAttribute("lowStockCount", service.listLowStock().size());
-        setResultRows(req, uc, "Quan ly Kho & Ton kho (" + uc + ")", rows);
+        setResultRows(req, uc, "Quản lý Kho & Tồn kho (" + uc + ")", rows);
         forwardView(req, resp, "/warehouses".equals(servletPath)
                 ? "/WEB-INF/views/tv2_nguyen_duc_anh/warehouses.jsp"
                 : "/WEB-INF/views/tv2_nguyen_duc_anh/inventory.jsp");

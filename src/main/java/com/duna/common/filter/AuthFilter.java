@@ -26,7 +26,7 @@ public class AuthFilter implements Filter {
             "/roles", "/users", "/hr", "/EmployeeManagementServlet", "/AddEmployeeServlet",
             "/UpdateEmployeeServlet", "/ToggleEmployeeStatusServlet", "/finance",
             "/system", "/marketing", "/notifications", "/procurement", "/categories",
-            "/promotions", "/vouchers", "/VoucherServlet"
+            "/promotions", "/vouchers", "/VoucherServlet", "/uc-run"
     ));
 
     @Override
@@ -59,7 +59,7 @@ public class AuthFilter implements Filter {
                 response.getWriter().write("{\"ok\":false,\"message\":\"Vui long dang nhap he thong DUNA\"}");
                 return;
             }
-            response.sendRedirect(ctx + "/auth?action=login");
+            response.sendRedirect(ctx + "/login.jsp");
             return;
         }
 
@@ -73,7 +73,7 @@ public class AuthFilter implements Filter {
                 response.getWriter().write("{\"ok\":false,\"message\":\"Tu choi truy cap: Tai khoan khong du quyen quan tri (RBAC)\"}");
                 return;
             }
-            String fallback = isStaff ? "/pos?error=access_denied" : "/products?error=access_denied";
+            String fallback = isStaff ? "/OrderServlet?view=sell&error=access_denied" : "/products?error=access_denied";
             response.sendRedirect(ctx + fallback);
             return;
         }
@@ -85,7 +85,8 @@ public class AuthFilter implements Filter {
         if (path.isEmpty() || "/".equals(path) || "/index.jsp".equals(path) || "/login.jsp".equals(path)) {
             return true;
         }
-        if ("/auth".equals(path) || "/LoginServlet".equals(path) || "/LogoutServlet".equals(path)) {
+        if ("/auth".equals(path) || "/LoginServlet".equals(path) || "/LogoutServlet".equals(path)
+                || "/QRConfirmServlet".equals(path) || "/qr-mobile.jsp".equals(path)) {
             return true;
         }
         return path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".png")
@@ -100,8 +101,15 @@ public class AuthFilter implements Filter {
         if ("/OrderServlet".equals(path) && "report".equalsIgnoreCase(request.getParameter("view"))) {
             return true;
         }
-        if (("/products".equals(path) || "/ProductServlet".equals(path) || "/variants".equals(path))
-                && "POST".equalsIgnoreCase(request.getMethod())) {
+        if ("/ProductServlet".equals(path)) {
+            String act = request.getParameter("action");
+            boolean allowedVariantRead = "GET".equalsIgnoreCase(request.getMethod())
+                    && ("uc12".equalsIgnoreCase(act) || "uc16".equalsIgnoreCase(act) || "1".equals(request.getParameter("ajaxDetailAll")));
+            if (!allowedVariantRead) {
+                return true;
+            }
+        }
+        if (("/products".equals(path) || "/variants".equals(path)) && "POST".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
         if (!isStaff && ("/pos".equals(path) || "/stores".equals(path) || "/inventory".equals(path)

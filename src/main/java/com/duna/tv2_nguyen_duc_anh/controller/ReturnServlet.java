@@ -29,7 +29,7 @@ public class ReturnServlet extends BaseServlet {
             writeOkJson(resp, uc, "Thanh cong", rows);
             return;
         }
-        setResultRows(req, uc, "Quan ly Doi tra hang (" + uc + ")", rows);
+        setResultRows(req, uc, "Quản lý Đổi trả hàng (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv2_nguyen_duc_anh/returns.jsp");
     }
 

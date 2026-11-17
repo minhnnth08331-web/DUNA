@@ -8,6 +8,51 @@
 
 ## 📅 CẬP NHẬT GẦN NHẤT: 17/11/2026
 
+### 7. Hoàn Thiện & Đồng Bộ Bộ SQL (`database/`) + File Excel (`Nhom6_300_usecase_CHUAN_HOA_DUNA.xlsx`)
+- **Bộ SQL (`database/01..04`):**
+  - Chuẩn hóa lại dữ liệu đơn hàng mẫu `DN20260802`, `DN20261105`, `voucher_usages` và khóa ngoại `voucher_id` trực tiếp ngay trong [03_DUNA_Seed_Data.sql](file:///d:/fpt/DUNA/database/03_DUNA_Seed_Data.sql), đồng bộ tiếp nối qua [04_DUNA_Sync_Integrity.sql](file:///d:/fpt/DUNA/database/04_DUNA_Sync_Integrity.sql) với `DUNA_MensWear` (`100` bảng, `300` câu SQL tại [02_DUNA_300UC_SQL.sql](file:///d:/fpt/DUNA/database/02_DUNA_300UC_SQL.sql)).
+- **File Excel ([Nhom6_300_usecase_CHUAN_HOA_DUNA.xlsx](file:///d:/fpt/DUNA/Nhom6_300_usecase_CHUAN_HOA_DUNA.xlsx)):**
+  - Chỉnh lại phạm vi `M03` (`UC044–UC086`, `43` UC) và `M04` (`UC087–UC113`, `27` UC) trên sheet **Tổng Quan** khớp 100% với mã nguồn `UcRegistry.java` và sheet **Phân Công**.
+  - Bổ sung đầy đủ 4 cột ánh xạ thực tế (`Module`, `Route Web / JSP`, `Lớp DAO & Dispatcher`, `Trạng thái Triển khai`) cho toàn bộ **300/300 Use Case** trên sheet **Phân Công** và cột **Số dòng dữ liệu thực tế (DB)** từ SQL Server cho đủ **100/100 bảng** trên sheet **Danh Sách 100 Bảng**.
+
+### 6. Chuẩn Hóa Toàn Diện Liên Kết CSDL & Đồng Bộ Hiển Thị Giữa Tài Khoản ↔ Khách Hàng ↔ Hóa Đơn ↔ Nhân Sự
+- **Phân tách rõ màn hình tác nghiệp chính với bàn nghiệp vụ UC mở rộng (`ProductServlet.java`, `CustomerServlet.java`, `OrderServlet.java`, `uc-hub.jsp`):**
+  - Sửa `/products` mở trang [products.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/products.jsp) (COGS, VAT, Tag, Top bán chạy & đủ 23 UC sản phẩm `UC064–086`), `/customers` mở [customers.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/customers.jsp) (Hạng VIP, Nhóm KH, Số đo `UC028–043`) và `/orders` mở [orders.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv2_nguyen_duc_anh/orders.jsp) (Tạo đơn qua điện thoại, Hóa đơn VAT `UC126–151`), không còn trùng lặp với `/ProductServlet`, `/CustomerServlet`, `/OrderServlet`.
+- **Đồng bộ toán học & ràng buộc toàn vẹn CSDL (`database/04_DUNA_Sync_Integrity.sql`):**
+  - Dọn bỏ 4 dòng hạng thẻ lỗi font UTF-8 trùng lặp (`tier_id 5..8`) trong `membership_tiers`, chuẩn hóa 4 hạng duy nhất (`Thành Viên 0%`, `Bạc 3%`, `Vàng 7%`, `Kim Cương 10%`).
+  - Khởi tạo dữ liệu thật cho `permissions`, `role_permissions`, `departments`, `positions`, `work_shifts`; đồng bộ 1:1 nhân sự (`QL001`, `QL002`, `NV003`, `NV004 Lê Minh Bách`, `NV005 Nguyễn Kiều An`) với bảng `users`, ngày sinh riêng biệt, phòng ban và chức vụ rõ ràng.
+  - Khắc phục triệt để tình trạng `customers.total_spent` / `total_orders` / `loyalty_accounts` có số liệu ảo không khớp với `orders`: sinh đầy đủ **1,017 hóa đơn thật (`orders`, `order_items`, `payments`, `loyalty_transactions`)** và đối soát 100% số tiền chi tiêu, số đơn, hạng thành viên, điểm thưởng, lượt dùng voucher và số lượng sản phẩm đã bán (`0` dòng sai lệch).
+- **Đồng bộ giao diện & DAO (`CustomerDAO.java`, `quan-ly-khach-hang.jsp`, `ban-hang.jsp`, `OrderDAO.java`, `ProductDAO.java`, `UserDAO.java`, `users.jsp`, `HumanResourceDAO.java`, `AuthServlet.java`):**
+  - Khắc phục lỗi lệch hạng (`Kim Cương` ở `/users` bị rơi thành `Thường • 0%` và `Vàng` bị hiện `-4%` ở `quan-ly-khach-hang.jsp`), thay bằng hiển thị động theo `membership_tiers`, bổ sung liên kết bấm chéo giữa `Mã KH` ↔ `Tài khoản (/users)` ↔ `Hóa đơn (/OrderServlet)` và `Nhân sự (/EmployeeDetailServlet)`.
+  - Bổ sung tự động thăng hạng `tier_id`, cộng điểm `loyalty_accounts` / `loyalty_transactions`, ghi nhận `voucher_id` + `voucher_usages` ngay khi thanh toán đơn POS/Online tại `OrderDAO`, và sửa tên bảng `inventory_logs` trong `ProductDAO.deleteClassicVariant`.
+
+### 5. Hoàn Thiện Trọn Vẹn M01 Tài Khoản (`UC011–UC027`) & Điều Phối 300/300 Use Case Lên Giao Diện Web
+- **Nâng cấp toàn diện Trung Tâm Tài Khoản & Bảo Mật M01 (`/users` — `UserDAO.java`, `AuthAccountService.java`, `UserServlet.java`, `users.jsp`):**
+  - Đưa đầy đủ **17 Use Case (`UC011–UC027`)** lên giao diện 5 tab trực quan: **Tài khoản (`UC011–022`)**, **Sổ địa chỉ (`UC023–026`)**, **Lịch sử đăng nhập (`UC015`)**, **Đăng nhập thất bại (`UC016`)** và **Nhật ký kiểm toán (`UC027`)**.
+  - Bổ sung bộ lọc vai trò (`ADMIN`, `MANAGER`, `STAFF`, `CUSTOMER`), trạng thái (`ACTIVE`, `LOCKED`), phân trang 20 dòng/trang (`31` trang cho `603+` tài khoản), 4 thẻ KPI tổng quan, modal **Tạo tài khoản (`UC014`)**, modal **Sửa hồ sơ + Đặt lại mật khẩu / Token (`UC017–020`)**, modal **Sổ địa chỉ theo Tỉnh/Thành → Phường/Xã (`UC024–026`)**, khóa/mở khóa đồng bộ 2 chiều (`UC021`) và xóa tài khoản chưa phát sinh đơn (`UC022`).
+- **Hoàn thiện 300/300 Use Case xuyên suốt DAO → Dispatcher → Controller → JSP (`com.duna.common.uc.*`, `BaseServlet.java`, `UcWorkbenchServlet.java`, `AuthFilter.java`, `uc-workbench.jspf`, `uc-hub.jsp`):**
+  - Bổ sung đủ 4 phương thức DAO tường minh còn thiếu: `OrderDAO.uc135_packOrder`, `OrderDAO.uc136_shipOrder`, `PaymentDAO.uc166_createMomoPayment`, `ReviewSupportDAO.uc226_rejectReview` (`300/300` UC có mặt đầy đủ ở tầng DAO).
+  - Tạo kiến trúc điều phối chuẩn hóa `UcRegistry` (`300` metadata + `ParamSpec`), `UcDispatchSupport`, `Tv1UcDispatcher` (`UC001–UC086`), `Tv2UcDispatcher` (`UC087–UC151`), `Tv3UcDispatcher` (`UC152–UC218`), `Tv4UcDispatcher` (`UC219–UC300`) và mở cổng `/uc-run` trong `UcWorkbenchServlet` (bảo vệ `ADMIN/MANAGER` qua `AuthFilter`).
+  - Nhúng `uc-workbench.jspf` vào toàn bộ **23 trang module mở rộng** dưới `WEB-INF/views/` và nâng cấp `uc-hub.jsp` thành **Trình khám phá & chạy thử đủ 300 Use Case**.
+
+### 4. Khắc Phục Lỗi Mất Biến Thể / Barcode, Lỗi In Phiếu & Đồng Bộ Liên Kết CSDL (`DUNA_MensWear`)
+- **Sửa lỗi mất Biến thể & Barcode (`ProductServlet.java`, `ProductDAO.java`, `quan-ly-san-pham.jsp`):**
+  - Chuẩn hóa API `ProductServlet?action=uc12&id=...` trả về trực tiếp mảng JSON biến thể (và trả `{variants, specs}` khi kèm `ajaxDetailAll=1`), khắc phục lỗi `data.map is not a function` làm rỗng modal **Biến thể Size & Màu**, kẹt modal **In tem Barcode** và lỗi nạp dropdown **Đổi Size**.
+  - Bổ sung tạo biến thể khởi tạo khi thêm sản phẩm mới và hàm `deleteClassicVariant` xóa/vô hiệu hóa an toàn không vướng khóa ngoại.
+- **Sửa lỗi Phiếu Thanh Toán Bán Lẻ bị mất STT, Tên sản phẩm & Biến thể (`OrderDAO.java`):**
+  - Bổ sung key `"chiTiet"` (song song `"items"`) trong `OrderDAO.getClassicOrderDetailJson()`, đồng thời ghép đầy đủ tên biến thể `(Màu / Size)` qua `LEFT JOIN product_variants / colors / sizes` và trả kèm `voucherCode`, `voucherName`.
+- **Đồng bộ 100% liên kết 1:1 `users` ↔ `customers` ↔ `employees` & Việt hóa bảng mở rộng (`03_DUNA_Seed_Data.sql`, `UserDAO.java`, `CustomerDAO.java`, `result-table.jspf`, `users.jsp`):**
+  - Đồng bộ toàn bộ 600 khách hàng với 600 tài khoản `users` (`CUSTOMER`) và 600 ví điểm `loyalty_accounts` (`0` khách hàng thiếu liên kết); đồng bộ 2 chiều Thêm/Sửa/Khóa giữa `CustomerDAO` và `UserDAO`.
+  - Hiển thị cột liên kết `Mã KH / NV`, `Hạng / Vai trò`, tiêu đề tiếng Việt có dấu trên `result-table.jspf`, giải thích rõ chức năng phân hệ **Quản lý Tài khoản (M01)** vs **Quản lý Khách hàng (M02)** trên `users.jsp` kèm nút Khóa/Mở khóa trực tiếp từng dòng.
+
+### 3. Khôi Phục Giao Diện Gốc DUNA & Tích Hợp Hybrid 300 Use Case (`DUNA_MensWear`)
+- **Khôi phục trọn vẹn 10 giao diện JSP gốc giàu tính năng từ bản gốc (`5bf252b`) và kết nối trực tiếp CSDL `DUNA_MensWear` (100 bảng):**
+  - `ban-hang.jsp` (`/OrderServlet?view=sell`), `quan-ly-san-pham.jsp` (`/ProductServlet`), `quan-ly-hoa-don.jsp` (`/OrderServlet`), `quan-ly-khach-hang.jsp` (`/CustomerServlet`), `quan-ly-voucher.jsp` (`/VoucherServlet`), `bao-cao-thong-ke.jsp` (`/OrderServlet?view=report`), `employee-management.jsp` (`/EmployeeManagementServlet`), `employee-detail.jsp` (`/EmployeeDetailServlet`), `add-employee.jsp`, `qr-mobile.jsp` (`/QRConfirmServlet`).
+  - Bổ sung các adapter truy vấn & nghiệp vụ tại `ProductDAO`/`ProductServlet`, `CustomerDAO`/`CustomerServlet`, `OrderDAO`/`OrderServlet`, `BarcodeScanServlet`, `PromotionVoucherDAO`/`PromotionVoucherServlet`, `QRConfirmServlet`, `HumanResourceDAO`/`EmployeeHrServlet`, `AuthServlet`, `AuthFilter` (cho phép cả `ADMIN` và `MANAGER` truy cập toàn bộ phân hệ quản trị, đồng thời giữ chặt RBAC cho `STAFF`).
+- **Đồng bộ & hoàn thiện giao diện 17 module mở rộng (`300 UC`):**
+  - Chuẩn hóa liên kết thanh điều hướng `navbar.jspf` và `uc-hub.jsp` về các màn hình tác nghiệp chính kèm đường dẫn truy cập nhanh `300 UC`.
+  - Đồng bộ danh mục thời trang nam trong `quan-ly-san-pham.jsp` khớp 10 danh mục thật của `DUNA_MensWear`, chuẩn hóa tiếng Việt có dấu toàn bộ tiêu đề các Servlet/JSP mở rộng và loại bỏ lỗi `<head>hi` tại `quan-ly-hoa-don.jsp`.
+
 ### 2. Hoàn Thành Giai Đoạn 2: Nâng Cấp Toàn Bộ Mã Nguồn Java Web MVC (100 Bảng / 300 UC) Giữ Giao Diện DUNA Quen Thuộc
 - **Cấu trúc 4 thành viên × 4 tầng MVC (`controller` → `service` → `dao` → `model`) + `com.duna.common`:**
   - `com.duna.common.{util,filter}` (`12` lớp): `DBConnection` (kết nối `DUNA_MensWear`), `BaseDAO`, `BaseServlet`, `RequestUtil`, `PasswordUtil`, `JsonUtil`, `CurrencyUtil`, `DateUtil`, `BarcodeUtil`, `FileUploadUtil`, `ExcelExportUtil`, `EncodingFilter`, `AuthFilter` (RBAC + HttpOnly `yn_user`, không lưu mật khẩu thô).

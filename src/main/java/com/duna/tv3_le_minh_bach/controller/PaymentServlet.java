@@ -40,7 +40,7 @@ public class PaymentServlet extends BaseServlet {
             return;
         }
         req.setAttribute("paymentMethods", service.listPaymentMethods(""));
-        setResultRows(req, uc, "Thanh toan, Hoan tien & Doi soat COD (" + uc + ")", rows);
+        setResultRows(req, uc, "Thanh toán, Hoàn tiền & Đối soát COD (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv3_le_minh_bach/payments.jsp");
     }
 

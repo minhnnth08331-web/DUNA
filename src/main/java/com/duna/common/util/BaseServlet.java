@@ -1,5 +1,8 @@
 package com.duna.common.util;
 
+import com.duna.common.uc.UcRegistry.UcMeta;
+import com.duna.common.uc.UcRegistry;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -48,6 +51,11 @@ public abstract class BaseServlet extends HttpServlet {
 
     protected void forwardView(HttpServletRequest req, HttpServletResponse resp, String jspPath)
             throws ServletException, IOException {
+        if (req.getAttribute("moduleUcs") == null) {
+            List<UcMeta> routeUcs = UcRegistry.findByRoute(req.getServletPath());
+            req.setAttribute("moduleUcs", routeUcs);
+            req.setAttribute("moduleRoute", req.getServletPath());
+        }
         req.getRequestDispatcher(jspPath).forward(req, resp);
     }
 
@@ -55,6 +63,10 @@ public abstract class BaseServlet extends HttpServlet {
         req.setAttribute("activeUc", ucCode);
         req.setAttribute("resultTitle", title);
         req.setAttribute("resultRows", rows);
+        if (req.getAttribute("moduleUcs") == null) {
+            req.setAttribute("moduleUcs", UcRegistry.findByRoute(req.getServletPath()));
+            req.setAttribute("moduleRoute", req.getServletPath());
+        }
     }
 
     protected int getSessionUserId(HttpServletRequest req, int fallback) {

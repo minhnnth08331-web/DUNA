@@ -38,7 +38,7 @@ public class NotificationServlet extends BaseServlet {
             writeOkJson(resp, uc, "Thanh cong", rows);
             return;
         }
-        setResultRows(req, uc, "Thong bao & Chien dich Email (" + uc + ")", rows);
+        setResultRows(req, uc, "Thông báo & Chiến dịch Email (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv4_nguyen_kieu_an/notifications.jsp");
     }
 

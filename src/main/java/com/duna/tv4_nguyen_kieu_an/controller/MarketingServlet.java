@@ -31,7 +31,7 @@ public class MarketingServlet extends BaseServlet {
             writeOkJson(resp, uc, "Thanh cong", rows);
             return;
         }
-        setResultRows(req, uc, "Noi dung & Marketing Web (" + uc + ")", rows);
+        setResultRows(req, uc, "Nội dung & Marketing Web (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv4_nguyen_kieu_an/marketing.jsp");
     }
 

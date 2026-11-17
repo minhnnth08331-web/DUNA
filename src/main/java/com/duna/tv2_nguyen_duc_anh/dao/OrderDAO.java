@@ -1,9 +1,14 @@
 package com.duna.tv2_nguyen_duc_anh.dao;
 
 import com.duna.common.util.BaseDAO;
+import com.duna.common.util.JsonUtil;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * DAO phan he M06 - Quan ly Don hang & Hoa don ban hang (UC126 - UC146).
@@ -117,6 +122,16 @@ public class OrderDAO extends BaseDAO {
         return updated;
     }
 
+    // UC135: Chuyen don hang sang trang thai dong goi
+    public int uc135_packOrder(long orderId, int staffUserId) {
+        return uc134_136_transitionOrderStatus(orderId, "CONFIRMED", "PACKING", staffUserId, "Đóng gói đơn hàng");
+    }
+
+    // UC136: Chuyen don hang sang trang thai dang giao
+    public int uc136_shipOrder(long orderId, int staffUserId) {
+        return uc134_136_transitionOrderStatus(orderId, "PACKING", "SHIPPING", staffUserId, "Bàn giao đơn vị vận chuyển");
+    }
+
     // UC137: Xac nhan giao hang thanh cong va cap nhat thanh toan COD
     public int uc137_markDelivered(long orderId, int staffUserId) {
         int updated = executeUpdate("UPDATE orders SET status = 'DELIVERED', payment_status = 'PAID', updated_at = GETDATE() WHERE order_id = ? AND status = 'SHIPPING'",
@@ -129,18 +144,37 @@ public class OrderDAO extends BaseDAO {
         return updated;
     }
 
-    // UC138: Hoan tat don hang, tru ton thuc te va cong chi tieu tich luy cho khach
+    // UC138: Hoan tat don hang, tru ton thuc te va cong chi tieu + nang hang + tich diem cho khach
     public int uc138_completeOrder(long orderId) {
         int updated = executeUpdate("UPDATE orders SET status = 'COMPLETED', updated_at = GETDATE() WHERE order_id = ? AND status = 'DELIVERED'", orderId);
         if (updated > 0) {
-            executeUpdate("UPDATE customers SET total_spent = total_spent + (SELECT total_amount FROM orders WHERE order_id = ?), "
-                    + "total_orders = total_orders + 1 WHERE customer_id = (SELECT customer_id FROM orders WHERE order_id = ?)",
-                    orderId, orderId);
+            Map<String, Object> ord = queryFirstRow("SELECT customer_id, total_amount, order_code FROM orders WHERE order_id = ?", orderId);
+            if (ord != null && ord.get("customer_id") != null) {
+                syncCustomerSpendTierAndLoyalty(orderId, ((Number) ord.get("customer_id")).intValue(),
+                        ((Number) ord.get("total_amount")).doubleValue(), String.valueOf(ord.get("order_code")));
+            }
             executeUpdate("UPDATE products SET sold_count = sold_count + 1 WHERE product_id IN ("
                     + "SELECT pv.product_id FROM order_items oi JOIN product_variants pv ON oi.variant_id = pv.variant_id WHERE oi.order_id = ?)",
                     orderId);
         }
         return updated;
+    }
+
+    private void syncCustomerSpendTierAndLoyalty(long orderId, int customerId, double orderAmount, String orderCode) {
+        executeUpdate("UPDATE customers SET total_spent = total_spent + ?, total_orders = total_orders + 1, updated_at = GETDATE() WHERE customer_id = ?",
+                orderAmount, customerId);
+        executeUpdate("UPDATE customers SET tier_id = (SELECT TOP 1 t.tier_id FROM membership_tiers t WHERE t.min_spend <= customers.total_spent ORDER BY t.min_spend DESC) WHERE customer_id = ?",
+                customerId);
+        int earned = (int) Math.floor(orderAmount / 10000.0);
+        if (earned > 0) {
+            executeUpdate("IF NOT EXISTS (SELECT 1 FROM loyalty_accounts WHERE customer_id = ?) INSERT INTO loyalty_accounts (customer_id, points_balance, lifetime_points) VALUES (?, 0, 0)",
+                    customerId, customerId);
+            executeUpdate("UPDATE loyalty_accounts SET points_balance = points_balance + ?, lifetime_points = lifetime_points + ?, updated_at = GETDATE() WHERE customer_id = ?",
+                    earned, earned, customerId);
+            executeUpdate("INSERT INTO loyalty_transactions (account_id, order_id, points, txn_type, description) "
+                    + "SELECT account_id, ?, ?, 'EARN', ? FROM loyalty_accounts WHERE customer_id = ?",
+                    orderId, earned, "Tích điểm đơn hàng " + (orderCode == null ? "#" + orderId : orderCode), customerId);
+        }
     }
 
     // UC139: Huy don hang, ghi ly do va hoan tra ton kho giu cho
@@ -207,5 +241,411 @@ public class OrderDAO extends BaseDAO {
     // UC146: Huy hoa don da xuat do sai thong tin
     public int uc146_cancelInvoice(int invoiceId) {
         return executeUpdate("UPDATE invoices SET status = 'CANCELLED' WHERE invoice_id = ? AND status = 'ISSUED'", invoiceId);
+    }
+
+    // --- Adapter cho ban-hang.jsp, quan-ly-hoa-don.jsp, bao-cao-thong-ke.jsp (DUNA_MensWear 100 bang) ---
+    public List<Map<String, Object>> listPosCustomers() {
+        String sql = "SELECT c.customer_id AS id, c.full_name AS ten, ISNULL(c.phone, '') AS sdt, "
+                + "ISNULL(t.tier_name, N'Thành Viên') AS hang, "
+                + "CAST(ISNULL(t.discount_percent, 0) AS INT) AS discountPct, "
+                + "DATEDIFF(DAY, GETDATE(), DATEADD(MONTH, 3, c.created_at)) AS daysLeft "
+                + "FROM customers c LEFT JOIN membership_tiers t ON c.tier_id = t.tier_id "
+                + "WHERE c.is_active = 1 ORDER BY c.customer_id ASC";
+        return queryRows(sql);
+    }
+
+    public List<Map<String, Object>> listPosProducts() {
+        String pSql = "SELECT p.product_id AS id, p.product_code AS maSP, p.product_name AS tenSP, "
+                + "ISNULL(b.brand_name, N'DUNA') AS thuongHieu, CAST(p.base_price AS BIGINT) AS giaBan, "
+                + "CASE WHEN p.base_price >= 1000000 THEN N'Cao cấp' WHEN p.base_price >= 400000 THEN N'Trung cấp' ELSE N'Tiêu chuẩn' END AS phanCap "
+                + "FROM products p LEFT JOIN brands b ON p.brand_id = b.brand_id WHERE p.is_active = 1 ORDER BY p.product_id ASC";
+        List<Map<String, Object>> products = queryRows(pSql);
+
+        String vSql = "SELECT pv.product_id, pv.variant_id AS id, pv.variant_id AS idBienThe, "
+                + "c.color_name AS mauSac, s.size_code AS trongLuong, pv.sku AS maBienThe, "
+                + "ISNULL(pv.barcode, pv.sku) AS barcode, CAST(ISNULL(pv.price, p.base_price) AS BIGINT) AS giaBan, "
+                + "ISNULL(SUM(inv.stock_quantity), 0) AS soLuong "
+                + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
+                + "JOIN colors c ON pv.color_id = c.color_id JOIN sizes s ON pv.size_id = s.size_id "
+                + "LEFT JOIN inventories inv ON pv.variant_id = inv.variant_id "
+                + "WHERE pv.is_active = 1 "
+                + "GROUP BY pv.product_id, pv.variant_id, c.color_name, s.size_code, pv.sku, pv.barcode, pv.price, p.base_price";
+        List<Map<String, Object>> allVars = queryRows(vSql);
+
+        Map<Integer, List<Map<String, Object>>> byProd = new LinkedHashMap<>();
+        for (Map<String, Object> v : allVars) {
+            int pid = ((Number) v.get("product_id")).intValue();
+            v.put("mau", v.get("mauSac"));
+            v.put("tl", v.get("trongLuong"));
+            v.put("size", v.get("trongLuong"));
+            byProd.computeIfAbsent(pid, k -> new ArrayList<>()).add(v);
+        }
+        for (Map<String, Object> p : products) {
+            int pid = ((Number) p.get("id")).intValue();
+            List<Map<String, Object>> vars = byProd.getOrDefault(pid, new ArrayList<>());
+            Set<String> colors = new LinkedHashSet<>();
+            Set<String> sizes = new LinkedHashSet<>();
+            int stockSum = 0;
+            for (Map<String, Object> v : vars) {
+                colors.add(String.valueOf(v.get("mauSac")));
+                sizes.add(String.valueOf(v.get("trongLuong")));
+                stockSum += ((Number) v.get("soLuong")).intValue();
+            }
+            p.put("soLuong", stockSum);
+            p.put("mauSacList", new ArrayList<>(colors));
+            p.put("trongLuongList", new ArrayList<>(sizes));
+            p.put("variantsJson", JsonUtil.toJson(vars));
+        }
+        return products;
+    }
+
+    public Map<String, Object> scanByBarcodeOrSku(String code) {
+        String q = code == null ? "" : code.trim();
+        String sql = "SELECT TOP 1 p.product_id AS id, pv.variant_id AS idBT, p.product_code AS maSP, "
+                + "p.product_name AS tenSP, CAST(ISNULL(pv.price, p.base_price) AS BIGINT) AS giaBan, "
+                + "ISNULL(inv.stock_quantity, 0) AS soLuong, c.color_name AS mauSac, s.size_code AS trongLuong "
+                + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
+                + "JOIN colors c ON pv.color_id = c.color_id JOIN sizes s ON pv.size_id = s.size_id "
+                + "LEFT JOIN inventories inv ON pv.variant_id = inv.variant_id "
+                + "WHERE pv.barcode = ? OR pv.sku = ? OR p.product_code = ?";
+        Map<String, Object> row = queryFirstRow(sql, q, q, q);
+        if (row != null) {
+            row.put("found", Boolean.TRUE);
+        }
+        return row;
+    }
+
+    public double getVatRate() {
+        Map<String, Object> row = queryFirstRow("SELECT TOP 1 setting_value FROM system_settings WHERE setting_key = 'VAT_RATE'");
+        if (row != null && row.get("setting_value") != null) {
+            try {
+                return Double.parseDouble(String.valueOf(row.get("setting_value")));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return 8.0;
+    }
+
+    public int updateVatRate(double newVat) {
+        return executeUpdate("UPDATE system_settings SET setting_value = ?, updated_at = GETDATE() WHERE setting_key = 'VAT_RATE'",
+                String.valueOf((int) Math.round(newVat)));
+    }
+
+    public Map<String, Object> getHoldOrderInfo(long orderId) {
+        Map<String, Object> h = queryFirstRow(
+                "SELECT o.order_id AS id, o.order_code AS maDH, ISNULL(o.customer_id, 0) AS idKH, "
+                        + "o.receiver_name AS tenKH, ISNULL(o.receiver_phone, '') AS sdtKH, ISNULL(o.note, '') AS ghiChu "
+                        + "FROM orders o WHERE o.order_id = ? AND o.payment_status = 'UNPAID'", orderId);
+        if (h == null) {
+            return null;
+        }
+        List<Map<String, Object>> items = queryRows(
+                "SELECT pv.product_id AS idSP, oi.product_name AS tenSP, CAST(oi.unit_price AS BIGINT) AS donGia, "
+                        + "oi.quantity AS soLuong, ISNULL(inv.stock_quantity, 10) AS tonKho "
+                        + "FROM order_items oi JOIN product_variants pv ON oi.variant_id = pv.variant_id "
+                        + "LEFT JOIN inventories inv ON pv.variant_id = inv.variant_id WHERE oi.order_id = ?", orderId);
+        h.put("items", items);
+        return h;
+    }
+
+    public long saveClassicPosOrder(long holdId, Integer customerId, int staffUserId, boolean isPaid,
+                                    String payMethod, String voucherCode, double discountAmount,
+                                    double taxAmount, String note, String[] spIds, String[] qtys,
+                                    String[] prices, String[] colors, String[] sizes) {
+        if (spIds == null || spIds.length == 0) {
+            return -1L;
+        }
+        double subtotal = 0;
+        List<int[]> itemVars = new ArrayList<>();
+        List<String[]> itemMeta = new ArrayList<>();
+        List<Integer> itemQtys = new ArrayList<>();
+        List<Double> itemPrices = new ArrayList<>();
+
+        for (int i = 0; i < spIds.length; i++) {
+            int spId = Integer.parseInt(spIds[i].trim());
+            int qty = Integer.parseInt(qtys[i].trim());
+            double price = Double.parseDouble(prices[i].trim());
+            String col = (colors != null && i < colors.length) ? colors[i].trim() : "";
+            String sz = (sizes != null && i < sizes.length) ? sizes[i].trim() : "";
+
+            Map<String, Object> vRow = queryFirstRow(
+                    "SELECT TOP 1 pv.variant_id, pv.sku, p.product_name "
+                            + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
+                            + "JOIN colors c ON pv.color_id = c.color_id JOIN sizes s ON pv.size_id = s.size_id "
+                            + "WHERE pv.product_id = ? AND (? = '' OR c.color_name = ?) AND (? = '' OR s.size_code = ?) "
+                            + "ORDER BY pv.variant_id ASC",
+                    spId, col, col, sz, sz);
+            if (vRow == null) {
+                vRow = queryFirstRow(
+                        "SELECT TOP 1 pv.variant_id, pv.sku, p.product_name FROM product_variants pv JOIN products p ON pv.product_id = p.product_id WHERE pv.product_id = ?",
+                        spId);
+            }
+            if (vRow == null) {
+                continue;
+            }
+            int variantId = ((Number) vRow.get("variant_id")).intValue();
+            String label = String.valueOf(vRow.get("product_name"))
+                    + (!col.isEmpty() || !sz.isEmpty() ? " (" + col + (!col.isEmpty() && !sz.isEmpty() ? " - " : "") + sz + ")" : "");
+            subtotal += price * qty;
+            itemVars.add(new int[]{spId, variantId});
+            itemMeta.add(new String[]{label, String.valueOf(vRow.get("sku"))});
+            itemQtys.add(qty);
+            itemPrices.add(price);
+        }
+        if (itemVars.isEmpty()) {
+            return -1L;
+        }
+        double totalAmount = Math.max(0, subtotal - discountAmount + taxAmount);
+
+        String custName = "Khách vãng lai";
+        String custPhone = "0000000000";
+        if (customerId != null && customerId > 0) {
+            Map<String, Object> cRow = queryFirstRow("SELECT full_name, ISNULL(phone, '') AS phone FROM customers WHERE customer_id = ?", customerId);
+            if (cRow != null) {
+                custName = String.valueOf(cRow.get("full_name"));
+                custPhone = String.valueOf(cRow.get("phone"));
+            }
+        } else {
+            customerId = null;
+        }
+
+        if (holdId > 0) {
+            executeUpdate("DELETE FROM order_items WHERE order_id = ?", holdId);
+            executeUpdate(
+                    "UPDATE orders SET customer_id = ?, status = ?, payment_status = ?, subtotal = ?, discount_amount = ?, "
+                            + "tax_amount = ?, total_amount = ?, note = ?, updated_at = GETDATE() WHERE order_id = ?",
+                    customerId, isPaid ? "COMPLETED" : "PENDING", isPaid ? "PAID" : "UNPAID",
+                    subtotal, discountAmount, taxAmount, totalAmount, note, holdId);
+        } else {
+            String orderCode = "POS" + uc131_generateNextOrderCode().substring(2);
+            holdId = executeInsertGetId(
+                    "INSERT INTO orders (order_code, customer_id, store_id, channel, status, payment_status, handled_by, "
+                            + "receiver_name, receiver_phone, shipping_address, subtotal, discount_amount, tax_amount, total_amount, note) "
+                            + "VALUES (?, ?, (SELECT TOP 1 store_id FROM stores ORDER BY store_id), 'POS', ?, ?, ?, ?, ?, N'Tại cửa hàng DUNA', ?, ?, ?, ?, ?)",
+                    orderCode, customerId, isPaid ? "COMPLETED" : "PENDING", isPaid ? "PAID" : "UNPAID",
+                    staffUserId, custName, custPhone, subtotal, discountAmount, taxAmount, totalAmount, note);
+        }
+
+        Integer whId = queryOne("SELECT TOP 1 warehouse_id FROM warehouses ORDER BY warehouse_id", rs -> rs.getInt(1));
+        for (int i = 0; i < itemVars.size(); i++) {
+            int variantId = itemVars.get(i)[1];
+            int qty = itemQtys.get(i);
+            double price = itemPrices.get(i);
+            executeUpdate("INSERT INTO order_items (order_id, variant_id, product_name, sku, quantity, unit_price, line_total) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    holdId, variantId, itemMeta.get(i)[0], itemMeta.get(i)[1], qty, price, qty * price);
+            if (isPaid && whId != null) {
+                executeUpdate("UPDATE inventories SET stock_quantity = CASE WHEN stock_quantity >= ? THEN stock_quantity - ? ELSE 0 END, updated_at = GETDATE() WHERE variant_id = ? AND warehouse_id = ?",
+                        qty, qty, variantId, whId);
+                executeUpdate("INSERT INTO inventory_logs (variant_id, warehouse_id, change_type, quantity_changed, reference_type, reference_id) VALUES (?, ?, 'SALE', ?, 'ORDER', ?)",
+                        variantId, whId, -qty, holdId);
+                executeUpdate("UPDATE products SET sold_count = sold_count + ? WHERE product_id = ?", qty, itemVars.get(i)[0]);
+            }
+        }
+        if (isPaid) {
+            if (voucherCode != null && !voucherCode.trim().isEmpty()) {
+                Map<String, Object> vRow = queryFirstRow("SELECT TOP 1 voucher_id FROM vouchers WHERE voucher_code = ?", voucherCode.trim());
+                if (vRow != null) {
+                    int vid = ((Number) vRow.get("voucher_id")).intValue();
+                    executeUpdate("UPDATE orders SET voucher_id = ? WHERE order_id = ?", vid, holdId);
+                    executeUpdate("UPDATE vouchers SET used_count = used_count + 1 WHERE voucher_id = ?", vid);
+                    Integer usageUid = customerId != null
+                            ? queryOne("SELECT user_id FROM customers WHERE customer_id = ?", rs -> rs.getInt(1), customerId)
+                            : null;
+                    executeUpdate("INSERT INTO voucher_usages (voucher_id, user_id, order_id, discount_amount) VALUES (?, ?, ?, ?)",
+                            vid, usageUid != null ? usageUid : staffUserId, holdId, discountAmount);
+                }
+            }
+            if (customerId != null) {
+                Map<String, Object> oCodeRow = queryFirstRow("SELECT order_code FROM orders WHERE order_id = ?", holdId);
+                String finalCode = oCodeRow != null ? String.valueOf(oCodeRow.get("order_code")) : ("#" + holdId);
+                syncCustomerSpendTierAndLoyalty(holdId, customerId, totalAmount, finalCode);
+            }
+            String methodCode = (payMethod != null && payMethod.toLowerCase().contains("chuyển")) ? "VNPAY" : "COD";
+            executeUpdate("INSERT INTO payments (order_id, method_id, amount, status, paid_at) "
+                    + "SELECT ?, method_id, ?, 'SUCCESS', GETDATE() FROM payment_methods WHERE method_code = ?",
+                    holdId, totalAmount, methodCode);
+        }
+        return holdId;
+    }
+
+    public List<Map<String, Object>> listClassicOrders(String search, String trangThai, String payMethod,
+                                                       String fromDate, String toDate, int offset, int limit) {
+        String kw = likePattern(search);
+        String st = trangThai == null ? "" : trangThai.trim();
+        String pm = payMethod == null ? "" : payMethod.trim();
+        String fd = (fromDate == null || fromDate.trim().isEmpty()) ? "2000-01-01" : fromDate.trim();
+        String td = (toDate == null || toDate.trim().isEmpty()) ? "2099-12-31" : toDate.trim() + " 23:59:59";
+        String sql = "SELECT o.order_id AS id, o.order_code AS maDH, "
+                + "CONVERT(VARCHAR(16), o.ordered_at, 120) AS ngayTao, "
+                + "ISNULL(o.receiver_name, N'Khách vãng lai') AS tenKH, "
+                + "ISNULL(u.full_name, N'Admin') AS tenNV, "
+                + "CASE WHEN EXISTS (SELECT 1 FROM payments p JOIN payment_methods m ON p.method_id = m.method_id WHERE p.order_id = o.order_id AND m.is_online = 1) THEN N'Chuyển khoản' ELSE N'Tiền mặt' END AS thanhToan, "
+                + "CASE WHEN o.status = 'CANCELLED' THEN N'Đã hủy' WHEN o.payment_status = 'PAID' OR o.status IN ('COMPLETED', 'DELIVERED') THEN N'Đã thanh toán' ELSE N'Chưa thanh toán' END AS trangThai, "
+                + "CAST(o.total_amount AS BIGINT) AS tongTien, ISNULL(o.note, '') AS ghiChu "
+                + "FROM orders o LEFT JOIN users u ON o.handled_by = u.user_id "
+                + "WHERE (o.order_code LIKE ? OR ISNULL(o.receiver_name, '') LIKE ? OR ISNULL(o.receiver_phone, '') LIKE ?) "
+                + "AND o.ordered_at BETWEEN ? AND ? "
+                + "AND (? = '' OR ? = 'ALL' "
+                + "  OR (? = N'Đã thanh toán' AND (o.payment_status = 'PAID' OR o.status IN ('COMPLETED', 'DELIVERED')) AND o.status <> 'CANCELLED') "
+                + "  OR (? = N'Chưa thanh toán' AND o.payment_status = 'UNPAID' AND o.status <> 'CANCELLED') "
+                + "  OR (? = N'Đã hủy' AND o.status = 'CANCELLED')) "
+                + "AND (? = '' OR ? = 'ALL' "
+                + "  OR (? = N'Chuyển khoản' AND EXISTS (SELECT 1 FROM payments p JOIN payment_methods m ON p.method_id = m.method_id WHERE p.order_id = o.order_id AND m.is_online = 1)) "
+                + "  OR (? = N'Tiền mặt' AND NOT EXISTS (SELECT 1 FROM payments p JOIN payment_methods m ON p.method_id = m.method_id WHERE p.order_id = o.order_id AND m.is_online = 1))) "
+                + "ORDER BY o.order_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        List<Map<String, Object>> orders = queryRows(sql, kw, kw, kw, fd, td, st, st, st, st, st, pm, pm, pm, pm, Math.max(0, offset), Math.max(1, limit));
+        for (Map<String, Object> dh : orders) {
+            long oid = ((Number) dh.get("id")).longValue();
+            List<Map<String, Object>> items = queryRows(
+                    "SELECT oi.order_item_id AS idChiTiet, pv.product_id AS idSP, oi.product_name AS tenSP, "
+                            + "oi.quantity AS soLuong, CAST(oi.unit_price AS BIGINT) AS donGia, CAST(oi.line_total AS BIGINT) AS thanhTien "
+                            + "FROM order_items oi JOIN product_variants pv ON oi.variant_id = pv.variant_id WHERE oi.order_id = ?", oid);
+            dh.put("chiTiet", items);
+        }
+        return orders;
+    }
+
+    public int countClassicOrders(String search, String trangThai, String payMethod, String fromDate, String toDate) {
+        String kw = likePattern(search);
+        String st = trangThai == null ? "" : trangThai.trim();
+        String fd = (fromDate == null || fromDate.trim().isEmpty()) ? "2000-01-01" : fromDate.trim();
+        String td = (toDate == null || toDate.trim().isEmpty()) ? "2099-12-31" : toDate.trim() + " 23:59:59";
+        String sql = "SELECT COUNT(*) FROM orders o "
+                + "WHERE (o.order_code LIKE ? OR ISNULL(o.receiver_name, '') LIKE ? OR ISNULL(o.receiver_phone, '') LIKE ?) "
+                + "AND o.ordered_at BETWEEN ? AND ? "
+                + "AND (? = '' OR ? = 'ALL' "
+                + "  OR (? = N'Đã thanh toán' AND (o.payment_status = 'PAID' OR o.status IN ('COMPLETED', 'DELIVERED')) AND o.status <> 'CANCELLED') "
+                + "  OR (? = N'Chưa thanh toán' AND o.payment_status = 'UNPAID' AND o.status <> 'CANCELLED') "
+                + "  OR (? = N'Đã hủy' AND o.status = 'CANCELLED'))";
+        return queryInt(sql, kw, kw, kw, fd, td, st, st, st, st, st);
+    }
+
+    public Map<String, Object> getClassicOrderDetailJson(long orderId) {
+        Map<String, Object> row = queryFirstRow(
+                "SELECT o.order_code AS maDH, CONVERT(VARCHAR(16), o.ordered_at, 120) AS ngayTao, "
+                        + "ISNULL(o.receiver_name, N'Khách vãng lai') AS tenKH, ISNULL(o.receiver_phone, '-') AS sdtKH, "
+                        + "ISNULL(o.shipping_address, N'Tại cửa hàng DUNA') AS diaChiKH, "
+                        + "CASE WHEN EXISTS (SELECT 1 FROM payments p JOIN payment_methods m ON p.method_id = m.method_id WHERE p.order_id = o.order_id AND m.is_online = 1) THEN N'Chuyển khoản' ELSE N'Tiền mặt' END AS thanhToan, "
+                        + "CASE WHEN o.status = 'CANCELLED' THEN N'Đã hủy' WHEN o.payment_status = 'PAID' OR o.status IN ('COMPLETED', 'DELIVERED') THEN N'Đã thanh toán' ELSE N'Chưa thanh toán' END AS trangThai, "
+                        + "ISNULL(u.full_name, N'Thu ngân DUNA') AS tenNV, ISNULL(o.note, '') AS ghiChu, "
+                        + "ISNULL(v.voucher_code, '') AS voucherCode, ISNULL(v.voucher_name, '') AS voucherName, "
+                        + "CAST(o.total_amount AS BIGINT) AS tongTien "
+                        + "FROM orders o LEFT JOIN users u ON o.handled_by = u.user_id "
+                        + "LEFT JOIN vouchers v ON o.voucher_id = v.voucher_id WHERE o.order_id = ?", orderId);
+        if (row != null) {
+            List<Map<String, Object>> itemRows = queryRows(
+                    "SELECT CASE WHEN oi.product_name LIKE '%(%' THEN oi.product_name "
+                            + "ELSE oi.product_name + N' (' + ISNULL(c.color_name, N'Tiêu chuẩn') + N' / ' + ISNULL(s.size_code, 'L') + N')' END AS tenSP, "
+                            + "oi.quantity AS soLuong, CAST(oi.unit_price AS BIGINT) AS donGia, CAST(oi.line_total AS BIGINT) AS thanhTien "
+                            + "FROM order_items oi "
+                            + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
+                            + "LEFT JOIN colors c ON pv.color_id = c.color_id "
+                            + "LEFT JOIN sizes s ON pv.size_id = s.size_id "
+                            + "WHERE oi.order_id = ?", orderId);
+            row.put("chiTiet", itemRows);
+            row.put("items", itemRows);
+        }
+        return row;
+    }
+
+    public int exchangeOrderItem(long orderId, long orderItemId, int newVariantId, int qty) {
+        Map<String, Object> oldItem = queryFirstRow("SELECT variant_id, quantity FROM order_items WHERE order_item_id = ?", orderItemId);
+        if (oldItem == null) return 0;
+        int oldVariantId = ((Number) oldItem.get("variant_id")).intValue();
+        int q = Math.max(1, qty);
+        Integer whId = queryOne("SELECT TOP 1 warehouse_id FROM warehouses ORDER BY warehouse_id", rs -> rs.getInt(1));
+        if (whId != null) {
+            executeUpdate("UPDATE inventories SET stock_quantity = stock_quantity + ? WHERE variant_id = ? AND warehouse_id = ?", q, oldVariantId, whId);
+            executeUpdate("UPDATE inventories SET stock_quantity = CASE WHEN stock_quantity >= ? THEN stock_quantity - ? ELSE 0 END WHERE variant_id = ? AND warehouse_id = ?", q, q, newVariantId, whId);
+        }
+        Map<String, Object> nv = queryFirstRow(
+                "SELECT p.product_name + ' (' + c.color_name + ' - ' + s.size_code + ')' AS lbl, pv.sku, ISNULL(pv.price, p.base_price) AS price "
+                        + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
+                        + "JOIN colors c ON pv.color_id = c.color_id JOIN sizes s ON pv.size_id = s.size_id WHERE pv.variant_id = ?",
+                newVariantId);
+        if (nv != null) {
+            executeUpdate("UPDATE order_items SET variant_id = ?, product_name = ?, sku = ?, unit_price = ?, line_total = quantity * ? WHERE order_item_id = ?",
+                    newVariantId, nv.get("lbl"), nv.get("sku"), nv.get("price"), nv.get("price"), orderItemId);
+        }
+        return executeUpdate(
+                "INSERT INTO return_requests (return_code, order_id, request_type, reason, status) VALUES (?, ?, 'EXCHANGE', N'Đổi size/màu tại cửa hàng', 'COMPLETED')",
+                "EX-" + System.currentTimeMillis(), orderId);
+    }
+
+    public Map<String, Object> buildClassicReportData(int year, int top5Month, int top5Year, int soldMonth, int soldYear) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("stat_completedOrders", queryInt("SELECT COUNT(*) FROM orders WHERE (payment_status = 'PAID' OR status IN ('COMPLETED','DELIVERED')) AND status <> 'CANCELLED'"));
+        out.put("stat_cancelledOrders", queryInt("SELECT COUNT(*) FROM orders WHERE status = 'CANCELLED'"));
+        out.put("stat_totalOrders", queryInt("SELECT COUNT(*) FROM orders"));
+
+        long revToday = (long) queryDouble("SELECT ISNULL(SUM(total_amount), 0) FROM orders WHERE CAST(ordered_at AS DATE) = CAST(GETDATE() AS DATE) AND status <> 'CANCELLED'");
+        long costToday = (long) queryDouble("SELECT ISNULL(SUM(oi.quantity * p.cost_price), 0) FROM order_items oi JOIN orders o ON oi.order_id = o.order_id JOIN product_variants pv ON oi.variant_id = pv.variant_id JOIN products p ON pv.product_id = p.product_id WHERE CAST(o.ordered_at AS DATE) = CAST(GETDATE() AS DATE) AND o.status <> 'CANCELLED'");
+        out.put("stat_totalRevenueToday", revToday);
+        out.put("stat_grossProfitToday", Math.max(0L, revToday - costToday));
+
+        long revYear = (long) queryDouble("SELECT ISNULL(SUM(total_amount), 0) FROM orders WHERE YEAR(ordered_at) = ? AND status <> 'CANCELLED'", year);
+        long costYear = (long) queryDouble("SELECT ISNULL(SUM(oi.quantity * p.cost_price), 0) FROM order_items oi JOIN orders o ON oi.order_id = o.order_id JOIN product_variants pv ON oi.variant_id = pv.variant_id JOIN products p ON pv.product_id = p.product_id WHERE YEAR(o.ordered_at) = ? AND o.status <> 'CANCELLED'", year);
+        long profitYear = Math.max(0L, revYear - costYear);
+        double margin = revYear > 0 ? Math.round((profitYear * 1000.0) / revYear) / 10.0 : 0.0;
+
+        out.put("stat_totalRevenueYear", revYear);
+        out.put("stat_grossProfitYear", profitYear);
+        out.put("stat_profitMarginYear", margin);
+        out.put("stat_totalRevenueAllTime", (long) queryDouble("SELECT ISNULL(SUM(total_amount), 0) FROM orders WHERE status <> 'CANCELLED'"));
+        out.put("stat_totalSoldYear", queryInt("SELECT ISNULL(SUM(oi.quantity), 0) FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE YEAR(o.ordered_at) = ? AND o.status <> 'CANCELLED'", year));
+        out.put("stat_totalSold", queryInt("SELECT ISNULL(SUM(sold_count), 0) FROM products"));
+        out.put("stat_totalInventory", queryInt("SELECT ISNULL(SUM(stock_quantity), 0) FROM inventories"));
+
+        long[] mRev = new long[12];
+        long[] mProfit = new long[12];
+        int[] mSold = new int[12];
+        List<Map<String, Object>> mRows = queryRows(
+                "SELECT MONTH(o.ordered_at) AS m, ISNULL(SUM(o.total_amount), 0) AS rev "
+                        + "FROM orders o WHERE YEAR(o.ordered_at) = ? AND o.status <> 'CANCELLED' GROUP BY MONTH(o.ordered_at)", year);
+        for (Map<String, Object> mr : mRows) {
+            int m = ((Number) mr.get("m")).intValue();
+            if (m >= 1 && m <= 12) {
+                long r = ((Number) mr.get("rev")).longValue();
+                mRev[m - 1] = r;
+                mProfit[m - 1] = Math.round(r * 0.48);
+            }
+        }
+        List<Map<String, Object>> sRows = queryRows(
+                "SELECT MONTH(o.ordered_at) AS m, ISNULL(SUM(oi.quantity), 0) AS qty "
+                        + "FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE YEAR(o.ordered_at) = ? AND o.status <> 'CANCELLED' GROUP BY MONTH(o.ordered_at)", year);
+        for (Map<String, Object> sr : sRows) {
+            int m = ((Number) sr.get("m")).intValue();
+            if (m >= 1 && m <= 12) mSold[m - 1] = ((Number) sr.get("qty")).intValue();
+        }
+        List<Long> revList = new ArrayList<>();
+        List<Long> profList = new ArrayList<>();
+        List<Integer> soldList = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            revList.add(mRev[i]);
+            profList.add(mProfit[i]);
+            soldList.add(mSold[i]);
+        }
+        out.put("stat_monthlyRevenue", JsonUtil.toJson(revList));
+        out.put("stat_monthlyProfit", JsonUtil.toJson(profList));
+        out.put("stat_monthlySold", JsonUtil.toJson(soldList));
+
+        out.put("topProducts", queryRows(
+                "SELECT TOP 10 ROW_NUMBER() OVER (ORDER BY p.sold_count DESC) AS stt, p.product_code AS maSP, "
+                        + "p.product_name AS tenSP, p.sold_count AS daBan, CAST(p.sold_count * p.base_price AS BIGINT) AS doanhThu "
+                        + "FROM products p WHERE p.is_active = 1 ORDER BY p.sold_count DESC"));
+        out.put("categoryStock", queryRows(
+                "SELECT c.category_name AS danhMuc, COUNT(DISTINCT p.product_id) AS soLuong, "
+                        + "ISNULL(SUM(inv.stock_quantity), 0) AS soLuongTon "
+                        + "FROM categories c LEFT JOIN products p ON c.category_id = p.category_id "
+                        + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id "
+                        + "LEFT JOIN inventories inv ON pv.variant_id = inv.variant_id "
+                        + "GROUP BY c.category_name ORDER BY soLuongTon DESC"));
+        out.put("soldProducts", queryRows(
+                "SELECT TOP 15 p.product_code AS maSP, p.product_name AS tenSP, c.category_name AS danhMuc, "
+                        + "p.sold_count AS soLuong, CAST(p.sold_count * p.base_price AS BIGINT) AS thanhTien, "
+                        + "MONTH(GETDATE()) AS thang, ? AS nam, CONVERT(VARCHAR(10), GETDATE(), 103) AS thoiGian "
+                        + "FROM products p JOIN categories c ON p.category_id = c.category_id "
+                        + "WHERE p.sold_count > 0 ORDER BY p.sold_count DESC", soldYear));
+        return out;
     }
 }

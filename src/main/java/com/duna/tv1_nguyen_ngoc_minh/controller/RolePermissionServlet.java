@@ -39,7 +39,7 @@ public class RolePermissionServlet extends BaseServlet {
         }
         req.setAttribute("roles", authService.listRoles(""));
         req.setAttribute("permissions", authService.listPermissions(""));
-        setResultRows(req, uc, "Phan quyen he thong (" + uc + ")", rows);
+        setResultRows(req, uc, "Phân quyền hệ thống (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv1_nguyen_ngoc_minh/roles.jsp");
     }
 

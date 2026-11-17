@@ -1,7 +1,9 @@
 package com.duna.tv3_le_minh_bach.controller;
 
 import com.duna.common.util.BaseServlet;
+import com.duna.common.util.ExcelExportUtil;
 import com.duna.common.util.RequestUtil;
+import com.duna.tv3_le_minh_bach.dao.PromotionVoucherDAO;
 import com.duna.tv3_le_minh_bach.service.PromotionService;
 
 import javax.servlet.ServletException;
@@ -13,52 +15,112 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controller M09 - Voucher, Khuyen mai & Flash Sale (UC191 - UC210).
+ * Controller M09 - Voucher, Khuyen mai & Flash Sale (UC191 - UC210) & Giao dien Quan ly Voucher.
  * Tac gia: Le Minh Bach - TH08442
  */
 @WebServlet(name = "PromotionVoucherServlet", urlPatterns = {"/promotions", "/vouchers", "/VoucherServlet"})
 public class PromotionVoucherServlet extends BaseServlet {
     private final PromotionService service = new PromotionService();
+    private final PromotionVoucherDAO voucherDAO = new PromotionVoucherDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String uc = RequestUtil.getString(req, "uc", "UC191");
+        String servletPath = req.getServletPath();
+        String uc = req.getParameter("uc");
+        String action = RequestUtil.getString(req, "action", "");
+
+        if ("toggleStatus".equalsIgnoreCase(action)) {
+            int id = RequestUtil.getInt(req, "id", 0);
+            if (id > 0) {
+                service.toggleVoucher(id);
+            }
+            resp.sendRedirect(req.getContextPath() + "/VoucherServlet?msg=status_updated");
+            return;
+        }
+
+        // Classic UI view (/VoucherServlet or /vouchers without uc/json)
+        if (("/VoucherServlet".equals(servletPath) || "/vouchers".equals(servletPath))
+                && (uc == null || uc.isEmpty()) && !wantsJson(req)) {
+            String search = RequestUtil.getString(req, "search", "");
+            String giamGia = RequestUtil.getString(req, "giamGia", "");
+            String trangThai = RequestUtil.getString(req, "trangThai", "");
+            List<Map<String, Object>> vouchers = voucherDAO.listClassicVouchers(search, giamGia, trangThai);
+
+            if ("excel".equalsIgnoreCase(req.getParameter("export"))) {
+                ExcelExportUtil.writeExcel(resp, "duna_vouchers.xlsx", "Vouchers", vouchers);
+                return;
+            }
+
+            Map<String, Object> stats = voucherDAO.getClassicVoucherStats();
+            req.setAttribute("vouchers", vouchers);
+            req.setAttribute("search", search);
+            req.setAttribute("giamGia", giamGia);
+            req.setAttribute("trangThai", trangThai);
+            req.setAttribute("stat_total", stats.get("stat_total"));
+            req.setAttribute("stat_available", stats.get("stat_available"));
+            req.setAttribute("stat_used", stats.get("stat_used"));
+            req.setAttribute("stat_discount", stats.get("stat_discount"));
+            forwardView(req, resp, "/quan-ly-voucher.jsp");
+            return;
+        }
+
+        String resolvedUc = (uc == null || uc.isEmpty()) ? "UC191" : uc;
         String keyword = RequestUtil.getString(req, "keyword", "");
 
-        if ("UC196".equalsIgnoreCase(uc)) {
+        if ("UC196".equalsIgnoreCase(resolvedUc)) {
             Map<String, Object> valid = service.validateVoucher(keyword,
                     RequestUtil.getDouble(req, "orderAmount", 500000), getSessionUserId(req, 1));
             if (wantsJson(req)) {
-                writeOkJson(resp, uc, valid != null ? "Hop le" : "Khong hop le", valid);
+                writeOkJson(resp, resolvedUc, valid != null ? "Hop le" : "Khong hop le", valid);
                 return;
             }
         }
 
         List<Map<String, Object>> rows;
-        if ("UC198".equalsIgnoreCase(uc)) {
+        if ("UC198".equalsIgnoreCase(resolvedUc)) {
             rows = service.getVoucherAnalytics();
-        } else if ("UC199".equalsIgnoreCase(uc)) {
+        } else if ("UC199".equalsIgnoreCase(resolvedUc)) {
             rows = service.listPromotions(keyword);
-        } else if ("UC205".equalsIgnoreCase(uc)) {
+        } else if ("UC205".equalsIgnoreCase(resolvedUc)) {
             rows = service.listFlashSales(keyword);
-        } else if ("UC210".equalsIgnoreCase(uc)) {
+        } else if ("UC210".equalsIgnoreCase(resolvedUc)) {
             rows = service.listRunningFlashItems();
         } else {
             rows = service.listVouchers(keyword);
         }
         if (wantsJson(req)) {
-            writeOkJson(resp, uc, "Thanh cong", rows);
+            writeOkJson(resp, resolvedUc, "Thanh cong", rows);
             return;
         }
-        setResultRows(req, uc, "Voucher, Khuyen mai & Flash Sale (" + uc + ")", rows);
+        setResultRows(req, resolvedUc, "Voucher, Khuyến mãi & Flash Sale (" + resolvedUc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv3_le_minh_bach/promotions.jsp");
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        req.setCharacterEncoding("UTF-8");
         String action = RequestUtil.getString(req, "action", "");
+        String servletPath = req.getServletPath();
         int affected = 0;
-        if ("createVoucher".equals(action)) {
+
+        if ("addCustom".equals(action)) {
+            String vipNumber = RequestUtil.getString(req, "vipNumber", "");
+            String tenCT = RequestUtil.getString(req, "tenChuongTrinh", "Voucher VIP DUNA");
+            double giamGia = RequestUtil.getDouble(req, "giamGia", 100000);
+            double donToiThieu = RequestUtil.getDouble(req, "donToiThieu", 500000);
+            int soLuong = RequestUtil.getInt(req, "soLuong", 1);
+            affected = voucherDAO.createClassicVipVoucher("VIP" + vipNumber, tenCT, giamGia, donToiThieu, soLuong);
+            resp.sendRedirect(req.getContextPath() + "/VoucherServlet?msg=" + (affected > 0 ? "created" : "exists"));
+            return;
+        } else if ("generateBatch".equals(action)) {
+            String prefix = RequestUtil.getString(req, "batchPrefix", "YN100");
+            String campaign = RequestUtil.getString(req, "batchTen", "Lô voucher ưu đãi DUNA");
+            double amount = RequestUtil.getDouble(req, "batchAmount", 100000);
+            int qty = RequestUtil.getInt(req, "batchQty", 10);
+            affected = voucherDAO.generateClassicBatchVouchers(prefix, campaign, amount, qty);
+            resp.sendRedirect(req.getContextPath() + "/VoucherServlet?msg=batch_" + affected);
+            return;
+        } else if ("createVoucher".equals(action)) {
             affected = service.createVoucher(RequestUtil.getString(req, "voucherCode", ""),
                     RequestUtil.getString(req, "voucherName", ""),
                     RequestUtil.getString(req, "discountType", "PERCENT"),
@@ -88,7 +150,8 @@ public class PromotionVoucherServlet extends BaseServlet {
         if (wantsJson(req)) {
             writeOkJson(resp, action, "Thanh cong", affected);
         } else {
-            resp.sendRedirect(req.getContextPath() + "/promotions?msg=" + (affected > 0 ? "ok" : "skip"));
+            String target = "/VoucherServlet".equals(servletPath) ? "/VoucherServlet" : "/promotions";
+            resp.sendRedirect(req.getContextPath() + target + "?msg=" + (affected > 0 ? "ok" : "skip"));
         }
     }
 }

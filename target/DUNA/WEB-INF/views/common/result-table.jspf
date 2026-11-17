@@ -1,5 +1,58 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%
+    java.util.Map<String, String> colLabels = new java.util.HashMap<String, String>();
+    colLabels.put("user_id", "Mã TK");
+    colLabels.put("linked_code", "Mã KH / NV");
+    colLabels.put("linked_info", "Hạng / Vai trò");
+    colLabels.put("email", "Email đăng nhập");
+    colLabels.put("phone", "Số điện thoại");
+    colLabels.put("full_name", "Họ và tên");
+    colLabels.put("role_code", "Mã quyền");
+    colLabels.put("role_name", "Vai trò");
+    colLabels.put("status", "Trạng thái");
+    colLabels.put("last_login_at", "Đăng nhập cuối");
+    colLabels.put("inventory_id", "Mã tồn kho");
+    colLabels.put("warehouse_name", "Tên kho");
+    colLabels.put("product_id", "Mã định danh SP");
+    colLabels.put("product_code", "Mã SP");
+    colLabels.put("product_name", "Tên sản phẩm");
+    colLabels.put("color_name", "Màu sắc");
+    colLabels.put("size_code", "Size");
+    colLabels.put("sku", "Mã SKU");
+    colLabels.put("barcode", "Mã vạch Barcode");
+    colLabels.put("stock_quantity", "Tồn thực tế");
+    colLabels.put("reserved_quantity", "Đang giữ đơn");
+    colLabels.put("available_qty", "Có thể bán");
+    colLabels.put("low_stock_threshold", "Mức cảnh báo");
+    colLabels.put("category_id", "Mã DM");
+    colLabels.put("category_name", "Danh mục");
+    colLabels.put("audit_id", "Mã nhật ký");
+    colLabels.put("action", "Hành động");
+    colLabels.put("entity_name", "Bảng dữ liệu");
+    colLabels.put("entity_id", "ID bản ghi");
+    colLabels.put("ip_address", "Địa chỉ IP");
+    colLabels.put("created_at", "Thời gian");
+    colLabels.put("receiver_name", "Người nhận");
+    colLabels.put("receiver_phone", "SĐT nhận");
+    colLabels.put("address_line", "Địa chỉ");
+    colLabels.put("ward_name", "Phường/Xã");
+    colLabels.put("province_name", "Tỉnh/Thành phố");
+    colLabels.put("is_default", "Mặc định");
+    colLabels.put("role_id", "Mã vai trò");
+    colLabels.put("permission_id", "Mã quyền");
+    colLabels.put("permission_code", "Mã chức năng");
+    colLabels.put("permission_name", "Tên quyền");
+    colLabels.put("module_name", "Phân hệ");
+    colLabels.put("store_id", "Mã CH");
+    colLabels.put("store_code", "Mã cửa hàng");
+    colLabels.put("store_name", "Tên cửa hàng");
+    colLabels.put("employee_id", "Mã ID NV");
+    colLabels.put("employee_code", "Mã NV");
+    colLabels.put("department_name", "Phòng ban");
+    colLabels.put("position_name", "Chức vụ");
+    request.setAttribute("_dunaColLabels", colLabels);
+%>
 <div class="table-wrap" style="margin-top: 16px;">
     <c:choose>
         <c:when test="${empty resultRows}">
@@ -12,7 +65,8 @@
                 <thead>
                 <tr>
                     <c:forEach items="${resultRows[0]}" var="col">
-                        <th><c:out value="${col.key}"/></th>
+                        <c:set var="colKeyLower" value="${col.key.toLowerCase()}" />
+                        <th><c:out value="${not empty _dunaColLabels[colKeyLower] ? _dunaColLabels[colKeyLower] : col.key}"/></th>
                     </c:forEach>
                 </tr>
                 </thead>
@@ -20,7 +74,23 @@
                 <c:forEach items="${resultRows}" var="row">
                     <tr>
                         <c:forEach items="${row}" var="cell">
-                            <td><c:out value="${cell.value}"/></td>
+                            <c:set var="ck" value="${cell.key.toLowerCase()}" />
+                            <c:set var="cv" value="${cell.value}" />
+                            <td>
+                                <c:choose>
+                                    <c:when test="${ck == 'status'}">
+                                        <span class="badge ${cv == 'ACTIVE' || cv == 'WORKING' || cv == 'COMPLETED' || cv == 'PAID' || cv == 'SUCCESS' || cv == 'RUNNING' || cv == 'RESOLVED' ? 'badge-success' : (cv == 'LOCKED' || cv == 'CANCELLED' || cv == 'RESIGNED' || cv == 'FAILED' ? 'badge-danger' : 'badge-warning')}">
+                                            <c:out value="${cv}"/>
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${ck == 'barcode' || ck == 'sku' || ck == 'linked_code'}">
+                                        <code style="font-weight:700;"><c:out value="${cv}"/></code>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:out value="${cv}"/>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
                         </c:forEach>
                     </tr>
                 </c:forEach>

@@ -69,6 +69,41 @@ public class AuthAccountService {
         return userDAO.uc013_filterUsersByRoleAndStatus(roleCode, status, keyword);
     }
 
+    public List<Map<String, Object>> filterUsersPaged(String roleCode, String status, String keyword, int offset, int limit) {
+        return userDAO.uc013_filterUsersByRoleAndStatusPaged(roleCode, status, keyword, offset, limit);
+    }
+
+    public int countUsersFiltered(String roleCode, String status, String keyword) {
+        return userDAO.countUsersFiltered(roleCode, status, keyword);
+    }
+
+    public Map<String, Object> getUserStats() {
+        return userDAO.getUserStats();
+    }
+
+    public List<Map<String, Object>> listLoginHistories(String keyword, boolean onlyFailed) {
+        return userDAO.uc015_listLoginHistories(keyword, onlyFailed);
+    }
+
+    public int updateProfileAndSync(int userId, String fullName, String phone, String email) {
+        return userDAO.uc017_updateProfileAndSync(userId, fullName, RequestUtil.normalizePhone(phone), email);
+    }
+
+    public int adminResetPassword(int userId, String newPassword, int actorUserId) {
+        if (!PasswordUtil.isStrongPassword(newPassword)) {
+            return -1;
+        }
+        return userDAO.adminResetPassword(userId, PasswordUtil.hashPassword(newPassword), actorUserId);
+    }
+
+    public List<Map<String, Object>> listProvinces() {
+        return userDAO.listAllProvinces();
+    }
+
+    public List<Map<String, Object>> listWardsByProvince(int provinceId) {
+        return userDAO.listWardsByProvince(provinceId);
+    }
+
     public long registerCustomer(String email, String phone, String rawPassword, String fullName) {
         if (!PasswordUtil.isStrongPassword(rawPassword)) {
             return -2L;

@@ -13,6 +13,7 @@ public class HumanResourceDAO extends BaseDAO {
 
     // UC267: Xem danh sach nhan vien theo cua hang va phong ban
     public List<Map<String, Object>> uc267_listEmployees(String keyword) {
+        ensureStaffUsersSyncedToEmployees();
         String sql = "SELECT e.employee_id, e.employee_code, e.full_name, e.phone, e.email, "
                 + "d.department_name, po.position_name, s.store_name, e.status "
                 + "FROM employees e LEFT JOIN departments d ON e.department_id = d.department_id "
@@ -107,5 +108,199 @@ public class HumanResourceDAO extends BaseDAO {
                 + "FROM employees e LEFT JOIN attendance_records a ON e.employee_id = a.employee_id AND a.work_date BETWEEN ? AND ? "
                 + "GROUP BY e.employee_code, e.full_name";
         return queryRows(sql, fromDate, toDate);
+    }
+
+    // ==================== CLASSIC UI ADAPTERS (employee-management.jsp / employee-detail.jsp) ====================
+
+    public int updatePasswordForEmployee(int empOrUserId, String passwordHash) {
+        String sql = "UPDATE users SET password_hash = ?, updated_at = GETDATE() "
+                + "WHERE user_id = ? OR user_id = (SELECT user_id FROM employees WHERE employee_id = ?)";
+        return executeUpdate(sql, passwordHash, empOrUserId, empOrUserId);
+    }
+
+    public boolean verifyUserPassword(int userId, String passwordHash) {
+        return queryInt("SELECT COUNT(*) FROM users WHERE user_id = ? AND password_hash = ? AND status = 'ACTIVE'",
+                userId, passwordHash) > 0;
+    }
+
+    public List<Map<String, Object>> listClassicEmployees(String searchQuery, String statusFilter, String roleScope) {
+        ensureStaffUsersSyncedToEmployees();
+        String sq = searchQuery == null ? "" : searchQuery.trim();
+        String sf = statusFilter == null ? "" : statusFilter.trim();
+        String pat = likePattern(sq);
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT e.employee_id AS id, e.employee_code AS maNV, e.full_name AS ten, "
+                + "CONVERT(VARCHAR(10), e.birth_date, 23) AS ngaySinh, "
+                + "CASE WHEN e.status = 'WORKING' AND (u.status IS NULL OR u.status = 'ACTIVE') THEN N'Hoạt động' ELSE N'Đã khóa' END AS trangThai, "
+                + "ISNULL((SELECT TOP 1 al.new_value FROM audit_logs al WHERE al.entity_name = 'employees' "
+                + " AND al.entity_id = CAST(e.employee_id AS VARCHAR(40)) AND al.action = 'HR_LOCK' ORDER BY al.created_at DESC), '') AS lyDo, "
+                + "ISNULL(r.role_code, 'STAFF') AS roleCode "
+                + "FROM employees e "
+                + "LEFT JOIN users u ON e.user_id = u.user_id "
+                + "LEFT JOIN roles r ON u.role_id = r.role_id "
+                + "WHERE (e.full_name LIKE ? OR e.employee_code LIKE ?) "
+        );
+        if ("MANAGER".equalsIgnoreCase(roleScope)) {
+            sql.append("AND r.role_code IN ('ADMIN', 'MANAGER') ");
+        } else {
+            sql.append("AND (r.role_code IS NULL OR r.role_code NOT IN ('ADMIN', 'MANAGER')) ");
+        }
+        if ("1".equals(sf)) {
+            sql.append("AND e.status = 'WORKING' AND (u.status IS NULL OR u.status = 'ACTIVE') ");
+        } else if ("2".equals(sf)) {
+            sql.append("AND (e.status <> 'WORKING' OR u.status = 'LOCKED') ");
+        }
+        sql.append("ORDER BY e.employee_id ASC");
+        return queryRows(sql.toString(), pat, pat);
+    }
+
+    public Map<String, Object> getClassicEmployeeDetail(int idOrUserId) {
+        ensureStaffUsersSyncedToEmployees();
+        String sql = "SELECT TOP 1 e.employee_id AS id, e.employee_code AS maNV, e.full_name AS hoVaTen, "
+                + "ISNULL(u.email, '') AS email, ISNULL(u.phone, e.phone) AS soDienThoai, "
+                + "ISNULL(u.email, e.employee_code) AS username, "
+                + "CONVERT(VARCHAR(10), e.birth_date, 23) AS ngaySinh, "
+                + "CONVERT(VARCHAR(10), e.created_at, 23) AS ngayTao, "
+                + "CASE WHEN e.status = 'WORKING' AND (u.status IS NULL OR u.status = 'ACTIVE') THEN N'Hoạt động' ELSE N'Đã khóa' END AS trangThai, "
+                + "CASE WHEN r.role_code IN ('ADMIN', 'MANAGER') THEN 'true' ELSE 'false' END AS isAdmin, "
+                + "ISNULL(s.address, N'Hà Nội') AS diaChiStore, "
+                + "e.user_id "
+                + "FROM employees e "
+                + "LEFT JOIN users u ON e.user_id = u.user_id "
+                + "LEFT JOIN roles r ON u.role_id = r.role_id "
+                + "LEFT JOIN stores s ON e.store_id = s.store_id "
+                + "WHERE e.employee_id = ? OR e.user_id = ?";
+        Map<String, Object> row = queryFirstRow(sql, idOrUserId, idOrUserId);
+        if (row == null) {
+            return null;
+        }
+        row.put("password", "********");
+        row.put("cccd", "");
+        row.put("ngayCapCccd", "");
+        row.put("ngayHetHanCccd", "");
+        row.put("noiCapCccd", "");
+        row.put("queQuan", "Hà Nội");
+        row.put("noiThuongTru", "Hà Nội");
+        row.put("diaChiHienTai", row.get("diaChiStore"));
+
+        Map<String, Object> metaRow = queryFirstRow(
+                "SELECT TOP 1 new_value FROM audit_logs WHERE entity_name = 'employees' AND entity_id = ? AND action = 'HR_PROFILE' ORDER BY audit_id DESC",
+                String.valueOf(row.get("id")));
+        if (metaRow != null && metaRow.get("new_value") != null) {
+            parseHrProfileMeta(String.valueOf(metaRow.get("new_value")), row);
+        }
+        return row;
+    }
+
+    public int addClassicEmployee(String username, String passwordHash, String fullName, String phone, String email,
+                                  String birthDate, String cccd, String ngayCapCccd, String ngayHetHanCccd,
+                                  String noiCapCccd, String queQuan, String noiThuongTru, String diaChiHienTai,
+                                  int actorUserId) {
+        if (queryInt("SELECT COUNT(*) FROM users WHERE email = ? OR (phone IS NOT NULL AND phone = ?)", email, phone) > 0) {
+            return -1;
+        }
+        String insertUser = "INSERT INTO users (email, phone, password_hash, full_name, role_id, status, email_verified) "
+                + "SELECT ?, ?, ?, ?, role_id, 'ACTIVE', 1 FROM roles WHERE role_code = 'STAFF'";
+        long newUserId = executeInsertGetId(insertUser, email, phone, passwordHash, fullName);
+        if (newUserId <= 0) {
+            return 0;
+        }
+        String code = (username != null && !username.trim().isEmpty())
+                ? username.trim().toUpperCase().replaceAll("[^A-Z0-9_]", "")
+                : String.format("NV%04d", newUserId);
+        if (code.length() > 18) code = code.substring(0, 18);
+        if (queryInt("SELECT COUNT(*) FROM employees WHERE employee_code = ?", code) > 0) {
+            code = String.format("NV%04d", newUserId);
+        }
+        long empId = executeInsertGetId(
+                "INSERT INTO employees (employee_code, user_id, full_name, phone, email, birth_date, hire_date, store_id, status) "
+                + "VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), GETDATE(), 1, 'WORKING')",
+                code, newUserId, fullName, phone, email, birthDate == null ? "" : birthDate);
+        if (empId > 0) {
+            saveHrProfileMeta((int) empId, actorUserId, username, cccd, ngayCapCccd, ngayHetHanCccd,
+                    noiCapCccd, queQuan, noiThuongTru, diaChiHienTai);
+        }
+        return (int) empId;
+    }
+
+    public int updateClassicEmployee(int empId, String fullName, String phone, String email, String birthDate,
+                                     String cccd, String ngayCapCccd, String ngayHetHanCccd, String noiCapCccd,
+                                     String queQuan, String noiThuongTru, String diaChiHienTai,
+                                     String reason, int actorUserId) {
+        int res = executeUpdate(
+                "UPDATE employees SET full_name = ?, phone = ?, email = ?, birth_date = NULLIF(?, ''), updated_at = GETDATE() WHERE employee_id = ?",
+                fullName, phone, email, birthDate == null ? "" : birthDate, empId);
+        executeUpdate(
+                "UPDATE users SET full_name = ?, phone = ?, updated_at = GETDATE() WHERE user_id = (SELECT user_id FROM employees WHERE employee_id = ?)",
+                fullName, phone, empId);
+        saveHrProfileMeta(empId, actorUserId, "", cccd, ngayCapCccd, ngayHetHanCccd,
+                noiCapCccd, queQuan, noiThuongTru, diaChiHienTai);
+        if (reason != null && !reason.trim().isEmpty()) {
+            executeUpdate("INSERT INTO audit_logs (user_id, action, entity_name, entity_id, new_value) VALUES (?, 'HR_UPDATE', 'employees', ?, ?)",
+                    actorUserId > 0 ? actorUserId : null, String.valueOf(empId), reason.trim());
+        }
+        return res;
+    }
+
+    public int toggleClassicEmployeeStatus(int empId, boolean currentlyActive, String reason, int actorUserId) {
+        String newEmpStatus = currentlyActive ? "RESIGNED" : "WORKING";
+        String newUserStatus = currentlyActive ? "LOCKED" : "ACTIVE";
+        int res = executeUpdate("UPDATE employees SET status = ?, updated_at = GETDATE() WHERE employee_id = ?",
+                newEmpStatus, empId);
+        executeUpdate("UPDATE users SET status = ?, updated_at = GETDATE() WHERE user_id = (SELECT user_id FROM employees WHERE employee_id = ?)",
+                newUserStatus, empId);
+        String lockNote = currentlyActive ? (reason == null ? "" : reason.trim()) : "";
+        executeUpdate("INSERT INTO audit_logs (user_id, action, entity_name, entity_id, new_value) VALUES (?, 'HR_LOCK', 'employees', ?, ?)",
+                actorUserId > 0 ? actorUserId : null, String.valueOf(empId), lockNote);
+        return res;
+    }
+
+    private void saveHrProfileMeta(int empId, int actorUserId, String username, String cccd, String ngayCap,
+                                   String ngayHetHan, String noiCap, String queQuan, String noiThuongTru, String diaChiHienTai) {
+        String payload = "username=" + safeMeta(username)
+                + "\ncccd=" + safeMeta(cccd)
+                + "\nngayCapCccd=" + safeMeta(ngayCap)
+                + "\nngayHetHanCccd=" + safeMeta(ngayHetHan)
+                + "\nnoiCapCccd=" + safeMeta(noiCap)
+                + "\nqueQuan=" + safeMeta(queQuan)
+                + "\nnoiThuongTru=" + safeMeta(noiThuongTru)
+                + "\ndiaChiHienTai=" + safeMeta(diaChiHienTai);
+        executeUpdate("INSERT INTO audit_logs (user_id, action, entity_name, entity_id, new_value) VALUES (?, 'HR_PROFILE', 'employees', ?, ?)",
+                actorUserId > 0 ? actorUserId : null, String.valueOf(empId), payload);
+    }
+
+    private String safeMeta(String s) {
+        return s == null ? "" : s.replace("\r", " ").replace("\n", " ").trim();
+    }
+
+    private void parseHrProfileMeta(String payload, Map<String, Object> row) {
+        if (payload == null) return;
+        for (String line : payload.split("\n")) {
+            int idx = line.indexOf('=');
+            if (idx > 0) {
+                String k = line.substring(0, idx).trim();
+                String v = line.substring(idx + 1).trim();
+                if (!v.isEmpty()) {
+                    row.put(k, v);
+                }
+            }
+        }
+    }
+
+    public void ensureStaffUsersSyncedToEmployees() {
+        String sql = "INSERT INTO employees (employee_code, user_id, full_name, phone, email, birth_date, hire_date, department_id, position_id, store_id, status) "
+                + "SELECT CASE WHEN r.role_code IN ('ADMIN', 'MANAGER') THEN 'QL' ELSE 'NV' END "
+                + "+ RIGHT('000' + CAST(u.user_id AS VARCHAR(10)), 3), "
+                + "u.user_id, u.full_name, u.phone, u.email, DATEADD(YEAR, -24 - (u.user_id % 7), '2026-01-01'), CAST(u.created_at AS DATE), "
+                + "(SELECT TOP 1 department_id FROM departments ORDER BY department_id), "
+                + "(SELECT TOP 1 position_id FROM positions ORDER BY base_salary ASC), 1, "
+                + "CASE WHEN u.status = 'ACTIVE' THEN 'WORKING' ELSE 'RESIGNED' END "
+                + "FROM users u JOIN roles r ON u.role_id = r.role_id "
+                + "WHERE r.role_code <> 'CUSTOMER' "
+                + "AND NOT EXISTS (SELECT 1 FROM employees e WHERE e.user_id = u.user_id) "
+                + "AND NOT EXISTS (SELECT 1 FROM employees e2 WHERE e2.employee_code = "
+                + "CASE WHEN r.role_code IN ('ADMIN', 'MANAGER') THEN 'QL' ELSE 'NV' END + RIGHT('000' + CAST(u.user_id AS VARCHAR(10)), 3))";
+        executeUpdate(sql);
     }
 }

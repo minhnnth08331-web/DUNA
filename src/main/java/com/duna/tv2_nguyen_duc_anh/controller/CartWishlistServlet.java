@@ -37,7 +37,7 @@ public class CartWishlistServlet extends BaseServlet {
             writeOkJson(resp, uc, "Thanh cong", rows);
             return;
         }
-        setResultRows(req, uc, "Gio hang & Yeu thich (" + uc + ")", rows);
+        setResultRows(req, uc, "Giỏ hàng & Yêu thích (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv2_nguyen_duc_anh/cart.jsp");
     }
 

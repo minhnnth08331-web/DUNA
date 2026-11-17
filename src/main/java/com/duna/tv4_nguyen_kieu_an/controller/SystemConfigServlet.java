@@ -31,7 +31,7 @@ public class SystemConfigServlet extends BaseServlet {
             writeOkJson(resp, uc, "Thanh cong", rows);
             return;
         }
-        setResultRows(req, uc, "Cau hinh He thong & Job ngam (" + uc + ")", rows);
+        setResultRows(req, uc, "Cấu hình Hệ thống & Job ngầm (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv4_nguyen_kieu_an/system.jsp");
     }
 

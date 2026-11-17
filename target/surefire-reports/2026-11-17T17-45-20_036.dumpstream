@@ -1,4 +1,4 @@
-# Created at 2026-11-17T10:34:58.829
+# Created at 2026-11-17T17:45:20.330
 Boot Manifest-JAR contains absolute paths in classpath 'D:\fpt\DUNA\target\test-classes'
 Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
 'other' has different root

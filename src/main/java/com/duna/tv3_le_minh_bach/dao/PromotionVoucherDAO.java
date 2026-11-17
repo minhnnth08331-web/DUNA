@@ -161,4 +161,104 @@ public class PromotionVoucherDAO extends BaseDAO {
                 + "WHERE fs.status = 'RUNNING'";
         return queryRows(sql);
     }
+
+    // ==================== CLASSIC UI ADAPTERS (quan-ly-voucher.jsp) ====================
+
+    public List<Map<String, Object>> listClassicVouchers(String search, String giamGia, String trangThai) {
+        String s = search == null ? "" : search.trim();
+        String g = giamGia == null ? "" : giamGia.trim();
+        String st = trangThai == null ? "" : trangThai.trim();
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT TOP 300 v.voucher_id AS ID_Voucher, v.voucher_code AS MaVoucher, "
+                + "v.voucher_name AS TenChuongTrinh, "
+                + "CAST(v.discount_value AS BIGINT) AS GiamGia, "
+                + "CAST(v.min_order_value AS BIGINT) AS DonToiThieu, "
+                + "CASE WHEN v.usage_limit IS NOT NULL AND v.used_count >= v.usage_limit THEN 0 ELSE ISNULL(v.usage_limit, 100) END AS SoLuong, "
+                + "v.used_count AS DaSuDung, "
+                + "CAST(v.is_active AS INT) AS TrangThai, "
+                + "(SELECT TOP 1 o.order_code FROM voucher_usages vu JOIN orders o ON vu.order_id = o.order_id "
+                + " WHERE vu.voucher_id = v.voucher_id ORDER BY vu.used_at DESC) AS DonHangSuDung "
+                + "FROM vouchers v WHERE 1=1 "
+        );
+        java.util.List<Object> params = new java.util.ArrayList<>();
+        if (!s.isEmpty()) {
+            sql.append("AND (v.voucher_code LIKE ? OR v.voucher_name LIKE ?) ");
+            String pat = likePattern(s);
+            params.add(pat);
+            params.add(pat);
+        }
+        if (!g.isEmpty()) {
+            try {
+                double gv = Double.parseDouble(g);
+                if (gv <= 100) {
+                    sql.append("AND v.discount_type = 'PERCENT' AND v.discount_value = ? ");
+                } else {
+                    sql.append("AND v.discount_type = 'FIXED' AND v.discount_value = ? ");
+                }
+                params.add(gv);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        if ("available".equalsIgnoreCase(st)) {
+            sql.append("AND v.is_active = 1 AND (v.usage_limit IS NULL OR v.used_count < v.usage_limit) ");
+        } else if ("used".equalsIgnoreCase(st)) {
+            sql.append("AND v.usage_limit IS NOT NULL AND v.used_count >= v.usage_limit ");
+        } else if ("locked".equalsIgnoreCase(st)) {
+            sql.append("AND v.is_active = 0 ");
+        }
+        sql.append("ORDER BY v.voucher_id DESC");
+        return queryRows(sql.toString(), params.toArray());
+    }
+
+    public Map<String, Object> getClassicVoucherStats() {
+        Map<String, Object> stats = new java.util.LinkedHashMap<>();
+        stats.put("stat_total", queryInt("SELECT COUNT(*) FROM vouchers"));
+        stats.put("stat_available", queryInt(
+                "SELECT COUNT(*) FROM vouchers WHERE is_active = 1 AND (usage_limit IS NULL OR used_count < usage_limit)"));
+        stats.put("stat_used", queryInt("SELECT ISNULL(SUM(used_count), 0) FROM vouchers"));
+        stats.put("stat_discount", queryDouble("SELECT ISNULL(SUM(discount_amount), 0) FROM voucher_usages"));
+        return stats;
+    }
+
+    public int createClassicVipVoucher(String code, String tenChuongTrinh, double giamGia, double donToiThieu, int soLuong) {
+        String cleanCode = (code == null ? "" : code.trim().toUpperCase().replaceAll("[^A-Z0-9]", ""));
+        if (!cleanCode.startsWith("VIP")) {
+            cleanCode = "VIP" + cleanCode;
+        }
+        String type = giamGia <= 100 ? "PERCENT" : "FIXED";
+        double maxDiscount = giamGia <= 100 ? Math.max(donToiThieu * 0.5, 100000) : giamGia;
+        String sql = "IF NOT EXISTS (SELECT 1 FROM vouchers WHERE voucher_code = ?) "
+                + "INSERT INTO vouchers (voucher_code, voucher_name, discount_type, discount_value, max_discount_amount, "
+                + "min_order_value, usage_limit, per_user_limit, start_date, end_date, is_active) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, 1, GETDATE(), DATEADD(YEAR, 1, GETDATE()), 1)";
+        return executeUpdate(sql, cleanCode, cleanCode,
+                (tenChuongTrinh == null || tenChuongTrinh.trim().isEmpty()) ? "Voucher VIP DUNA" : tenChuongTrinh.trim(),
+                type, giamGia, maxDiscount, donToiThieu, Math.max(1, soLuong));
+    }
+
+    public int generateClassicBatchVouchers(String prefix, String campaignName, double amount, int qty) {
+        String cleanPrefix = (prefix == null || prefix.trim().isEmpty()) ? "DUNA" : prefix.trim().toUpperCase();
+        String name = (campaignName == null || campaignName.trim().isEmpty()) ? "Lô voucher DUNA" : campaignName.trim();
+        String type = amount <= 100 ? "PERCENT" : "FIXED";
+        double minOrder = amount <= 100 ? amount * 150000 : amount * 5;
+        double maxDiscount = amount <= 100 ? Math.max(minOrder * 0.3, 100000) : amount;
+        int safeQty = Math.min(Math.max(1, qty), 500);
+        int inserted = 0;
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        java.util.Random rnd = new java.util.Random();
+        String sql = "IF NOT EXISTS (SELECT 1 FROM vouchers WHERE voucher_code = ?) "
+                + "INSERT INTO vouchers (voucher_code, voucher_name, discount_type, discount_value, max_discount_amount, "
+                + "min_order_value, usage_limit, per_user_limit, start_date, end_date, is_active) "
+                + "VALUES (?, ?, ?, ?, ?, ?, 1, 1, GETDATE(), DATEADD(YEAR, 1, GETDATE()), 1)";
+        for (int i = 0; i < safeQty; i++) {
+            StringBuilder suffix = new StringBuilder();
+            for (int j = 0; j < 5; j++) {
+                suffix.append(chars.charAt(rnd.nextInt(chars.length())));
+            }
+            String code = cleanPrefix + suffix;
+            inserted += executeUpdate(sql, code, code, name, type, amount, maxDiscount, minOrder);
+        }
+        return inserted;
+    }
 }

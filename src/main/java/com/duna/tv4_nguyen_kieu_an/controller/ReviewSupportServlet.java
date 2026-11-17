@@ -47,7 +47,7 @@ public class ReviewSupportServlet extends BaseServlet {
             writeOkJson(resp, uc, "Thanh cong", rows);
             return;
         }
-        setResultRows(req, uc, (isSupport ? "Ho tro khach hang" : "Danh gia san pham") + " (" + uc + ")", rows);
+        setResultRows(req, uc, (isSupport ? "Hỗ trợ khách hàng" : "Đánh giá sản phẩm") + " (" + uc + ")", rows);
         forwardView(req, resp, isSupport
                 ? "/WEB-INF/views/tv4_nguyen_kieu_an/support.jsp"
                 : "/WEB-INF/views/tv4_nguyen_kieu_an/reviews.jsp");

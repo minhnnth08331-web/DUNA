@@ -13,6 +13,7 @@
             <p class="page-subtitle">M14 • Quầy thu ngân POS, quét mã vạch, mở/đóng ca &amp; cửa hàng bán lẻ (TV4 • UC257–UC266)</p>
         </div>
         <div class="action-buttons">
+            <a href="${pageContext.request.contextPath}/OrderServlet?view=sell" class="btn btn-primary btn-sm">Mở Quầy POS 1 Chạm</a>
             <a href="${pageContext.request.contextPath}/pos?uc=UC261" class="btn btn-outline btn-sm">UC261 Quét Barcode</a>
             <a href="${pageContext.request.contextPath}/pos?uc=UC257" class="btn btn-outline btn-sm">UC257 Cửa hàng</a>
             <a href="${pageContext.request.contextPath}/pos?uc=UC265" class="btn btn-outline btn-sm">UC265 Doanh thu ca</a>
@@ -33,27 +34,20 @@
     <div class="toolbar-section" style="margin-top:12px;">
         <form method="post" action="${pageContext.request.contextPath}/pos" class="filter-form" style="width:100%;">
             <input type="hidden" name="action" value="openSession">
-            <select name="storeId" class="form-control" style="max-width:200px;">
+            <label style="font-size:12.5px;font-weight:600;color:var(--muted);">Cửa hàng:</label>
+            <select name="storeId" class="form-control" style="max-width:220px;">
                 <c:forEach items="${stores}" var="st">
                     <option value="${st.store_id}">${st.store_name}</option>
                 </c:forEach>
             </select>
-            <input type="number" name="openingCash" class="form-control" style="max-width:160px;" value="2000000" placeholder="Tiền đầu ca">
+            <label style="font-size:12.5px;font-weight:600;color:var(--muted);">Tiền đầu ca (đ):</label>
+            <input type="number" name="openingCash" class="form-control" style="max-width:170px;" value="2000000" placeholder="Tiền đầu ca">
             <button type="submit" class="btn btn-secondary btn-sm">Mở ca POS (UC260)</button>
         </form>
     </div>
 
-    <div class="toolbar-section" style="margin-top:12px;">
-        <form method="post" action="${pageContext.request.contextPath}/pos" class="filter-form" style="width:100%;">
-            <input type="hidden" name="action" value="createPosOrder">
-            <input type="number" name="variantId" class="form-control" style="max-width:120px;" value="1" placeholder="Variant ID" required>
-            <input type="number" name="quantity" class="form-control" style="max-width:100px;" value="1" min="1" required>
-            <input type="number" name="customerId" class="form-control" style="max-width:120px;" value="1" placeholder="Customer ID">
-            <button type="submit" class="btn btn-primary btn-sm">Thanh toán tại quầy (UC262)</button>
-        </form>
-    </div>
-
     <%@ include file="/WEB-INF/views/common/result-table.jspf" %>
+    <%@ include file="/WEB-INF/views/common/uc-workbench.jspf" %>
 </div>
 <jsp:include page="/footer.jsp" />
 </body>

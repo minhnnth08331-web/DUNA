@@ -61,7 +61,7 @@ public class FinanceReportServlet extends BaseServlet {
         }
         req.setAttribute("dashboard", financeService.getDashboard());
         req.setAttribute("netProfit", financeService.monthlyNetProfit(from, to));
-        setResultRows(req, uc, "Tai chinh & Bao cao thong ke (" + uc + ")", rows);
+        setResultRows(req, uc, "Tài chính & Báo cáo thống kê (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv4_nguyen_kieu_an/finance.jsp");
     }
 

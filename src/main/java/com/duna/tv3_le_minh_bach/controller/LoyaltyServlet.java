@@ -45,7 +45,7 @@ public class LoyaltyServlet extends BaseServlet {
             return;
         }
         req.setAttribute("rewards", earnService.listRewards(""));
-        setResultRows(req, uc, "Tich diem & Doi qua (" + uc + ")", rows);
+        setResultRows(req, uc, "Tích điểm & Đổi quà (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv3_le_minh_bach/loyalty.jsp");
     }
 

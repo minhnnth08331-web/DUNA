@@ -50,6 +50,11 @@ public class ReviewSupportDAO extends BaseDAO {
                 newStatus, reviewId);
     }
 
+    // UC226: Tu choi danh gia vi pham noi quy
+    public int uc226_rejectReview(int reviewId) {
+        return uc225_226_moderateReview(reviewId, "REJECTED");
+    }
+
     // UC227: Shop phan hoi danh gia cua khach hang
     public int uc227_replyReview(int reviewId, int userId, String content) {
         return executeUpdate("INSERT INTO review_replies (review_id, user_id, content) VALUES (?, ?, ?)",

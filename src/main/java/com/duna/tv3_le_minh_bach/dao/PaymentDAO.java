@@ -53,6 +53,11 @@ public class PaymentDAO extends BaseDAO {
         return paymentId;
     }
 
+    // UC166: Tao yeu cau thanh toan qua vi MoMo
+    public long uc166_createMomoPayment(long orderId, double amount, String txnRef) {
+        return uc163_166_createOnlinePayment(orderId, "MOMO", amount, txnRef);
+    }
+
     // UC164: Xu ly ket qua thanh toan VNPay thanh cong (IPN callback)
     public int uc164_handlePaymentIpnSuccess(String txnRef, String gateway, String gatewayTxnNo, double amount) {
         Map<String, Object> pay = queryFirstRow(

@@ -59,7 +59,7 @@ public class CategoryCatalogServlet extends BaseServlet {
         req.setAttribute("categories", catalogService.listCategoryTree());
         req.setAttribute("colors", catalogService.listColors());
         req.setAttribute("sizes", catalogService.listSizes(""));
-        setResultRows(req, uc, "Danh muc, Thuoc tinh & Tu van Size (" + uc + ")", rows);
+        setResultRows(req, uc, "Danh mục, Thuộc tính & Tư vấn Size (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv1_nguyen_ngoc_minh/categories.jsp");
     }
 

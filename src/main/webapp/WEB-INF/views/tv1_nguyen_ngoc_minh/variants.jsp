@@ -13,15 +13,16 @@
             <p class="page-subtitle">M03 • Chi tiết biến thể màu/size, SKU, Barcode &amp; Giá bán riêng (TV1 • UC076–UC080)</p>
         </div>
         <div class="action-buttons">
-            <a href="${pageContext.request.contextPath}/products" class="btn btn-outline btn-sm">Quay lại Danh sách SP</a>
+            <a href="${pageContext.request.contextPath}/ProductServlet" class="btn btn-outline btn-sm">Quay lại Danh sách SP</a>
         </div>
     </div>
 
     <div class="toolbar-section">
         <form method="get" action="${pageContext.request.contextPath}/variants" class="filter-form" style="width:100%;">
-            <input type="number" name="productId" class="form-control" style="max-width:150px;" value="${selectedProductId}" placeholder="Product ID">
+            <label style="font-size:12.5px;font-weight:600;color:var(--muted);">Mã SP:</label>
+            <input type="number" name="productId" class="form-control" style="max-width:120px;" value="${selectedProductId}" placeholder="Mã SP">
             <div class="search-box-wrap">
-                <input type="text" name="keyword" class="search-box" placeholder="Lọc theo SKU..." value="${param.keyword}">
+                <input type="text" name="keyword" class="search-box" placeholder="Lọc theo SKU hoặc Barcode..." value="${param.keyword}">
             </div>
             <button type="submit" class="btn btn-primary btn-sm">Xem biến thể</button>
         </form>
@@ -48,6 +49,7 @@
     </div>
 
     <%@ include file="/WEB-INF/views/common/result-table.jspf" %>
+    <%@ include file="/WEB-INF/views/common/uc-workbench.jspf" %>
 </div>
 <jsp:include page="/footer.jsp" />
 </body>

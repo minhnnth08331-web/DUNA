@@ -1,7 +1,9 @@
 package com.duna.tv1_nguyen_ngoc_minh.controller;
 
 import com.duna.common.util.BaseServlet;
+import com.duna.common.util.PasswordUtil;
 import com.duna.common.util.RequestUtil;
+import com.duna.tv1_nguyen_ngoc_minh.dao.UserDAO;
 import com.duna.tv1_nguyen_ngoc_minh.service.AuthAccountService;
 
 import javax.servlet.ServletException;
@@ -42,6 +44,10 @@ public class AuthServlet extends BaseServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if ("/ChangeCredentialsServlet".equals(req.getServletPath())) {
+            handleChangeCredentialsFromEmployeeDetail(req, resp);
+            return;
+        }
         String action = RequestUtil.getString(req, "action", "login");
         try {
             if ("register".equalsIgnoreCase(action)) {
@@ -80,18 +86,27 @@ public class AuthServlet extends BaseServlet {
         }
 
         HttpSession session = req.getSession(true);
-        session.setAttribute("userId", user.get("user_id"));
+        Object uid = user.get("user_id");
+        int userIntId = uid instanceof Number ? ((Number) uid).intValue() : 1;
+        Integer empId = new UserDAO().findEmployeeIdByUserId(userIntId);
+        session.setAttribute("userId", uid);
+        session.setAttribute("idNhanVien", empId != null ? empId : uid);
+        session.setAttribute("nhanVienID", empId != null ? empId : uid);
         session.setAttribute("email", user.get("email"));
+        session.setAttribute("username", user.get("email"));
         session.setAttribute("fullName", user.get("full_name"));
         session.setAttribute("tenNV", user.get("full_name"));
         String role = String.valueOf(user.get("role_code")).toUpperCase();
         session.setAttribute("role", role);
+        session.setAttribute("roleId", user.get("role_id"));
+        session.setAttribute("roleID", user.get("role_id"));
 
         // Bao mat: Chi luu ten dang nhap vao Cookie HttpOnly, tuyet doi khong luu mat khau tho
-        Cookie userCookie = new Cookie("yn_user", "true".equalsIgnoreCase(remember) || "on".equalsIgnoreCase(remember) ? loginId : "");
+        boolean keepUser = "true".equalsIgnoreCase(remember) || "on".equalsIgnoreCase(remember);
+        Cookie userCookie = new Cookie("yn_user", keepUser ? loginId : "");
         userCookie.setHttpOnly(true);
         userCookie.setPath(req.getContextPath().isEmpty() ? "/" : req.getContextPath());
-        userCookie.setMaxAge(("true".equalsIgnoreCase(remember) || "on".equalsIgnoreCase(remember)) ? 7 * 86400 : 0);
+        userCookie.setMaxAge(keepUser ? 7 * 86400 : 0);
         resp.addCookie(userCookie);
 
         if (wantsJson(req)) {
@@ -99,9 +114,9 @@ public class AuthServlet extends BaseServlet {
             return;
         }
         if ("STAFF".equals(role) || "EMPLOYEE".equals(role)) {
-            resp.sendRedirect(req.getContextPath() + "/pos");
+            resp.sendRedirect(req.getContextPath() + "/OrderServlet?view=sell");
         } else {
-            resp.sendRedirect(req.getContextPath() + "/products");
+            resp.sendRedirect(req.getContextPath() + "/ProductServlet");
         }
     }
 
@@ -138,5 +153,18 @@ public class AuthServlet extends BaseServlet {
         } else {
             resp.sendRedirect(req.getContextPath() + "/users?msg=" + (res > 0 ? "pw_changed" : "pw_error"));
         }
+    }
+
+    private void handleChangeCredentialsFromEmployeeDetail(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        int empOrUserId = RequestUtil.getInt(req, "idNhanVien", 1);
+        String newPw = RequestUtil.getString(req, "newPassword", "");
+        String confirmPw = RequestUtil.getString(req, "confirmPassword", "");
+        if (!newPw.equals(confirmPw) || !PasswordUtil.isStrongPassword(newPw)) {
+            resp.sendRedirect(req.getContextPath() + "/EmployeeDetailServlet?id=" + empOrUserId + "&credError=1");
+            return;
+        }
+        com.duna.tv4_nguyen_kieu_an.dao.HumanResourceDAO hrDao = new com.duna.tv4_nguyen_kieu_an.dao.HumanResourceDAO();
+        hrDao.updatePasswordForEmployee(empOrUserId, PasswordUtil.hashPassword(newPw));
+        resp.sendRedirect(req.getContextPath() + "/EmployeeDetailServlet?id=" + empOrUserId + "&credSuccess=1");
     }
 }

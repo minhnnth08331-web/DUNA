@@ -48,6 +48,7 @@
     </div>
 
     <%@ include file="/WEB-INF/views/common/result-table.jspf" %>
+    <%@ include file="/WEB-INF/views/common/uc-workbench.jspf" %>
 </div>
 <jsp:include page="/footer.jsp" />
 </body>

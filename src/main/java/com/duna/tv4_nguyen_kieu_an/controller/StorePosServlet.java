@@ -46,7 +46,7 @@ public class StorePosServlet extends BaseServlet {
         }
         req.setAttribute("stores", posService.listStores(""));
         req.setAttribute("sessions", posService.listCashierSessions(0, ""));
-        setResultRows(req, uc, "Ban hang POS & Cua hang (" + uc + ")", rows);
+        setResultRows(req, uc, "Cửa hàng & Ca làm việc POS (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv4_nguyen_kieu_an/pos.jsp");
     }
 

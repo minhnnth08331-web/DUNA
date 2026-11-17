@@ -34,7 +34,7 @@ public class ProcurementServlet extends BaseServlet {
         }
         req.setAttribute("suppliers", service.listSuppliers(""));
         req.setAttribute("warehouses", service.listWarehouses(""));
-        setResultRows(req, uc, "Nha cung cap & Nhap hang (" + uc + ")", rows);
+        setResultRows(req, uc, "Nhà cung cấp & Nhập hàng (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv2_nguyen_duc_anh/procurement.jsp");
     }
 

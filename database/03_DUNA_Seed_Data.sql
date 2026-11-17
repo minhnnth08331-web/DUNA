@@ -134,3 +134,92 @@ IF NOT EXISTS (SELECT 1 FROM system_settings WHERE setting_key = 'VAT_RATE')
     ('VAT_RATE', '8', N'Thuế suất VAT mặc định (%)'),
     ('FREE_SHIP_THRESHOLD', '500000', N'Ngưỡng đơn hàng được miễn phí vận chuyển (VNĐ)');
 GO
+
+-- 7. Du lieu mau Voucher, Don hang & Thanh toan nam 2026 phuc vu POS, Bao cao Chart.js va In hoa don
+IF NOT EXISTS (SELECT 1 FROM vouchers WHERE voucher_code = 'DUNA100')
+    INSERT INTO vouchers (voucher_code, voucher_name, discount_type, discount_value, max_discount_amount, min_order_value, usage_limit, per_user_limit, used_count, start_date, end_date, is_active) VALUES
+    ('DUNA100', N'Ưu đãi DUNA 100K cho hóa đơn từ 500K', 'FIXED', 100000, 100000, 500000, 100, 2, 1, '2026-01-01', '2027-06-30', 1),
+    ('VIP15P', N'Đặc quyền hội viên VIP giảm 15%', 'PERCENT', 15, 500000, 800000, 50, 2, 1, '2026-01-01', '2027-06-30', 1),
+    ('DUNA200', N'Khuyến mãi đơn công sở từ 1.2 Triệu', 'FIXED', 200000, 200000, 1200000, 60, 2, 1, '2026-01-01', '2027-06-30', 1),
+    ('WELCOME10', N'Chào mừng khách hàng mới giảm 10%', 'PERCENT', 10, 200000, 300000, 100, 1, 0, '2026-01-01', '2027-06-30', 1);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM orders WHERE order_code = 'DN20260701')
+BEGIN
+    INSERT INTO orders (order_code, customer_id, user_id, store_id, channel, status, payment_status, receiver_name, receiver_phone, subtotal, discount_amount, tax_amount, total_amount, handled_by, note, ordered_at)
+    VALUES
+    ('DN20260701', 1, 3, 1, 'POS', 'COMPLETED', 'PAID', N'Trần Văn Nam', '0912345678', 780000, 100000, 54400, 734400, 3, N'VAT (8%): 54.400 đ | Voucher (DUNA100): -100.000 đ | Bán hàng tại quầy', '2026-07-12 10:15:00'),
+    ('DN20260802', 2, 3, 1, 'POS', 'COMPLETED', 'PAID', N'Phan Văn Anh', '0864000422', 1110000, 168000, 75360, 1017360, 3, N'VAT (8%): 75.360 đ | Voucher (VIP15P): -168.000 đ | Chuyển khoản VietQR', '2026-08-18 14:20:00'),
+    ('DN20260903', 3, 3, 1, 'POS', 'COMPLETED', 'PAID', N'Lý Hữu Anh', '0778000681', 1560000, 200000, 108800, 1468800, 3, N'VAT (8%): 108.800 đ | Voucher (DUNA200): -200.000 đ | Tiền mặt', '2026-09-21 16:40:00'),
+    ('DN20261004', 4, 2, 1, 'WEB', 'DELIVERED', 'PAID', N'Hoàng Gia Anh', '0931000692', 1170000, 0, 93600, 1263600, 2, N'VAT (8%): 93.600 đ | Đơn hàng online giao nội thành', '2026-10-15 09:30:00'),
+    ('DN20261105', 5, 3, 1, 'POS', 'COMPLETED', 'PAID', N'Ngô Đức Bình', '0352000955', 1480000, 0, 118400, 1598400, 3, N'VAT (8%): 118.400 đ | Khách đưa: 1.600.000 đ | Tiền thừa: 1.600 đ', DATEADD(HOUR, -3, GETDATE())),
+    ('DN20261106', 1, 3, 1, 'POS', 'COMPLETED', 'PAID', N'Trần Văn Nam', '0912345678', 820000, 0, 65600, 885600, 3, N'VAT (8%): 65.600 đ | Thanh toán QR', DATEADD(HOUR, -1, GETDATE()));
+
+    INSERT INTO order_items (order_id, variant_id, product_name, sku, quantity, unit_price, line_total)
+    SELECT o.order_id, 1, N'Áo Sơ Mi Oxford Trắng DUNA (Trắng / M)', 'SP001-WHT-M', 2, 390000, 780000 FROM orders o WHERE o.order_code = 'DN20260701'
+    UNION ALL
+    SELECT o.order_id, 4, N'Áo Polo Pima Cotton Navy (Đen / M)', 'SP002-BLK-M', 2, 350000, 700000 FROM orders o WHERE o.order_code = 'DN20260802'
+    UNION ALL
+    SELECT o.order_id, 6, N'Áo Sơ Mi Linen Cổ Tàu Mùa Hè (Xám Tro / M)', 'SP005-GRY-M', 1, 410000, 410000 FROM orders o WHERE o.order_code = 'DN20260802'
+    UNION ALL
+    SELECT o.order_id, 1, N'Áo Sơ Mi Oxford Trắng DUNA (Trắng / M)', 'SP001-WHT-M', 4, 390000, 1560000 FROM orders o WHERE o.order_code = 'DN20260903'
+    UNION ALL
+    SELECT o.order_id, 2, N'Áo Sơ Mi Oxford Trắng DUNA (Xanh Navy / M)', 'SP001-NVY-M', 3, 390000, 1170000 FROM orders o WHERE o.order_code = 'DN20261004'
+    UNION ALL
+    SELECT o.order_id, 4, N'Áo Polo Pima Cotton Navy (Đen / M)', 'SP002-BLK-M', 2, 350000, 700000 FROM orders o WHERE o.order_code = 'DN20261105'
+    UNION ALL
+    SELECT o.order_id, 1, N'Áo Sơ Mi Oxford Trắng DUNA (Trắng / M)', 'SP001-WHT-M', 2, 390000, 780000 FROM orders o WHERE o.order_code = 'DN20261105'
+    UNION ALL
+    SELECT o.order_id, 6, N'Áo Sơ Mi Linen Cổ Tàu Mùa Hè (Xám Tro / M)', 'SP005-GRY-M', 2, 410000, 820000 FROM orders o WHERE o.order_code = 'DN20261106';
+
+    INSERT INTO payments (order_id, method_id, amount, status, transaction_ref, paid_at)
+    SELECT o.order_id, CASE WHEN o.order_code IN ('DN20260802','DN20261106') THEN 2 ELSE 1 END,
+           o.total_amount, 'SUCCESS', 'TXN-' + o.order_code, o.ordered_at
+    FROM orders o WHERE o.order_code LIKE 'DN2026%';
+
+    INSERT INTO voucher_usages (voucher_id, user_id, order_id, discount_amount, used_at)
+    SELECT v.voucher_id, ISNULL((SELECT c.user_id FROM customers c WHERE c.customer_id = o.customer_id), 3), o.order_id, 100000, o.ordered_at FROM vouchers v, orders o WHERE v.voucher_code='DUNA100' AND o.order_code='DN20260701'
+    UNION ALL
+    SELECT v.voucher_id, ISNULL((SELECT c.user_id FROM customers c WHERE c.customer_id = o.customer_id), 3), o.order_id, 168000, o.ordered_at FROM vouchers v, orders o WHERE v.voucher_code='VIP15P' AND o.order_code='DN20260802'
+    UNION ALL
+    SELECT v.voucher_id, ISNULL((SELECT c.user_id FROM customers c WHERE c.customer_id = o.customer_id), 3), o.order_id, 200000, o.ordered_at FROM vouchers v, orders o WHERE v.voucher_code='DUNA200' AND o.order_code='DN20260903';
+
+    UPDATE o SET o.voucher_id = vu.voucher_id FROM orders o JOIN voucher_usages vu ON vu.order_id = o.order_id;
+END
+GO
+
+-- 8. Dong bo 1:1 ho so khach hang <-> tai khoan users & vi diem thuong loyalty_accounts
+INSERT INTO users (email, phone, password_hash, full_name, role_id, status, email_verified, created_at)
+SELECT
+    ISNULL(NULLIF(LTRIM(RTRIM(c.email)), ''), LOWER(c.customer_code) + '@duna-member.vn'),
+    NULLIF(LTRIM(RTRIM(c.phone)), ''),
+    'a54126ab084dee02e0d353876d89bb04347688ca817ccaa2fcf52713f0cc6a61',
+    c.full_name,
+    (SELECT TOP 1 role_id FROM roles WHERE role_code = 'CUSTOMER'),
+    CASE WHEN c.is_active = 1 THEN 'ACTIVE' ELSE 'LOCKED' END,
+    1,
+    c.created_at
+FROM customers c
+WHERE c.user_id IS NULL
+  AND NOT EXISTS (
+      SELECT 1 FROM users u
+      WHERE u.email = ISNULL(NULLIF(LTRIM(RTRIM(c.email)), ''), LOWER(c.customer_code) + '@duna-member.vn')
+         OR (c.phone IS NOT NULL AND LTRIM(RTRIM(c.phone)) <> '' AND u.phone = LTRIM(RTRIM(c.phone)))
+  );
+GO
+
+UPDATE c
+SET c.user_id = u.user_id,
+    c.email = ISNULL(c.email, u.email)
+FROM customers c
+JOIN users u ON u.email = ISNULL(NULLIF(LTRIM(RTRIM(c.email)), ''), LOWER(c.customer_code) + '@duna-member.vn')
+WHERE c.user_id IS NULL;
+GO
+
+INSERT INTO loyalty_accounts (customer_id, points_balance, lifetime_points)
+SELECT c.customer_id, 0, 0
+FROM customers c
+WHERE NOT EXISTS (SELECT 1 FROM loyalty_accounts la WHERE la.customer_id = c.customer_id);
+GO
+
+-- Luu y: Sau khi chay 03_DUNA_Seed_Data.sql, chay tiep 04_DUNA_Sync_Integrity.sql de khoi tao phong ban/chuc vu/quyen han va doi soat 100% don hang, hang VIP & vi diem.

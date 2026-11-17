@@ -1,5 +1,11 @@
 D:\fpt\DUNA\src\main\java\com\duna\common\filter\AuthFilter.java
 D:\fpt\DUNA\src\main\java\com\duna\common\filter\EncodingFilter.java
+D:\fpt\DUNA\src\main\java\com\duna\common\uc\Tv1UcDispatcher.java
+D:\fpt\DUNA\src\main\java\com\duna\common\uc\Tv2UcDispatcher.java
+D:\fpt\DUNA\src\main\java\com\duna\common\uc\Tv3UcDispatcher.java
+D:\fpt\DUNA\src\main\java\com\duna\common\uc\Tv4UcDispatcher.java
+D:\fpt\DUNA\src\main\java\com\duna\common\uc\UcDispatchSupport.java
+D:\fpt\DUNA\src\main\java\com\duna\common\uc\UcRegistry.java
 D:\fpt\DUNA\src\main\java\com\duna\common\util\BarcodeUtil.java
 D:\fpt\DUNA\src\main\java\com\duna\common\util\BaseDAO.java
 D:\fpt\DUNA\src\main\java\com\duna\common\util\BaseServlet.java
@@ -50,6 +56,7 @@ D:\fpt\DUNA\src\main\java\com\duna\tv1_nguyen_ngoc_minh\model\UserAddress.java
 D:\fpt\DUNA\src\main\java\com\duna\tv1_nguyen_ngoc_minh\service\AuthAccountService.java
 D:\fpt\DUNA\src\main\java\com\duna\tv1_nguyen_ngoc_minh\service\CatalogProductService.java
 D:\fpt\DUNA\src\main\java\com\duna\tv1_nguyen_ngoc_minh\service\CustomerService.java
+D:\fpt\DUNA\src\main\java\com\duna\tv2_nguyen_duc_anh\controller\BarcodeScanServlet.java
 D:\fpt\DUNA\src\main\java\com\duna\tv2_nguyen_duc_anh\controller\CartWishlistServlet.java
 D:\fpt\DUNA\src\main\java\com\duna\tv2_nguyen_duc_anh\controller\OrderServlet.java
 D:\fpt\DUNA\src\main\java\com\duna\tv2_nguyen_duc_anh\controller\ProcurementServlet.java
@@ -91,6 +98,7 @@ D:\fpt\DUNA\src\main\java\com\duna\tv3_le_minh_bach\controller\LoyaltyServlet.ja
 D:\fpt\DUNA\src\main\java\com\duna\tv3_le_minh_bach\controller\OrderReportExportServlet.java
 D:\fpt\DUNA\src\main\java\com\duna\tv3_le_minh_bach\controller\PaymentServlet.java
 D:\fpt\DUNA\src\main\java\com\duna\tv3_le_minh_bach\controller\PromotionVoucherServlet.java
+D:\fpt\DUNA\src\main\java\com\duna\tv3_le_minh_bach\controller\QRConfirmServlet.java
 D:\fpt\DUNA\src\main\java\com\duna\tv3_le_minh_bach\controller\ShippingServlet.java
 D:\fpt\DUNA\src\main\java\com\duna\tv3_le_minh_bach\dao\GeographyShippingDAO.java
 D:\fpt\DUNA\src\main\java\com\duna\tv3_le_minh_bach\dao\LoyaltyPointDAO.java

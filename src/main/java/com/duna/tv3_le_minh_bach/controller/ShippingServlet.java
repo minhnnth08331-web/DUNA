@@ -50,7 +50,7 @@ public class ShippingServlet extends BaseServlet {
         }
         req.setAttribute("zones", service.listZones(""));
         req.setAttribute("carriers", service.listCarriers(""));
-        setResultRows(req, uc, "Dia ly & Van chuyen (" + uc + ")", rows);
+        setResultRows(req, uc, "Địa lý & Vận chuyển (" + uc + ")", rows);
         forwardView(req, resp, "/WEB-INF/views/tv3_le_minh_bach/shipping.jsp");
     }
 
