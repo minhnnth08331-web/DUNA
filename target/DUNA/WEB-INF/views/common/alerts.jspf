@@ -1,0 +1,11 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:if test="${param.msg == 'ok'}">
+    <div class="alert alert-success">Thao tác đã được lưu thành công vào CSDL <b>DUNA_MensWear</b>.</div>
+</c:if>
+<c:if test="${param.msg == 'skip'}">
+    <div class="alert alert-warning">Không có dòng nào thay đổi (kiểm tra trùng mã hoặc điều kiện ràng buộc).</div>
+</c:if>
+<c:if test="${param.error == 'access_denied'}">
+    <div class="alert alert-danger">Từ chối truy cập: Tài khoản không có quyền vào chức năng quản trị này (RBAC).</div>
+</c:if>

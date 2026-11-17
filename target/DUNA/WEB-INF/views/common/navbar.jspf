@@ -1,0 +1,49 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<div class="navbar">
+    <a href="${pageContext.request.contextPath}/products" class="navbar-brand">
+        <img src="${pageContext.request.contextPath}/img/duna-logo.png" alt="DUNA" class="navbar-brand-logo" width="36" height="36" style="width: 36px !important; height: 36px !important; max-width: 36px !important; max-height: 36px !important; border-radius: 6px; object-fit: contain; flex-shrink: 0;">
+        <div class="navbar-brand-text">
+            <span class="brand-monogram">DU<span>NA</span></span>
+            <span class="brand-subtext">Men's Wear</span>
+        </div>
+    </a>
+    <div class="nav-menu">
+        <c:choose>
+            <c:when test="${sessionScope.role == 'ADMIN' || sessionScope.role == 'MANAGER'}">
+                <a href="${pageContext.request.contextPath}/products" class="${activeNav == 'products' ? 'active' : ''}">Sản phẩm</a>
+                <a href="${pageContext.request.contextPath}/inventory" class="${activeNav == 'inventory' ? 'active' : ''}">Kho hàng</a>
+                <a href="${pageContext.request.contextPath}/orders" class="${activeNav == 'orders' ? 'active' : ''}">Đơn hàng</a>
+                <a href="${pageContext.request.contextPath}/customers" class="${activeNav == 'customers' ? 'active' : ''}">Khách hàng</a>
+                <a href="${pageContext.request.contextPath}/promotions" class="${activeNav == 'promotions' ? 'active' : ''}">Khuyến mãi</a>
+                <a href="${pageContext.request.contextPath}/pos" class="${activeNav == 'pos' ? 'active' : ''}">Bán hàng</a>
+                <a href="${pageContext.request.contextPath}/hr" class="${activeNav == 'hr' ? 'active' : ''}">Nhân sự</a>
+                <a href="${pageContext.request.contextPath}/finance" class="${activeNav == 'finance' ? 'active' : ''}">Báo cáo</a>
+                <a href="${pageContext.request.contextPath}/uc-hub" class="${activeNav == 'uchub' ? 'active' : ''}">300 UC</a>
+            </c:when>
+            <c:when test="${sessionScope.role == 'STAFF' || sessionScope.role == 'EMPLOYEE'}">
+                <a href="${pageContext.request.contextPath}/pos" class="${activeNav == 'pos' ? 'active' : ''}">Bán hàng POS</a>
+                <a href="${pageContext.request.contextPath}/orders" class="${activeNav == 'orders' ? 'active' : ''}">Đơn hàng</a>
+                <a href="${pageContext.request.contextPath}/customers" class="${activeNav == 'customers' ? 'active' : ''}">Khách hàng</a>
+                <a href="${pageContext.request.contextPath}/products" class="${activeNav == 'products' ? 'active' : ''}">Sản phẩm</a>
+                <a href="${pageContext.request.contextPath}/inventory" class="${activeNav == 'inventory' ? 'active' : ''}">Tồn kho</a>
+            </c:when>
+            <c:otherwise>
+                <a href="${pageContext.request.contextPath}/products" class="${activeNav == 'products' ? 'active' : ''}">Sản phẩm</a>
+                <a href="${pageContext.request.contextPath}/cart" class="${activeNav == 'cart' ? 'active' : ''}">Giỏ hàng</a>
+                <a href="${pageContext.request.contextPath}/orders" class="${activeNav == 'orders' ? 'active' : ''}">Đơn của tôi</a>
+                <a href="${pageContext.request.contextPath}/loyalty" class="${activeNav == 'loyalty' ? 'active' : ''}">Điểm thưởng</a>
+                <a href="${pageContext.request.contextPath}/support" class="${activeNav == 'support' ? 'active' : ''}">Hỗ trợ</a>
+            </c:otherwise>
+        </c:choose>
+    </div>
+    <div class="nav-right-cluster">
+        <div class="nav-user">
+            <span>Xin chào</span>
+            <span class="nav-user-name">${not empty sessionScope.fullName ? sessionScope.fullName : 'Khách'}</span>
+            <span class="badge badge-info" style="margin-left:4px;">${sessionScope.role}</span>
+            <span class="nav-divider">|</span>
+            <a href="${pageContext.request.contextPath}/LogoutServlet" class="nav-logout-btn">Đăng xuất</a>
+        </div>
+    </div>
+</div>

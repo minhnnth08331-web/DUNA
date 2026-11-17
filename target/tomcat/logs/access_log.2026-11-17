@@ -1,0 +1,12 @@
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:07:40 +0700] "GET /DUNA HTTP/1.1" 302 - http-bio-8080-exec-1 0
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:07:41 +0700] "GET /DUNA/ HTTP/1.1" 302 - http-bio-8080-exec-3 580
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:07:41 +0700] "GET /DUNA/login.jsp HTTP/1.1" 200 13512 http-bio-8080-exec-4 424
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:07:41 +0700] "GET /DUNA/style.css?v=duna_v4 HTTP/1.1" 304 - http-bio-8080-exec-2 4
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:07:41 +0700] "GET /DUNA/theme.css?v=duna_v4 HTTP/1.1" 304 - http-bio-8080-exec-5 5
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:08:06 +0700] "POST /DUNA/auth HTTP/1.1" 200 13748 http-bio-8080-exec-7 391
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:08:18 +0700] "POST /DUNA/auth HTTP/1.1" 302 - http-bio-8080-exec-8 65
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:08:18 +0700] "GET /DUNA/products HTTP/1.1" 200 31610 http-bio-8080-exec-9 326
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:08:25 +0700] "GET /DUNA/inventory HTTP/1.1" 200 203616 http-bio-8080-exec-10 212
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:08:28 +0700] "GET /DUNA/products HTTP/1.1" 200 31610 http-bio-8080-exec-10 125
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:08:30 +0700] "GET /DUNA/uc-hub HTTP/1.1" 200 15282 http-bio-8080-exec-10 67
+0:0:0:0:0:0:0:1 - - [17/Nov/2026:15:08:38 +0700] "GET /DUNA/promotions HTTP/1.1" 200 11206 http-bio-8080-exec-10 80
