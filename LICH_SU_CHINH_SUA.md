@@ -6,6 +6,34 @@
 
 ---
 
+## 📅 CẬP NHẬT GẦN NHẤT: 17/11/2026
+
+### 2. Hoàn Thành Giai Đoạn 2: Nâng Cấp Toàn Bộ Mã Nguồn Java Web MVC (100 Bảng / 300 UC) Giữ Giao Diện DUNA Quen Thuộc
+- **Cấu trúc 4 thành viên × 4 tầng MVC (`controller` → `service` → `dao` → `model`) + `com.duna.common`:**
+  - `com.duna.common.{util,filter}` (`12` lớp): `DBConnection` (kết nối `DUNA_MensWear`), `BaseDAO`, `BaseServlet`, `RequestUtil`, `PasswordUtil`, `JsonUtil`, `CurrencyUtil`, `DateUtil`, `BarcodeUtil`, `FileUploadUtil`, `ExcelExportUtil`, `EncodingFilter`, `AuthFilter` (RBAC + HttpOnly `yn_user`, không lưu mật khẩu thô).
+  - `tv1_nguyen_ngoc_minh` (`UC001–UC086`): `25` Models, `5` DAOs (`RolePermissionDAO`, `UserDAO`, `CustomerDAO`, `CatalogDAO`, `ProductDAO`), `3` Services, `6` Servlets (`AuthServlet`, `RolePermissionServlet`, `UserServlet`, `CustomerServlet`, `CategoryCatalogServlet`, `ProductServlet`).
+  - `tv2_nguyen_duc_anh` (`UC087–UC151`): `23` Models, `6` DAOs (`PriceWarehouseDAO`, `InventoryDAO`, `ProcurementDAO`, `CartWishlistDAO`, `OrderDAO`, `ReturnRequestDAO`), `3` Services, `5` Servlets.
+  - `tv3_le_minh_bach` (`UC152–UC218`): `19` Models, `5` DAOs (`RefundExportDAO`, `PaymentDAO`, `GeographyShippingDAO`, `PromotionVoucherDAO`, `LoyaltyPointDAO`), `4` Services, `5` Servlets.
+  - `tv4_nguyen_kieu_an` (`UC219–UC300`): `33` Models, `8` DAOs (`LoyaltyRewardDAO`, `ReviewSupportDAO`, `MarketingDAO`, `NotificationDAO`, `StorePosDAO`, `HumanResourceDAO`, `FinanceReportDAO`, `SystemSettingDAO`), `7` Services, `8` Servlets (`ReviewSupportServlet`, `MarketingServlet`, `NotificationServlet`, `StorePosServlet`, `EmployeeHrServlet`, `FinanceReportServlet`, `SystemConfigServlet`, `UcWorkbenchServlet`).
+- **Giao diện JSP giữ nguyên phong cách DUNA cũ (`theme.css?v=duna_v4`, `style.css?v=duna_v4`, `footer.jsp`, `.navbar`):**
+  - Cập nhật `login.jsp` nối vào `/auth` với 4 tài khoản mẫu thật của `DUNA_MensWear` và trang đăng ký `register.jsp`.
+  - Tách các trang quản trị theo từng thành viên dưới `WEB-INF/views/` (`common/`, `tv1_nguyen_ngoc_minh/`, `tv2_nguyen_duc_anh/`, `tv3_le_minh_bach/`, `tv4_nguyen_kieu_an/`), hỗ trợ đầy đủ cả giao diện web và API JSON.
+- **Kiểm thử & Build:**
+  - `mvn clean package` biên dịch `178` file Java sang bytecode Java 8 (`major version: 52`), JUnit `DunaArchitectureAndUcTest` pass `4/4`.
+  - Kiểm thử Tomcat 7 + Chrome DevTools & E2E HTTP: 25 endpoint JSON 200 OK, RBAC Staff 403/200 đạt chuẩn, `0` lỗi Console trên Chrome.
+
+### 1. Hoàn Thành Giai Đoạn 1: Chuẩn Hóa CSDL 100 Bảng (`DUNA_MensWear`), 300 UC SQL & File Excel Phân Công Chuẩn `Lab4.1`
+- **Tạo bộ SQL chuẩn 100 bảng & 300 Use Case tại `database/`:**
+  - `database/01_DUNA_Schema_100_Bang.sql`: Schema đầy đủ **100 bảng** (`17` module `M01–M17`) trên SQL Server `DUNA_MensWear`.
+  - `database/02_DUNA_300UC_SQL.sql`: Đầy đủ **300 batch SQL** (`UC001–UC300`), bổ sung mệnh đề lọc `WHERE ... LIKE ...` cho toàn bộ 60 UC `Search = True` để đồng bộ 100% với cờ CRUD và biên dịch thành công toàn bộ 300 batch qua `SET NOEXEC ON`.
+  - `database/03_DUNA_Seed_Data.sql`: Dữ liệu mẫu khởi tạo (vai trò, tài khoản SHA-256, khách hàng, hạng thành viên, địa lý, kho/cửa hàng, sản phẩm/biến thể, thanh toán, cấu hình).
+- **Xuất file Excel phân công chuẩn 300 UC `Nhom6_300_usecase_CHUAN_HOA_DUNA.xlsx`:**
+  - Cột `Độ phức tạp UI` (`H5:H304`), Data Validation và sheet `Hướng Dẫn`: loại bỏ hoàn toàn `Đơn giản` và `Phức tạp`, chỉ dùng đúng 2 nhãn **`Chuẩn`** (`64` UC) và **`Trung bình`** (`236` UC).
+  - Cập nhật công thức `Effort Chốt`, tham số `Tổng Quan` (`1145.8 giờ` / `7.16 MM`) và đủ họ tên/MSSV 4 thành viên (`Nguyễn Ngọc Minh - TH08331`, `Nguyễn Đức Anh - TH08308`, `Lê Minh Bách - TH08442`, `Nguyễn Kiều An - TH08490`).
+  - Kiểm định giả lập `Lab4.1`: `300/300` Đạt (`100.00%`), `0` Cảnh báo CRUD Lệch, `0` Thiếu SQL.
+
+---
+
 ## 📅 CẬP NHẬT GẦN NHẤT: 16/11/2026
 
 ---

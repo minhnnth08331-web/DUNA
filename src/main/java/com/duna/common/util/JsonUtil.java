@@ -13,10 +13,14 @@ public class JsonUtil {
     public static String toJson(Object obj) {
         if (obj == null) return "null";
         if (obj instanceof String) {
-            return "\"" + ((String) obj).replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r") + "\"";
+            return "\"" + ((String) obj).replace("\\", "\\\\").replace("\"", "\\\"")
+                    .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t") + "\"";
         }
         if (obj instanceof Number || obj instanceof Boolean) {
             return String.valueOf(obj);
+        }
+        if (obj instanceof java.util.Date) {
+            return toJson(String.valueOf(obj));
         }
         if (obj instanceof Map) {
             Map<?, ?> map = (Map<?, ?>) obj;

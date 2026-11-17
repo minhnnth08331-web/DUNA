@@ -19,10 +19,11 @@
             <div class="login-brand-title">DU<span>NA</span></div>
             <div class="login-brand-subtitle">Hệ Thống Quản Trị & Bán Lẻ Thời Trang Nam</div>
             
-            <form action="LoginServlet" method="POST" class="login-form" id="loginForm" onsubmit="return handleLoginSubmit(event)">
+            <form action="${pageContext.request.contextPath}/auth" method="POST" class="login-form" id="loginForm" onsubmit="return handleLoginSubmit(event)">
+                <input type="hidden" name="action" value="login">
                 <div class="form-group">
-                    <label for="username">Tên đăng nhập</label>
-                    <input type="text" id="username" name="username" class="form-control" required placeholder="Nhập tên tài khoản..." autocomplete="username" value="${not empty cookie.yn_user ? cookie.yn_user.value : ''}">
+                    <label for="username">Email hoặc Số điện thoại</label>
+                    <input type="text" id="username" name="username" class="form-control" required placeholder="Nhập email hoặc số điện thoại..." autocomplete="username" value="${not empty cookie.yn_user ? cookie.yn_user.value : ''}">
                 </div>
                 
                 <div class="form-group">
@@ -37,6 +38,12 @@
                     </label>
                 </div>
 
+                <c:if test="${param.registered == '1'}">
+                    <div class="alert alert-success" style="margin-top: 12px; margin-bottom: 12px;">
+                        Đăng ký tài khoản thành công! Vui lòng đăng nhập.
+                    </div>
+                </c:if>
+
                 <c:if test="${not empty requestScope.errorMessage}">
                     <div class="alert alert-danger" style="margin-top: 12px; margin-bottom: 12px;">
                         ${requestScope.errorMessage}
@@ -47,12 +54,18 @@
                     <button type="submit" class="btn btn-primary">ĐĂNG NHẬP HỆ THỐNG</button>
                 </div>
 
+                <div style="margin-top: 12px; text-align: center; font-size: 13px;">
+                    Chưa có tài khoản? <a href="${pageContext.request.contextPath}/auth?action=register" style="color: var(--brand-accent, #c5a059); font-weight: 600;">Đăng ký khách hàng (UC014)</a>
+                </div>
+
                 <div style="margin-top: 18px; padding: 12px 14px; background: rgba(197, 160, 89, 0.08); border: 1px dashed var(--brand-accent, #c5a059); border-radius: 8px; font-size: 12.5px; color: var(--color-text, #333); text-align: left; line-height: 1.6;">
                     <div style="font-weight: 600; color: #b45309; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                        <span>🔑</span> <span>Tài khoản kiểm thử hệ thống DUNA:</span>
+                        <span>🔑</span> <span>Tài khoản mẫu (CSDL DUNA_MensWear):</span>
                     </div>
-                    <div>• <b>Quản lý (Manager):</b> <code>admin</code> | Mật khẩu: <code>123</code> (hoặc <code>admin</code>)</div>
-                    <div>• <b>Nhân viên (POS):</b> <code>nv01</code> | Mật khẩu: <code>123</code></div>
+                    <div>• <b>Admin:</b> <code>admin@duna.vn</code> | Mật khẩu: <code>Admin123</code></div>
+                    <div>• <b>Quản lý (Manager):</b> <code>manager@duna.vn</code> | Mật khẩu: <code>Manager123</code></div>
+                    <div>• <b>Nhân viên (Staff/POS):</b> <code>staff@duna.vn</code> | Mật khẩu: <code>Staff123</code></div>
+                    <div>• <b>Khách hàng:</b> <code>khach01@gmail.com</code> | Mật khẩu: <code>Khach123</code></div>
                 </div>
             </form>
         </div>
