@@ -6,7 +6,15 @@
 
 ---
 
-## 📅 CẬP NHẬT GẦN NHẤT: 17/11/2026
+## 📅 CẬP NHẬT GẦN NHẤT: 18/11/2026
+
+### 8. Gộp Toàn Bộ CSDL Thành 1 File Duy Nhất & Xóa Các File SQL Thừa
+- **Xóa bỏ các file SQL không dùng / cũ / tách lẻ:** `QUANLYBANHANGQUANAODUNA.sql`, `seed_duna_50kh_70sp.sql`, `database/01_DUNA_Schema_100_Bang.sql`, `database/02_DUNA_300UC_SQL.sql`, `database/03_DUNA_Seed_Data.sql`, `database/04_DUNA_Sync_Integrity.sql`.
+- **Gộp thành 1 file SQL duy nhất:** [DUNA_MensWear.sql](file:///d:/fpt/DUNA/database/DUNA_MensWear.sql) (chứa đầy đủ schema 100 bảng + toàn bộ 7.297 dòng dữ liệu chuẩn hóa gồm 605 tài khoản, 600 khách hàng, 100 sản phẩm, 569 biến thể, 1.017 đơn hàng), đồng bộ sang cả `TV1`, `TV2`, `TV3`, `TV4` và đã kiểm chứng chạy sạch trên SQL Server từ đầu không lỗi.
+
+---
+
+## 📅 CẬP NHẬT: 17/11/2026
 
 ### 7. Hoàn Thiện & Đồng Bộ Bộ SQL (`database/`) + File Excel (`Nhom6_300_usecase_CHUAN_HOA_DUNA.xlsx`)
 - **Bộ SQL (`database/01..04`):**
