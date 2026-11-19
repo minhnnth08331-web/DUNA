@@ -75,6 +75,21 @@ public class AuthFilter implements Filter {
         boolean isAdminOrManager = "ADMIN".equals(role) || "MANAGER".equals(role);
         boolean isStaff = "STAFF".equals(role) || "EMPLOYEE".equals(role);
 
+        // He thong POS noi bo: chan moi phien dang nhap khong thuoc vai tro noi bo (vd: CUSTOMER)
+        if (!isAdminOrManager && !isStaff) {
+            if (session != null) {
+                session.invalidate();
+            }
+            if (isJsonRequest(request)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json; charset=UTF-8");
+                response.getWriter().write("{\"ok\":false,\"message\":\"He thong POS noi bo chi danh cho Nhan vien va Quan ly DUNA\"}");
+                return;
+            }
+            response.sendRedirect(ctx + "/login.jsp?error=internal_only");
+            return;
+        }
+
         if (!isAdminOrManager && isRestrictedForNonAdmin(path, request, session, isStaff)) {
             if (isJsonRequest(request)) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);

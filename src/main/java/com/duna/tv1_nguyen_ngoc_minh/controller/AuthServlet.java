@@ -36,7 +36,7 @@ public class AuthServlet extends BaseServlet {
             return;
         }
         if ("register".equalsIgnoreCase(action)) {
-            forwardView(req, resp, "/WEB-INF/views/tv1_nguyen_ngoc_minh/register.jsp");
+            resp.sendRedirect(req.getContextPath() + "/login.jsp?error=internal_only");
             return;
         }
         forwardView(req, resp, "/login.jsp");
@@ -51,7 +51,11 @@ public class AuthServlet extends BaseServlet {
         String action = RequestUtil.getString(req, "action", "login");
         try {
             if ("register".equalsIgnoreCase(action)) {
-                handleRegister(req, resp);
+                if (wantsJson(req)) {
+                    writeErrJson(resp, 403, "He thong POS noi bo khong mo tu dang ky khach hang.");
+                } else {
+                    resp.sendRedirect(req.getContextPath() + "/login.jsp?error=internal_only");
+                }
                 return;
             }
             if ("changePassword".equalsIgnoreCase(action)) {
@@ -85,6 +89,19 @@ public class AuthServlet extends BaseServlet {
             return;
         }
 
+        String role = String.valueOf(user.get("role_code")).toUpperCase();
+        boolean isInternalRole = "ADMIN".equals(role) || "MANAGER".equals(role)
+                || "STAFF".equals(role) || "EMPLOYEE".equals(role);
+        if (!isInternalRole) {
+            if (wantsJson(req)) {
+                writeErrJson(resp, 403, "Cong dang nhap nay chi danh cho Nhan vien & Quan ly cua hang DUNA (POS noi bo).");
+            } else {
+                req.setAttribute("errorMessage", "Cổng đăng nhập này chỉ dành cho Nhân viên & Quản lý nội bộ cửa hàng DUNA. Tài khoản khách hàng không được phép đăng nhập tại đây.");
+                forwardView(req, resp, "/login.jsp");
+            }
+            return;
+        }
+
         HttpSession session = req.getSession(true);
         Object uid = user.get("user_id");
         int userIntId = uid instanceof Number ? ((Number) uid).intValue() : 1;
@@ -96,7 +113,6 @@ public class AuthServlet extends BaseServlet {
         session.setAttribute("username", user.get("email"));
         session.setAttribute("fullName", user.get("full_name"));
         session.setAttribute("tenNV", user.get("full_name"));
-        String role = String.valueOf(user.get("role_code")).toUpperCase();
         session.setAttribute("role", role);
         session.setAttribute("roleId", user.get("role_id"));
         session.setAttribute("roleID", user.get("role_id"));

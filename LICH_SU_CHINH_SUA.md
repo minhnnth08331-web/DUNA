@@ -8,6 +8,14 @@
 
 ## 📅 CẬP NHẬT GẦN NHẤT: 20/11/2026
 
+### 17. Khóa Cứng Cổng Đăng Nhập POS Nội Bộ (Chặn Vai Trò `CUSTOMER` & Tắt Tự Đăng Ký Công Khai)
+- **[login.jsp](file:///d:/fpt/DUNA/src/main/webapp/login.jsp):**
+  - Cập nhật tiêu đề phụ sang *Hệ Thống Quản Trị & Bán Hàng Tại Quầy (Nội Bộ)*; gỡ bỏ link tự đăng ký khách hàng (`UC014`) và dòng tài khoản mẫu `khach01@gmail.com` (chỉ giữ 3 tài khoản nội bộ `Admin`, `Manager`, `Staff/POS`); bổ sung thông báo lỗi `?error=internal_only`.
+- **[AuthServlet.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/controller/AuthServlet.java) & [AuthFilter.java](file:///d:/fpt/DUNA/src/main/java/com/duna/common/filter/AuthFilter.java):**
+  - Đóng endpoint công khai `/auth?action=register` (GET chuyển về `/login.jsp?error=internal_only`, POST trả `403` / chuyển về `/login.jsp?error=internal_only`).
+  - Chặn tài khoản vai trò `CUSTOMER` đăng nhập vào cổng POS nội bộ trong `AuthServlet.handleLogin` (trả thông báo tiếng Việt rõ ràng / `403` JSON, không cấp session) và hủy session nếu phát hiện role ngoài nội bộ trong `AuthFilter`.
+  - Giữ nguyên liên kết 1:1 `customers.user_id` ↔ `users` trong CSDL `DUNA_MensWear` để đảm bảo toàn vẹn khóa ngoại `voucher_usages`, `user_addresses`, JUnit và khả năng mở rộng bán hàng Online về sau.
+
 ### 16. Khắc Phục Toàn Diện 12 Nhóm Lỗi Nghiêm Trọng & Bảo Mật Sau Kiểm Thử Hệ Thống (Lỗi #1, #2, #3, #4, #6, #7, #8, #9, #10, #12, #13, #14)
 - **Lỗi #1 — Hủy đơn chờ bị chuyển thành `COMPLETED` ([OrderServlet.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv2_nguyen_duc_anh/controller/OrderServlet.java), [OrderDAO.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv2_nguyen_duc_anh/dao/OrderDAO.java), [quan-ly-hoa-don.jsp](file:///d:/fpt/DUNA/src/main/webapp/quan-ly-hoa-don.jsp)):**
   - `OrderServlet` đọc cả hai tham số `status` và `trangThai` (không phân biệt hoa/thường), gọi đúng `cancelOrder` cập nhật `status = 'CANCELLED'`, `payment_status = 'UNPAID'`, ghi lịch sử hủy và trả JSON rõ ràng cho AJAX `cancelOrder()`.
