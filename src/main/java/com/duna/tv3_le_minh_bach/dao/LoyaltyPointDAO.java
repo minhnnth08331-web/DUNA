@@ -60,12 +60,30 @@ public class LoyaltyPointDAO extends BaseDAO {
         return queryRows(sql, customerId, customerId, likePattern(txnTypeFilter));
     }
 
-    // UC217: Tu dong het han diem thuong qua 12 thang
+    // UC217: Tu dong het han diem thuong qua 12 thang (khong tru lap va dong bo points_balance)
     public int uc217_expireOldPoints() {
-        String sql = "INSERT INTO loyalty_transactions (account_id, points, txn_type, description) "
-                + "SELECT account_id, -SUM(points), 'EXPIRE', N'Điểm hết hạn sau 12 tháng' "
-                + "FROM loyalty_transactions WHERE txn_type = 'EARN' AND expires_at < GETDATE() GROUP BY account_id";
-        return executeUpdate(sql);
+        List<Map<String, Object>> due = queryRows(
+                "SELECT la.account_id, la.points_balance, "
+                        + "ISNULL(SUM(CASE WHEN lt.txn_type = 'EARN' AND lt.expires_at < GETDATE() THEN lt.points ELSE 0 END), 0) AS overdue_earned, "
+                        + "ISNULL(SUM(CASE WHEN lt.txn_type = 'EXPIRE' THEN ABS(lt.points) ELSE 0 END), 0) AS already_expired "
+                        + "FROM loyalty_accounts la "
+                        + "JOIN loyalty_transactions lt ON la.account_id = lt.account_id "
+                        + "GROUP BY la.account_id, la.points_balance");
+        int affected = 0;
+        for (Map<String, Object> row : due) {
+            int accId = ((Number) row.get("account_id")).intValue();
+            int balance = ((Number) row.get("points_balance")).intValue();
+            int overdueEarned = ((Number) row.get("overdue_earned")).intValue();
+            int alreadyExpired = ((Number) row.get("already_expired")).intValue();
+            int toExpire = Math.min(Math.max(0, balance), Math.max(0, overdueEarned - alreadyExpired));
+            if (toExpire > 0) {
+                executeUpdate("INSERT INTO loyalty_transactions (account_id, points, txn_type, description) "
+                        + "VALUES (?, ?, 'EXPIRE', N'Điểm hết hạn sau 12 tháng')", accId, -toExpire);
+                affected += executeUpdate("UPDATE loyalty_accounts SET points_balance = CASE WHEN points_balance >= ? THEN points_balance - ? ELSE 0 END, "
+                        + "updated_at = GETDATE() WHERE account_id = ?", toExpire, toExpire, accId);
+            }
+        }
+        return affected;
     }
 
     // UC218: Xem danh sach qua doi diem dang ap dung

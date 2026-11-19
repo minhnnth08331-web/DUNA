@@ -30,7 +30,7 @@ public class DunaArchitectureAndUcTest extends TestCase {
     public void testDatabaseHas100TablesAndSeedData() throws Exception {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "SELECT (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'), "
+                     "SELECT (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME <> 'sysdiagrams'), "
                              + "(SELECT COUNT(*) FROM customers), (SELECT COUNT(*) FROM products)");
              ResultSet rs = ps.executeQuery()) {
             assertTrue(rs.next());

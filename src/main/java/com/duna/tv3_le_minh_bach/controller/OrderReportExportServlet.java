@@ -22,8 +22,8 @@ public class OrderReportExportServlet extends BaseServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String fromDate = RequestUtil.getString(req, "fromDate", "2026-01-01");
-        String toDate = RequestUtil.getString(req, "toDate", "2027-12-31");
+        String fromDate = RequestUtil.getSafeDate(req, "fromDate", "2026-01-01");
+        String toDate = RequestUtil.getSafeDate(req, "toDate", "2027-12-31");
         List<Map<String, Object>> rows = service.getOrdersForExport(fromDate, toDate);
         if (wantsJson(req)) {
             writeOkJson(resp, "UC158", "Du lieu xuat Excel", rows);

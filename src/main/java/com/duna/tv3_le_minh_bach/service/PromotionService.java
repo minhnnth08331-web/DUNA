@@ -33,7 +33,15 @@ public class PromotionService {
     }
 
     public Map<String, Object> validateVoucher(String code, double orderAmount, int userId) {
-        return promoDAO.uc196_validateVoucher(code.toUpperCase(), orderAmount, userId);
+        return promoDAO.uc196_validateVoucher(code == null ? "" : code.toUpperCase(), orderAmount, userId);
+    }
+
+    public Map<String, Object> validateVoucherDetailed(String code, double orderAmount, Integer customerUserId) {
+        return promoDAO.validateVoucherDetailed(code, orderAmount, customerUserId);
+    }
+
+    public List<Map<String, Object>> listClassicVouchers(String search, String giamGia, String trangThai) {
+        return promoDAO.listClassicVouchers(search, giamGia, trangThai);
     }
 
     public int recordVoucherUsage(int voucherId, int userId, long orderId, double discount) {

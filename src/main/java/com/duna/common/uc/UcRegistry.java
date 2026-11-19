@@ -122,7 +122,7 @@ public final class UcRegistry {
         w("UC046", "M03", "TV1", "/categories", vCat, "Cập nhật tên, mô tả và ảnh đại diện danh mục", p("categoryId", "ID danh mục", "number", "1"), p("categoryName", "Tên danh mục", "text", "Áo Sơ Mi Nam"), p("description", "Mô tả", "text", "Sơ mi Oxford, Bamboo thanh lịch"));
         w("UC047", "M03", "TV1", "/categories", vCat, "Xóa danh mục và kiểm tra sản phẩm, danh mục con đang trực thuộc", p("categoryId", "ID danh mục", "number", "999"));
         r("UC048", "M03", "TV1", "/categories", vCat, "Xem danh sách bộ sưu tập thời trang theo mùa", p("keyword", "Từ khóa", "text", ""));
-        w("UC049", "M03", "TV1", "/categories", vCat, "Thêm mới bộ sưu tập Xuân Hè / Thu Đông kèm banner", p("collectionName", "Tên BST", "text", "BST Thu Đông DUNA 2026"), p("season", "Mùa", "text", "Thu Đông 2026"), p("startDate", "Từ ngày", "date", "2026-10-01"), p("endDate", "Đến ngày", "date", "2027-02-28"));
+        w("UC049", "M03", "TV1", "/categories", vCat, "Thêm mới bộ sưu tập Xuân Hè / Thu Đông kèm banner", p("collectionName", "Tên BST", "text", "BST Thu Đông DUNA 2026"), p("season", "Mùa (SPRING_SUMMER/FALL_WINTER/ALL_SEASON)", "text", "FALL_WINTER"), p("startDate", "Từ ngày", "date", "2026-10-01"), p("endDate", "Đến ngày", "date", "2027-02-28"));
         w("UC050", "M03", "TV1", "/categories", vCat, "Cập nhật thời gian áp dụng và banner bộ sưu tập", p("collectionId", "ID BST", "number", "1"), p("endDate", "Ngày kết thúc", "date", "2027-03-31"), p("bannerUrl", "URL Banner", "text", "img/duna-logo.png"));
         w("UC051", "M03", "TV1", "/categories", vCat, "Xóa bộ sưu tập và gỡ liên kết sản phẩm thuộc bộ sưu tập", p("collectionId", "ID BST", "number", "999"));
         r("UC052", "M03", "TV1", "/categories", vCat, "Xem danh sách thương hiệu kèm số lượng sản phẩm", p("keyword", "Từ khóa", "text", ""));
@@ -217,27 +217,27 @@ public final class UcRegistry {
         r("UC126", "M06", "TV2", "/orders", vOrd, "Xem danh sách đơn hàng phân trang dành cho quản trị", p("keyword", "Từ khóa", "text", ""));
         r("UC127", "M06", "TV2", "/orders", vOrd, "Tìm kiếm đơn hàng theo mã đơn, số điện thoại hoặc tên người nhận", p("keyword", "Mã đơn / SĐT", "text", "DN"));
         r("UC128", "M06", "TV2", "/orders", vOrd, "Lọc đơn hàng theo trạng thái, kênh bán và khoảng ngày đặt", p("status", "Trạng thái", "text", ""), p("channel", "Kênh (POS/WEB)", "text", ""), p("fromDate", "Từ ngày", "date", "2026-01-01"), p("toDate", "Đến ngày", "date", "2027-12-31"));
-        r("UC129", "M06", "TV2", "/orders", vOrd, "Xem chi tiết đơn hàng kèm danh sách sản phẩm đã mua", p("orderId", "ID Đơn hàng", "number", "1"));
+        r("UC129", "M06", "TV2", "/orders", vOrd, "Xem chi tiết đơn hàng kèm danh sách sản phẩm đã mua", p("orderId", "ID Đơn hàng", "number", "7"));
         r("UC130", "M06", "TV2", "/orders", vOrd, "Xem lịch sử mua hàng của một khách hàng", p("customerId", "ID Khách hàng", "number", "1"), p("keyword", "Từ khóa", "text", ""));
         r("UC131", "M06", "TV2", "/orders", vOrd, "Tạo mã đơn hàng tự động theo ngày (DNyyMMdd-số thứ tự)");
         w("UC132", "M06", "TV2", "/orders", vOrd, "Đặt hàng online từ giỏ hàng: tạo đơn, chi tiết đơn và giữ chỗ tồn kho", p("customerId", "ID KH", "number", "1"), p("cartId", "ID Giỏ hàng", "number", "1"), p("receiverName", "Người nhận", "text", "Trần Văn Nam"), p("receiverPhone", "SĐT", "text", "0912345678"), p("shippingAddress", "Địa chỉ", "text", "Hà Nội"));
         w("UC133", "M06", "TV2", "/orders", vOrd, "Nhân viên tạo đơn hàng hộ khách qua điện thoại", p("customerId", "ID KH", "number", "1"), p("receiverName", "Người nhận", "text", "Khách gọi hotline"), p("receiverPhone", "SĐT", "text", "0912345678"), p("shippingAddress", "Địa chỉ giao", "text", "12 Nguyễn Trãi, Hà Nội"), p("subtotal", "Tiền hàng", "number", "390000"), p("shipFee", "Phí ship", "number", "30000"));
-        w("UC134", "M06", "TV2", "/orders", vOrd, "Xác nhận đơn hàng và ghi nhận lịch sử trạng thái", p("orderId", "ID Đơn hàng", "number", "1"));
-        w("UC135", "M06", "TV2", "/orders", vOrd, "Chuyển đơn hàng sang trạng thái đóng gói", p("orderId", "ID Đơn hàng", "number", "1"));
-        w("UC136", "M06", "TV2", "/orders", vOrd, "Chuyển đơn hàng sang trạng thái đang giao cho đơn vị vận chuyển", p("orderId", "ID Đơn hàng", "number", "1"));
-        w("UC137", "M06", "TV2", "/orders", vOrd, "Xác nhận giao hàng thành công và cập nhật thanh toán COD", p("orderId", "ID Đơn hàng", "number", "1"));
-        w("UC138", "M06", "TV2", "/orders", vOrd, "Hoàn tất đơn hàng, trừ tồn thực tế và cộng chi tiêu tích lũy cho khách", p("orderId", "ID Đơn hàng", "number", "1"));
+        w("UC134", "M06", "TV2", "/orders", vOrd, "Xác nhận đơn hàng và ghi nhận lịch sử trạng thái", p("orderId", "ID Đơn hàng", "number", "7"));
+        w("UC135", "M06", "TV2", "/orders", vOrd, "Chuyển đơn hàng sang trạng thái đóng gói", p("orderId", "ID Đơn hàng", "number", "7"));
+        w("UC136", "M06", "TV2", "/orders", vOrd, "Chuyển đơn hàng sang trạng thái đang giao cho đơn vị vận chuyển", p("orderId", "ID Đơn hàng", "number", "7"));
+        w("UC137", "M06", "TV2", "/orders", vOrd, "Xác nhận giao hàng thành công và cập nhật thanh toán COD", p("orderId", "ID Đơn hàng", "number", "7"));
+        w("UC138", "M06", "TV2", "/orders", vOrd, "Hoàn tất đơn hàng, trừ tồn thực tế và cộng chi tiêu tích lũy cho khách", p("orderId", "ID Đơn hàng", "number", "7"));
         w("UC139", "M06", "TV2", "/orders", vOrd, "Hủy đơn hàng, ghi lý do và hoàn trả tồn kho giữ chỗ", p("orderId", "ID Đơn hàng", "number", "999"), p("reasonCode", "Mã lý do", "text", "CUSTOMER_REQUEST"), p("reasonDetail", "Chi tiết", "text", "Khách đổi ý"));
-        w("UC140", "M06", "TV2", "/orders", vOrd, "Thêm ghi chú nội bộ cho đơn hàng", p("orderId", "ID Đơn hàng", "number", "1"), p("content", "Nội dung ghi chú", "text", "Giao giờ hành chính"), p("internal", "Nội bộ (true/false)", "text", "true"));
-        r("UC141", "M06", "TV2", "/orders", vOrd, "Xem danh sách ghi chú của đơn hàng kèm người ghi", p("orderId", "ID Đơn hàng", "number", "1"), p("keyword", "Từ khóa", "text", ""));
-        w("UC142", "M06", "TV2", "/orders", vOrd, "Cập nhật địa chỉ giao hàng của đơn chưa đóng gói", p("orderId", "ID Đơn hàng", "number", "1"), p("receiverName", "Người nhận", "text", "Trần Văn Nam"), p("phone", "SĐT", "text", "0912345678"), p("address", "Địa chỉ mới", "text", "Số 88 Cầu Giấy, Hà Nội"));
-        r("UC143", "M06", "TV2", "/orders", vOrd, "Xem lịch sử thay đổi trạng thái của đơn hàng", p("orderId", "ID Đơn hàng", "number", "1"), p("statusFilter", "Lọc trạng thái", "text", ""));
-        w("UC144", "M06", "TV2", "/orders", vOrd, "Xuất hóa đơn bán hàng cho đơn đã hoàn tất", p("orderId", "ID Đơn hàng", "number", "1"), p("buyerName", "Tên người mua", "text", "Trần Văn Nam"), p("companyName", "Công ty", "text", "DUNA Client"), p("taxCode", "MST", "text", "0101234567"));
+        w("UC140", "M06", "TV2", "/orders", vOrd, "Thêm ghi chú nội bộ cho đơn hàng", p("orderId", "ID Đơn hàng", "number", "7"), p("content", "Nội dung ghi chú", "text", "Giao giờ hành chính"), p("internal", "Nội bộ (true/false)", "text", "true"));
+        r("UC141", "M06", "TV2", "/orders", vOrd, "Xem danh sách ghi chú của đơn hàng kèm người ghi", p("orderId", "ID Đơn hàng", "number", "7"), p("keyword", "Từ khóa", "text", ""));
+        w("UC142", "M06", "TV2", "/orders", vOrd, "Cập nhật địa chỉ giao hàng của đơn chưa đóng gói", p("orderId", "ID Đơn hàng", "number", "7"), p("receiverName", "Người nhận", "text", "Trần Văn Nam"), p("phone", "SĐT", "text", "0912345678"), p("address", "Địa chỉ mới", "text", "Số 88 Cầu Giấy, Hà Nội"));
+        r("UC143", "M06", "TV2", "/orders", vOrd, "Xem lịch sử thay đổi trạng thái của đơn hàng", p("orderId", "ID Đơn hàng", "number", "7"), p("statusFilter", "Lọc trạng thái", "text", ""));
+        w("UC144", "M06", "TV2", "/orders", vOrd, "Xuất hóa đơn bán hàng cho đơn đã hoàn tất", p("orderId", "ID Đơn hàng", "number", "7"), p("buyerName", "Tên người mua", "text", "Trần Văn Nam"), p("companyName", "Công ty", "text", "DUNA Client"), p("taxCode", "MST", "text", "0101234567"));
         r("UC145", "M06", "TV2", "/orders", vOrd, "Tra cứu hóa đơn theo mã đơn hàng hoặc mã số thuế", p("keyword", "Mã hóa đơn / MST", "text", ""));
         w("UC146", "M06", "TV2", "/orders", vOrd, "Hủy hóa đơn đã xuất do sai thông tin", p("invoiceId", "ID Hóa đơn", "number", "999"));
 
         String vRet = "/WEB-INF/views/tv2_nguyen_duc_anh/returns.jsp";
-        w("UC147", "M06", "TV2", "/returns", vRet, "Khách tạo yêu cầu đổi trả hàng kèm sản phẩm cần đổi trả", p("orderId", "ID Đơn hàng", "number", "1"), p("customerId", "ID KH", "number", "1"), p("requestType", "Loại (RETURN/EXCHANGE)", "text", "EXCHANGE"), p("reason", "Lý do", "text", "Chật vai, đổi sang size lớn hơn"));
+        w("UC147", "M06", "TV2", "/returns", vRet, "Khách tạo yêu cầu đổi trả hàng kèm sản phẩm cần đổi trả", p("orderId", "ID Đơn hàng", "number", "7"), p("customerId", "ID KH", "number", "1"), p("requestType", "Loại (RETURN/EXCHANGE)", "text", "EXCHANGE"), p("reason", "Lý do", "text", "Chật vai, đổi sang size lớn hơn"));
         r("UC148", "M06", "TV2", "/returns", vRet, "Xem danh sách yêu cầu đổi trả đang chờ xử lý", p("status", "Trạng thái", "text", ""), p("keyword", "Từ khóa", "text", ""));
         w("UC149", "M06", "TV2", "/returns", vRet, "Duyệt yêu cầu đổi trả hàng của khách", p("returnId", "ID Yêu cầu đổi trả", "number", "1"));
         w("UC150", "M06", "TV2", "/returns", vRet, "Từ chối yêu cầu đổi trả và ghi chú lý do", p("returnId", "ID Yêu cầu đổi trả", "number", "999"), p("reasonNote", "Lý do từ chối", "text", "Sản phẩm đã qua sử dụng"));
@@ -245,7 +245,7 @@ public final class UcRegistry {
 
         // ===== TV3: LE MINH BACH - TH08442 (UC152 - UC218) =====
         String vPay = "/WEB-INF/views/tv3_le_minh_bach/payments.jsp";
-        w("UC152", "M06", "TV3", "/payments", vPay, "Tạo yêu cầu hoàn tiền sau khi nhận hàng trả", p("orderId", "ID Đơn hàng", "number", "1"), p("amount", "Số tiền hoàn", "number", "390000"), p("method", "Phương thức", "text", "BANK"));
+        w("UC152", "M06", "TV3", "/payments", vPay, "Tạo yêu cầu hoàn tiền sau khi nhận hàng trả", p("orderId", "ID Đơn hàng", "number", "7"), p("amount", "Số tiền hoàn", "number", "390000"), p("method", "Phương thức", "text", "BANK"));
         w("UC153", "M06", "TV3", "/payments", vPay, "Hoàn tất hoàn tiền và cập nhật trạng thái thanh toán đơn hàng", p("refundId", "ID Phiếu hoàn", "number", "1"));
         w("UC154", "M06", "TV3", "/returns", vRet, "Xử lý đổi hàng sang size khác: trừ kho size mới và cộng kho size cũ", p("returnId", "ID Yêu cầu đổi", "number", "1"), p("warehouseId", "ID Kho", "number", "1"));
         w("UC155", "M06", "TV3", "/orders", vOrd, "Tự động hủy đơn hàng quá hạn chưa thanh toán online");
@@ -255,11 +255,11 @@ public final class UcRegistry {
         r("UC159", "M07", "TV3", "/payments", vPay, "Xem danh sách phương thức thanh toán (COD, VNPay, MoMo, chuyển khoản)", p("keyword", "Từ khóa", "text", ""));
         w("UC160", "M07", "TV3", "/payments", vPay, "Thêm mới phương thức thanh toán", p("methodCode", "Mã PT", "text", "VIETQR"), p("methodName", "Tên PT", "text", "Chuyển khoản VietQR Napas"), p("isOnline", "Online (true/false)", "text", "true"), p("displayOrder", "Thứ tự", "number", "4"));
         w("UC161", "M07", "TV3", "/payments", vPay, "Bật tắt phương thức thanh toán trên trang đặt hàng", p("methodId", "ID Phương thức", "number", "3"));
-        w("UC162", "M07", "TV3", "/payments", vPay, "Tạo bản ghi thanh toán khi khách chọn thanh toán COD", p("orderId", "ID Đơn hàng", "number", "1"), p("amount", "Số tiền", "number", "500000"));
-        w("UC163", "M07", "TV3", "/payments", vPay, "Tạo yêu cầu thanh toán VNPay và lưu giao dịch chờ xử lý", p("orderId", "ID Đơn hàng", "number", "1"), p("amount", "Số tiền", "number", "500000"));
+        w("UC162", "M07", "TV3", "/payments", vPay, "Tạo bản ghi thanh toán khi khách chọn thanh toán COD", p("orderId", "ID Đơn hàng", "number", "7"), p("amount", "Số tiền", "number", "500000"));
+        w("UC163", "M07", "TV3", "/payments", vPay, "Tạo yêu cầu thanh toán VNPay và lưu giao dịch chờ xử lý", p("orderId", "ID Đơn hàng", "number", "7"), p("amount", "Số tiền", "number", "500000"));
         w("UC164", "M07", "TV3", "/payments", vPay, "Xử lý kết quả thanh toán VNPay thành công (IPN callback)", p("txnRef", "Mã giao dịch", "text", "TXN-DN20261106"), p("gateway", "Cổng", "text", "VNPAY"), p("gatewayTxnNo", "Mã cổng TT", "text", "VNP999888"), p("amount", "Số tiền", "number", "500000"));
         w("UC165", "M07", "TV3", "/payments", vPay, "Xử lý thanh toán thất bại hoặc hết hạn thanh toán online", p("paymentId", "ID Giao dịch", "number", "1"), p("gateway", "Cổng", "text", "VNPAY"), p("responseCode", "Mã lỗi", "text", "24"), p("amount", "Số tiền", "number", "500000"));
-        w("UC166", "M07", "TV3", "/payments", vPay, "Tạo yêu cầu thanh toán qua ví MoMo", p("orderId", "ID Đơn hàng", "number", "1"), p("amount", "Số tiền", "number", "500000"));
+        w("UC166", "M07", "TV3", "/payments", vPay, "Tạo yêu cầu thanh toán qua ví MoMo", p("orderId", "ID Đơn hàng", "number", "7"), p("amount", "Số tiền", "number", "500000"));
         r("UC167", "M07", "TV3", "/payments", vPay, "Xem lịch sử các giao dịch thanh toán của một đơn hàng", p("orderId", "ID Đơn hàng (0=tất cả)", "number", "0"), p("keyword", "Từ khóa", "text", ""));
         w("UC168", "M07", "TV3", "/payments", vPay, "Tạo phiên đối soát COD với đơn vị vận chuyển theo kỳ", p("carrierId", "ID ĐVVC", "number", "1"), p("periodFrom", "Từ ngày", "date", "2026-11-01"), p("periodTo", "Đến ngày", "date", "2026-11-30"));
         w("UC169", "M07", "TV3", "/payments", vPay, "Xác nhận hoàn tất đối soát COD và ghi nhận tiền về", p("reconciliationId", "ID Phiên đối soát", "number", "1"));
@@ -282,7 +282,7 @@ public final class UcRegistry {
         r("UC184", "M08", "TV3", "/shipping", vShip, "Xem bảng phí vận chuyển theo vùng và khối lượng");
         w("UC185", "M08", "TV3", "/shipping", vShip, "Cập nhật phí vận chuyển và ngưỡng miễn phí giao hàng", p("feeId", "ID Biểu phí", "number", "1"), p("baseFee", "Phí cơ bản (đ)", "number", "25000"), p("freeShipThreshold", "Ngưỡng freeship (đ)", "number", "500000"));
         r("UC186", "M08", "TV3", "/shipping", vShip, "Tính phí vận chuyển cho đơn hàng theo tỉnh nhận và khối lượng", p("provinceId", "ID Tỉnh", "number", "1"), p("shippingMethodId", "ID Dịch vụ", "number", "1"), p("weightGram", "Khối lượng (g)", "number", "500"), p("orderAmount", "Giá trị đơn (đ)", "number", "390000"));
-        w("UC187", "M08", "TV3", "/shipping", vShip, "Tạo vận đơn gửi đơn vị vận chuyển cho đơn hàng", p("orderId", "ID Đơn hàng", "number", "1"), p("carrierId", "ID ĐVVC", "number", "1"), p("shippingMethodId", "ID Dịch vụ", "number", "1"), p("trackingCode", "Mã vận đơn", "text", "VD-DN202601"), p("shippingFee", "Phí ship", "number", "25000"), p("codAmount", "Tiền thu hộ COD", "number", "0"));
+        w("UC187", "M08", "TV3", "/shipping", vShip, "Tạo vận đơn gửi đơn vị vận chuyển cho đơn hàng", p("orderId", "ID Đơn hàng", "number", "7"), p("carrierId", "ID ĐVVC", "number", "1"), p("shippingMethodId", "ID Dịch vụ", "number", "1"), p("trackingCode", "Mã vận đơn", "text", "VD-DN202601"), p("shippingFee", "Phí ship", "number", "25000"), p("codAmount", "Tiền thu hộ COD", "number", "0"));
         w("UC188", "M08", "TV3", "/shipping", vShip, "Cập nhật trạng thái vận đơn theo webhook của đơn vị vận chuyển", p("trackingCode", "Mã vận đơn", "text", "VD-DN202601"), p("newStatus", "Trạng thái", "text", "IN_TRANSIT"), p("location", "Vị trí", "text", "Kho trung chuyển Hà Nội"), p("note", "Ghi chú", "text", "Đang giao"));
         r("UC189", "M08", "TV3", "/shipping", vShip, "Tra cứu hành trình vận đơn theo mã vận đơn", p("trackingCode", "Mã vận đơn", "text", "VD"));
         r("UC190", "M08", "TV3", "/shipping", vShip, "Xem danh sách vận đơn giao trễ hoặc giao thất bại cần xử lý", p("keyword", "Từ khóa", "text", ""));
@@ -294,7 +294,7 @@ public final class UcRegistry {
         w("UC194", "M09", "TV3", "/promotions", vPromo, "Bật tắt trạng thái voucher", p("voucherId", "ID Voucher", "number", "1"));
         w("UC195", "M09", "TV3", "/promotions", vPromo, "Xóa voucher chưa có lượt sử dụng", p("voucherId", "ID Voucher", "number", "999"));
         r("UC196", "M09", "TV3", "/promotions", vPromo, "Kiểm tra mã voucher hợp lệ khi khách nhập tại bước thanh toán", p("keyword", "Mã Voucher", "text", "DUNA100"), p("orderAmount", "Giá trị đơn", "number", "600000"));
-        w("UC197", "M09", "TV3", "/promotions", vPromo, "Ghi nhận lượt sử dụng voucher khi đặt hàng thành công", p("voucherId", "ID Voucher", "number", "1"), p("userId", "ID TK", "number", "4"), p("orderId", "ID Đơn", "number", "1"), p("discountAmount", "Tiền giảm", "number", "100000"));
+        w("UC197", "M09", "TV3", "/promotions", vPromo, "Ghi nhận lượt sử dụng voucher khi đặt hàng thành công", p("voucherId", "ID Voucher", "number", "1"), p("userId", "ID TK", "number", "4"), p("orderId", "ID Đơn", "number", "7"), p("discountAmount", "Tiền giảm", "number", "100000"));
         r("UC198", "M09", "TV3", "/promotions", vPromo, "Thống kê hiệu quả voucher theo số lượt dùng và tổng tiền giảm");
         r("UC199", "M09", "TV3", "/promotions", vPromo, "Xem danh sách chương trình khuyến mãi đang diễn ra", p("keyword", "Từ khóa", "text", ""));
         w("UC200", "M09", "TV3", "/promotions", vPromo, "Thêm mới chương trình khuyến mãi theo sự kiện (Black Friday, 11.11)", p("promotionName", "Tên CT", "text", "DUNA Smart Casual Week"), p("promoType", "Loại (PERCENT/FIXED)", "text", "PERCENT"), p("discountValue", "Mức giảm", "number", "15"), p("startDate", "Từ ngày", "date", "2026-11-01"), p("endDate", "Đến ngày", "date", "2027-01-31"));
@@ -312,8 +312,8 @@ public final class UcRegistry {
         String vLoy = "/WEB-INF/views/tv3_le_minh_bach/loyalty.jsp";
         w("UC211", "M10", "TV3", "/loyalty", vLoy, "Tạo tài khoản tích điểm cho khách hàng mới", p("customerId", "ID Khách hàng", "number", "1"));
         r("UC212", "M10", "TV3", "/loyalty", vLoy, "Xem số dư điểm và hạng thành viên của khách hàng", p("customerId", "ID Khách hàng", "number", "2"));
-        w("UC213", "M10", "TV3", "/loyalty", vLoy, "Cộng điểm thưởng khi đơn hàng hoàn tất theo hệ số hạng thành viên", p("accountId", "ID Ví điểm", "number", "1"), p("orderId", "ID Đơn", "number", "1"), p("points", "Số điểm cộng", "number", "50"), p("description", "Nội dung", "text", "Tích điểm đơn hoàn tất"));
-        w("UC214", "M10", "TV3", "/loyalty", vLoy, "Trừ điểm khi khách dùng điểm để thanh toán đơn hàng", p("accountId", "ID Ví điểm", "number", "2"), p("orderId", "ID Đơn", "number", "1"), p("points", "Số điểm trừ", "number", "10"), p("description", "Nội dung", "text", "Đổi điểm giảm giá đơn"));
+        w("UC213", "M10", "TV3", "/loyalty", vLoy, "Cộng điểm thưởng khi đơn hàng hoàn tất theo hệ số hạng thành viên", p("accountId", "ID Ví điểm", "number", "1"), p("orderId", "ID Đơn", "number", "7"), p("points", "Số điểm cộng", "number", "50"), p("description", "Nội dung", "text", "Tích điểm đơn hoàn tất"));
+        w("UC214", "M10", "TV3", "/loyalty", vLoy, "Trừ điểm khi khách dùng điểm để thanh toán đơn hàng", p("accountId", "ID Ví điểm", "number", "2"), p("orderId", "ID Đơn", "number", "7"), p("points", "Số điểm trừ", "number", "10"), p("description", "Nội dung", "text", "Đổi điểm giảm giá đơn"));
         w("UC215", "M10", "TV3", "/loyalty", vLoy, "Điều chỉnh điểm thủ công kèm lý do", p("accountId", "ID Ví điểm", "number", "1"), p("deltaPoints", "Điểm +/-", "number", "20"), p("reason", "Lý do", "text", "Thưởng sinh nhật hội viên"));
         r("UC216", "M10", "TV3", "/loyalty", vLoy, "Xem lịch sử giao dịch điểm thưởng của khách hàng", p("customerId", "ID KH (0=tất cả)", "number", "0"), p("txnType", "Loại (EARN/REDEEM/ADJUST)", "text", ""));
         w("UC217", "M10", "TV3", "/loyalty", vLoy, "Tự động hết hạn điểm thưởng quá 12 tháng");
@@ -334,7 +334,7 @@ public final class UcRegistry {
         r("UC228", "M11", "TV4", "/reviews", vRev, "Thống kê điểm đánh giá trung bình và phản hồi về size của sản phẩm");
 
         String vSup = "/WEB-INF/views/tv4_nguyen_kieu_an/support.jsp";
-        w("UC229", "M11", "TV4", "/support", vSup, "Khách hàng tạo yêu cầu hỗ trợ gắn với đơn hàng", p("customerId", "ID KH", "number", "1"), p("orderId", "ID Đơn", "number", "1"), p("category", "Phân loại (SIZE_ADVICE/ORDER/RETURN)", "text", "SIZE_ADVICE"), p("subject", "Tiêu đề", "text", "Hỗ trợ chọn size sơ mi"), p("priority", "Ưu tiên (LOW/MEDIUM/HIGH)", "text", "MEDIUM"));
+        w("UC229", "M11", "TV4", "/support", vSup, "Khách hàng tạo yêu cầu hỗ trợ gắn với đơn hàng", p("customerId", "ID KH", "number", "1"), p("orderId", "ID Đơn", "number", "7"), p("category", "Phân loại (SIZE_ADVICE/ORDER/RETURN)", "text", "SIZE_ADVICE"), p("subject", "Tiêu đề", "text", "Hỗ trợ chọn size sơ mi"), p("priority", "Ưu tiên (LOW/NORMAL/HIGH/URGENT)", "text", "NORMAL"));
         r("UC230", "M11", "TV4", "/support", vSup, "Xem danh sách yêu cầu hỗ trợ theo trạng thái và mức ưu tiên", p("keyword", "Mã Ticket", "text", ""));
         w("UC231", "M11", "TV4", "/support", vSup, "Phân công nhân viên chăm sóc xử lý yêu cầu hỗ trợ", p("ticketId", "ID Ticket", "number", "1"), p("staffUserId", "ID Nhân viên", "number", "3"));
         w("UC232", "M11", "TV4", "/support", vSup, "Gửi tin nhắn phản hồi trong yêu cầu hỗ trợ", p("ticketId", "ID Ticket", "number", "1"), p("content", "Nội dung tin nhắn", "text", "DUNA đã tiếp nhận và tư vấn size phù hợp cho anh."));
@@ -359,7 +359,7 @@ public final class UcRegistry {
         r("UC247", "M13", "TV4", "/notifications", vNot, "Xem danh sách mẫu thông báo theo kênh gửi", p("channel", "Kênh (EMAIL/SMS/INAPP)", "text", ""), p("keyword", "Mã mẫu", "text", ""));
         w("UC248", "M13", "TV4", "/notifications", vNot, "Thêm mới mẫu email xác nhận đơn hàng", p("templateCode", "Mã mẫu", "text", "ORDER_CONFIRMED_V2"), p("channel", "Kênh", "text", "EMAIL"), p("subject", "Tiêu đề", "text", "DUNA xác nhận đơn hàng"), p("body", "Nội dung", "text", "Cảm ơn quý khách đã mua sắm tại DUNA."));
         w("UC249", "M13", "TV4", "/notifications", vNot, "Cập nhật nội dung mẫu thông báo", p("templateId", "ID Mẫu", "number", "1"), p("subject", "Tiêu đề mới", "text", "DUNA - Cập nhật đơn hàng"), p("body", "Nội dung mới", "text", "Đơn hàng của bạn đang được xử lý."));
-        w("UC250", "M13", "TV4", "/notifications", vNot, "Tạo thông báo trong ứng dụng khi đơn hàng đổi trạng thái", p("orderId", "ID Đơn", "number", "1"), p("templateId", "ID Mẫu", "number", "1"), p("title", "Tiêu đề TB", "text", "Đơn hàng đã xác nhận"));
+        w("UC250", "M13", "TV4", "/notifications", vNot, "Tạo thông báo trong ứng dụng khi đơn hàng đổi trạng thái", p("orderId", "ID Đơn", "number", "7"), p("templateId", "ID Mẫu", "number", "1"), p("title", "Tiêu đề TB", "text", "Đơn hàng đã xác nhận"));
         r("UC251", "M13", "TV4", "/notifications", vNot, "Xem danh sách thông báo chưa đọc của người dùng", p("userId", "ID TK", "number", "1"), p("keyword", "Từ khóa", "text", ""));
         w("UC252", "M13", "TV4", "/notifications", vNot, "Đánh dấu thông báo đã đọc", p("notificationId", "ID Thông báo", "number", "1"));
         w("UC253", "M13", "TV4", "/notifications", vNot, "Tự động xóa thông báo đã đọc cũ hơn 90 ngày");
@@ -374,7 +374,7 @@ public final class UcRegistry {
         w("UC260", "M14", "TV4", "/pos", vPos, "Mở ca bán hàng tại quầy và nhập tiền đầu ca", p("storeId", "ID CH", "number", "1"), p("openingCash", "Tiền đầu ca (đ)", "number", "2000000"));
         r("UC261", "M14", "TV4", "/pos", vPos, "Tra cứu sản phẩm tại quầy bằng quét mã vạch", p("keyword", "Barcode / SKU", "text", "8936"), p("warehouseId", "ID Kho", "number", "1"));
         w("UC262", "M14", "TV4", "/pos", vPos, "Bán hàng tại quầy: tạo đơn POS, trừ tồn kho và ghi nhận tiền mặt", p("storeId", "ID CH", "number", "1"), p("warehouseId", "ID Kho", "number", "1"), p("sessionId", "ID Ca POS", "number", "1"), p("variantId", "ID Biến thể", "number", "1"), p("quantity", "SL", "number", "1"));
-        w("UC263", "M14", "TV4", "/pos", vPos, "Ghi nhận thu chi phát sinh trong két tiền mặt", p("posSessionId", "ID Ca POS", "number", "1"), p("txnType", "Loại (IN/OUT)", "text", "OUT"), p("amount", "Số tiền", "number", "50000"), p("note", "Ghi chú", "text", "Mua túi giấy gói hàng"));
+        w("UC263", "M14", "TV4", "/pos", vPos, "Ghi nhận thu chi phát sinh trong két tiền mặt", p("posSessionId", "ID Ca POS", "number", "1"), p("txnType", "Loại (CASH_IN/CASH_OUT)", "text", "CASH_OUT"), p("amount", "Số tiền", "number", "50000"), p("note", "Ghi chú", "text", "Mua túi giấy gói hàng"));
         w("UC264", "M14", "TV4", "/pos", vPos, "Đóng ca bán hàng và đối chiếu tiền mặt thực tế", p("sessionId", "ID Ca POS", "number", "999"), p("closingCash", "Tiền chốt két", "number", "2000000"));
         r("UC265", "M14", "TV4", "/pos", vPos, "Báo cáo doanh thu theo ca bán hàng", p("storeId", "ID CH (0=tất cả)", "number", "0"));
         r("UC266", "M14", "TV4", "/pos", vPos, "Xem lịch sử ca bán hàng theo thu ngân", p("cashierId", "ID Thu ngân (0=tất cả)", "number", "0"), p("statusFilter", "Trạng thái (OPEN/CLOSED)", "text", ""));

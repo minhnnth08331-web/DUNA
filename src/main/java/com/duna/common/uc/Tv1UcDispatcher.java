@@ -61,13 +61,13 @@ public final class Tv1UcDispatcher {
             case "UC024": return wrapAffected(uc, authSvc.addAddress(numInt(req, "userId", 4), str(req, "receiverName", "Trần Văn Nam"), str(req, "receiverPhone", "0912345678"), numInt(req, "provinceId", 1), numInt(req, "wardId", 1), str(req, "addressLine", "Số 25 Xuân Thủy"), true), "Đã thêm địa chỉ mới", "Không thể thêm địa chỉ");
             case "UC025": return wrapAffected(uc, authSvc.setDefaultAddress(numInt(req, "userId", 4), numInt(req, "addressId", 1), str(req, "addressLine", "Số 25 Xuân Thủy, Cầu Giấy")), "Đã cập nhật & đặt địa chỉ mặc định", "Không tìm thấy địa chỉ thuộc tài khoản");
             case "UC026": return wrapAffected(uc, authSvc.deleteAddress(numInt(req, "addressId", 999)), "Đã xóa địa chỉ phụ", "Không xóa được địa chỉ mặc định hoặc không tồn tại");
-            case "UC027": return authSvc.listAuditLogs(str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31"), kw);
+            case "UC027": return authSvc.listAuditLogs(safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31"), kw);
 
             case "UC028": return custSvc.listCustomers(kw, 0, 50);
             case "UC029": return custSvc.searchCustomers(kw);
             case "UC030": return wrapMap(custSvc.getCustomerDetail(numInt(req, "customerId", 1)), uc, "Chi tiết khách hàng");
-            case "UC031": return wrapAffected(uc, custSvc.addWalkInCustomer(str(req, "fullName", "Khách vãng lai mới"), str(req, "phone", "0909888111"), str(req, "gender", "MALE")), "Đã thêm khách vãng lai & tài khoản liên kết", "SĐT đã tồn tại");
-            case "UC032": return wrapAffected(uc, custSvc.updateCustomer(numInt(req, "customerId", 1), str(req, "phone", "0912345678"), str(req, "email", "khach01@gmail.com"), str(req, "birthDate", "1995-05-20")), "Đã cập nhật thông tin khách hàng", "Không tìm thấy khách hàng");
+            case "UC031": return wrapAffected(uc, custSvc.addWalkInCustomer(str(req, "fullName", "Khách vãng lai mới"), str(req, "phone", "0909888111"), str(req, "gender", "MALE")), "Đã thêm khách vãng lai & tài khoản liên kết", "SĐT không hợp lệ (phải bắt đầu bằng số 0, đủ 10 chữ số) hoặc đã tồn tại");
+            case "UC032": return wrapAffected(uc, custSvc.updateCustomer(numInt(req, "customerId", 1), str(req, "phone", "0912345678"), str(req, "email", "khach01@gmail.com"), str(req, "birthDate", "1995-05-20")), "Đã cập nhật thông tin khách hàng", "SĐT không hợp lệ/đã tồn tại hoặc không tìm thấy khách hàng");
             case "UC033": return wrapAffected(uc, custSvc.setCustomerActive(numInt(req, "customerId", 1), bool(req, "active", true)), "Đã cập nhật trạng thái hồ sơ khách hàng", "Không tìm thấy khách hàng");
             case "UC034": return wrapAffected(uc, custSvc.deleteCustomer(numInt(req, "customerId", 9999)), "Đã xóa khách hàng chưa có đơn", "Khách hàng đã có đơn hàng hoặc không tồn tại");
             case "UC035": return custSvc.listTiers(kw);
@@ -85,11 +85,11 @@ public final class Tv1UcDispatcher {
                 int pId = numInt(req, "parentId", 0);
                 return wrapAffected(uc, prodSvc.createCategory(str(req, "categoryName", "Áo Sơ Mi Dài Tay"), str(req, "slug", "ao-so-mi-dai-tay"), pId > 0 ? pId : null, str(req, "description", "Sơ mi công sở"), numInt(req, "displayOrder", 11)), "Đã tạo danh mục mới", "Danh mục đã tồn tại");
             }
-            case "UC046": return wrapAffected(uc, prodSvc.updateCategory(numInt(req, "categoryId", 1), str(req, "categoryName", "Áo Sơ Mi Nam"), str(req, "description", "Sơ mi Oxford, Bamboo thanh lịch"), ""), "Đã cập nhật danh mục", "Không tìm thấy danh mục");
+            case "UC046": return wrapAffected(uc, prodSvc.updateCategory(numInt(req, "categoryId", 1), str(req, "categoryName", "Áo Sơ Mi Nam"), str(req, "description", "Sơ mi Oxford, Bamboo thanh lịch"), str(req, "imageUrl", "")), "Đã cập nhật danh mục", "Không tìm thấy danh mục");
             case "UC047": return wrapAffected(uc, prodSvc.deleteCategory(numInt(req, "categoryId", 999)), "Đã xóa danh mục", "Danh mục đang có sản phẩm hoặc không tồn tại");
             case "UC048": return prodSvc.listCollections(kw);
-            case "UC049": return wrapAffected(uc, prodSvc.createCollection(str(req, "collectionName", "BST Thu Đông 2026"), str(req, "season", "Thu Đông"), "", "", str(req, "startDate", "2026-10-01"), str(req, "endDate", "2027-02-28")), "Đã thêm bộ sưu tập", "Không thêm được bộ sưu tập");
-            case "UC050": return wrapAffected(uc, prodSvc.updateCollection(numInt(req, "collectionId", 1), str(req, "endDate", "2027-03-31"), str(req, "bannerUrl", "img/duna-logo.png")), "Đã cập nhật bộ sưu tập", "Không tìm thấy bộ sưu tập");
+            case "UC049": return wrapAffected(uc, prodSvc.createCollection(str(req, "collectionName", "BST Thu Đông 2026"), str(req, "season", "FALL_WINTER"), "", "", safeDate(req, "startDate", "2026-10-01"), safeDate(req, "endDate", "2027-02-28")), "Đã thêm bộ sưu tập", "Không thêm được bộ sưu tập");
+            case "UC050": return wrapAffected(uc, prodSvc.updateCollection(numInt(req, "collectionId", 1), safeDate(req, "endDate", "2027-03-31"), str(req, "bannerUrl", "img/duna-logo.png")), "Đã cập nhật bộ sưu tập", "Không tìm thấy bộ sưu tập");
             case "UC051": return wrapAffected(uc, prodSvc.deleteCollection(numInt(req, "collectionId", 999)), "Đã xóa bộ sưu tập", "Không tìm thấy bộ sưu tập");
             case "UC052": return prodSvc.listBrands(kw);
             case "UC053": return wrapAffected(uc, prodSvc.createBrand(str(req, "brandName", "DUNA Smart Casual"), "", str(req, "description", "Thời trang nam tầm trung")), "Đã thêm thương hiệu", "Thương hiệu đã tồn tại");

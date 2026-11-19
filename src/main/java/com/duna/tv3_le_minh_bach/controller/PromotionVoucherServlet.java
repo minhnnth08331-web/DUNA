@@ -34,7 +34,7 @@ public class PromotionVoucherServlet extends BaseServlet {
             if (id > 0) {
                 service.toggleVoucher(id);
             }
-            resp.sendRedirect(req.getContextPath() + "/VoucherServlet?msg=status_updated");
+            resp.sendRedirect(req.getContextPath() + "/VoucherServlet?success=status");
             return;
         }
 
@@ -108,17 +108,20 @@ public class PromotionVoucherServlet extends BaseServlet {
             String tenCT = RequestUtil.getString(req, "tenChuongTrinh", "Voucher VIP DUNA");
             double giamGia = RequestUtil.getDouble(req, "giamGia", 100000);
             double donToiThieu = RequestUtil.getDouble(req, "donToiThieu", 500000);
+            double giamToiDa = RequestUtil.getDouble(req, "giamToiDa", 0);
             int soLuong = RequestUtil.getInt(req, "soLuong", 1);
-            affected = voucherDAO.createClassicVipVoucher("VIP" + vipNumber, tenCT, giamGia, donToiThieu, soLuong);
-            resp.sendRedirect(req.getContextPath() + "/VoucherServlet?msg=" + (affected > 0 ? "created" : "exists"));
+            affected = voucherDAO.createClassicVipVoucher("VIP" + vipNumber, tenCT, giamGia, donToiThieu, giamToiDa, soLuong);
+            resp.sendRedirect(req.getContextPath() + "/VoucherServlet?" + (affected > 0 ? "success=added" : "error=exist"));
             return;
         } else if ("generateBatch".equals(action)) {
             String prefix = RequestUtil.getString(req, "batchPrefix", "YN100");
             String campaign = RequestUtil.getString(req, "batchTen", "Lô voucher ưu đãi DUNA");
             double amount = RequestUtil.getDouble(req, "batchAmount", 100000);
+            double minOrder = RequestUtil.getDouble(req, "batchMinOrder", 0);
+            double maxDiscount = RequestUtil.getDouble(req, "batchMaxDiscount", 0);
             int qty = RequestUtil.getInt(req, "batchQty", 10);
-            affected = voucherDAO.generateClassicBatchVouchers(prefix, campaign, amount, qty);
-            resp.sendRedirect(req.getContextPath() + "/VoucherServlet?msg=batch_" + affected);
+            affected = voucherDAO.generateClassicBatchVouchers(prefix, campaign, amount, minOrder, maxDiscount, qty);
+            resp.sendRedirect(req.getContextPath() + "/VoucherServlet?success=batch&count=" + affected);
             return;
         } else if ("createVoucher".equals(action)) {
             affected = service.createVoucher(RequestUtil.getString(req, "voucherCode", ""),
@@ -129,16 +132,16 @@ public class PromotionVoucherServlet extends BaseServlet {
                     RequestUtil.getDouble(req, "minOrderValue", 300000),
                     RequestUtil.getInt(req, "usageLimit", 500),
                     RequestUtil.getInt(req, "perUserLimit", 1),
-                    RequestUtil.getString(req, "startDate", "2026-11-01"),
-                    RequestUtil.getString(req, "endDate", "2027-03-31"));
+                    RequestUtil.getSafeDate(req, "startDate", "2026-11-01"),
+                    RequestUtil.getSafeDate(req, "endDate", "2027-03-31"));
         } else if ("toggleVoucher".equals(action)) {
             affected = service.toggleVoucher(RequestUtil.getInt(req, "voucherId", 0));
         } else if ("createPromotion".equals(action)) {
             affected = service.createPromotion(RequestUtil.getString(req, "promotionName", ""),
                     RequestUtil.getString(req, "promoType", "PERCENT"),
                     RequestUtil.getDouble(req, "discountValue", 15),
-                    RequestUtil.getString(req, "startDate", "2026-11-01"),
-                    RequestUtil.getString(req, "endDate", "2027-01-31"),
+                    RequestUtil.getSafeDate(req, "startDate", "2026-11-01"),
+                    RequestUtil.getSafeDate(req, "endDate", "2027-01-31"),
                     RequestUtil.getString(req, "bannerUrl", ""));
         } else if ("createFlashSale".equals(action)) {
             affected = service.createFlashSale(RequestUtil.getString(req, "title", ""),

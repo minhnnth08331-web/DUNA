@@ -302,9 +302,15 @@ public class ProductDAO extends BaseDAO {
                         + "WHERE product_id = ?",
                 tenSP, catId, brandId, giaBan, giaNhap, chatLieu, safeForm, moTa, active ? 1 : 0, id);
         if (updated > 0 && hinhAnh != null && !hinhAnh.trim().isEmpty()) {
-            executeUpdate("UPDATE product_media SET is_primary = 0 WHERE product_id = ?", id);
-            executeUpdate("INSERT INTO product_media (product_id, media_type, media_url, is_primary, display_order) VALUES (?, 'IMAGE', ?, 1, 1)",
-                    id, hinhAnh.trim());
+            String newUrl = hinhAnh.trim();
+            String currentUrl = queryOne(
+                    "SELECT TOP 1 media_url FROM product_media WHERE product_id = ? ORDER BY is_primary DESC, media_id ASC",
+                    rs -> rs.getString(1), id);
+            if (currentUrl == null || !currentUrl.trim().equals(newUrl)) {
+                executeUpdate("UPDATE product_media SET is_primary = 0 WHERE product_id = ?", id);
+                executeUpdate("INSERT INTO product_media (product_id, media_type, media_url, is_primary, display_order) VALUES (?, 'IMAGE', ?, 1, 1)",
+                        id, newUrl);
+            }
         }
         return updated;
     }
@@ -337,10 +343,71 @@ public class ProductDAO extends BaseDAO {
     }
 
     public int editClassicVariant(int variantId, double giaBan, int soLuong, String barcode) {
-        executeUpdate("UPDATE product_variants SET price = ?, barcode = CASE WHEN ? <> '' THEN ? ELSE barcode END WHERE variant_id = ?",
-                giaBan, barcode == null ? "" : barcode, barcode == null ? "" : barcode, variantId);
-        return executeUpdate("UPDATE inventories SET stock_quantity = ?, updated_at = GETDATE() WHERE variant_id = ?",
-                Math.max(0, soLuong), variantId);
+        return editClassicVariant(variantId, null, null, giaBan, soLuong, barcode);
+    }
+
+    public int editClassicVariant(int variantId, String colorName, String sizeCode, double giaBan, int soLuong, String barcode) {
+        Map<String, Object> cur = queryFirstRow("SELECT product_id, color_id, size_id FROM product_variants WHERE variant_id = ?", variantId);
+        if (cur == null) {
+            return 0;
+        }
+        int productId = ((Number) cur.get("product_id")).intValue();
+        int newColorId = ((Number) cur.get("color_id")).intValue();
+        int newSizeId = ((Number) cur.get("size_id")).intValue();
+        if (colorName != null && !colorName.trim().isEmpty()) {
+            Integer cId = queryOne("SELECT TOP 1 color_id FROM colors WHERE color_name = ?", rs -> rs.getInt(1), colorName.trim());
+            if (cId == null) {
+                cId = (int) executeInsertGetId("INSERT INTO colors (color_name, hex_code, color_group) VALUES (?, '#1E293B', 'OTHER')", colorName.trim());
+            }
+            if (cId != null && cId > 0) {
+                newColorId = cId;
+            }
+        }
+        if (sizeCode != null && !sizeCode.trim().isEmpty()) {
+            Integer sId = queryOne("SELECT TOP 1 size_id FROM sizes WHERE size_code = ?", rs -> rs.getInt(1), sizeCode.trim());
+            if (sId == null) {
+                sId = (int) executeInsertGetId("INSERT INTO sizes (size_code, category_type, display_order) VALUES (?, 'SHIRT', 99)", sizeCode.trim());
+            }
+            if (sId != null && sId > 0) {
+                newSizeId = sId;
+            }
+        }
+        if (queryInt("SELECT COUNT(*) FROM product_variants WHERE product_id = ? AND color_id = ? AND size_id = ? AND variant_id <> ?",
+                productId, newColorId, newSizeId, variantId) > 0) {
+            return -1;
+        }
+        String bc = barcode == null ? "" : barcode.trim();
+        executeUpdate("UPDATE product_variants SET color_id = ?, size_id = ?, price = ?, barcode = CASE WHEN ? <> '' THEN ? ELSE barcode END WHERE variant_id = ?",
+                newColorId, newSizeId, giaBan, bc, bc, variantId);
+        return updateClassicVariantStock(variantId, soLuong);
+    }
+
+    public int updateClassicVariantStock(int variantId, int newQty) {
+        int safeQty = Math.max(0, newQty);
+        Integer oldQtyObj = queryOne("SELECT TOP 1 stock_quantity FROM inventories WHERE variant_id = ? ORDER BY warehouse_id ASC",
+                rs -> rs.getInt(1), variantId);
+        int updated = executeUpdate(
+                "UPDATE inventories SET stock_quantity = ?, updated_at = GETDATE() "
+                        + "WHERE inventory_id = (SELECT TOP 1 inventory_id FROM inventories WHERE variant_id = ? ORDER BY warehouse_id ASC)",
+                safeQty, variantId);
+        Integer whId = queryOne("SELECT TOP 1 warehouse_id FROM inventories WHERE variant_id = ? ORDER BY warehouse_id ASC",
+                rs -> rs.getInt(1), variantId);
+        if (updated == 0) {
+            whId = queryOne("SELECT TOP 1 warehouse_id FROM warehouses ORDER BY warehouse_id ASC", rs -> rs.getInt(1));
+            if (whId != null) {
+                updated = executeUpdate("INSERT INTO inventories (variant_id, warehouse_id, stock_quantity) VALUES (?, ?, ?)",
+                        variantId, whId, safeQty);
+            }
+        }
+        if (updated > 0 && whId != null) {
+            int delta = safeQty - (oldQtyObj != null ? oldQtyObj : 0);
+            if (delta != 0) {
+                executeUpdate("INSERT INTO inventory_logs (variant_id, warehouse_id, change_type, quantity_changed, reference_type, reason) "
+                                + "VALUES (?, ?, ?, ?, 'MANUAL_MATRIX', N'Cập nhật tồn kho từ Ma trận/Biến thể')",
+                        variantId, whId, delta > 0 ? "RESTOCK" : "ADJUSTMENT", delta);
+            }
+        }
+        return updated;
     }
 
     public int deleteClassicVariant(int variantId) {

@@ -51,7 +51,12 @@
 <div class="page-container">
     <c:if test="${not empty param.error}">
         <div class="alert alert-danger">
-            <span>${param.error}</span>
+            <span>
+                <c:choose>
+                    <c:when test="${param.error == 'duplicate_variant'}">Không thể cập nhật biến thể: Cặp Màu sắc &amp; Size này đã tồn tại trên sản phẩm!</c:when>
+                    <c:otherwise><c:out value="${param.error}"/></c:otherwise>
+                </c:choose>
+            </span>
             <button type="button" onclick="this.parentElement.style.display='none'" class="close-btn" style="position:static; margin-left:auto;">&times;</button>
         </div>
     </c:if>
@@ -152,10 +157,21 @@
                         </td>
                         <td class="text-center">
                             <div style="display:inline-flex; gap:4px; align-items:center;">
-                                <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px; font-weight: 600; color: #c5a059; border-color: #c5a059;" onclick="openProductMatrixModal('${sp.id}','${fn:escapeXml(sp.tenSP)}','${sp.maSP}')" title="Xem ma trận tồn kho Size & Màu">Ma trận</button>
-                                <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px;" onclick="openVariants('${sp.id}','${sp.tenSP}')" title="Quản lý biến thể size/màu">Biến thể</button>
-                                <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px;" onclick="openPrintTagModal('${sp.id}','${sp.maSP}','${sp.tenSP}','${sp.giaBan}')" title="In tem mác barcode">In tem</button>
-                                <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px;" onclick="openEdit('${sp.id}','${sp.tenSP}','${sp.danhMuc}','${sp.thuongHieu}','${sp.giaBan}','${sp.giaNhap}','${sp.soLuong}','${sp.trangThai}','${sp.chatLieu}','${sp.formDang}','${sp.hinhAnh}','${sp.moTa}')" title="Sửa thông tin">Sửa</button>
+                                <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px; font-weight: 600; color: #c5a059; border-color: #c5a059;"
+                                        data-id="${sp.id}" data-ten="${fn:escapeXml(sp.tenSP)}" data-masp="${fn:escapeXml(sp.maSP)}"
+                                        onclick="openProductMatrixModal(this.dataset.id, this.dataset.ten, this.dataset.masp)" title="Xem ma trận tồn kho Size & Màu">Ma trận</button>
+                                <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px;"
+                                        data-id="${sp.id}" data-ten="${fn:escapeXml(sp.tenSP)}"
+                                        onclick="openVariants(this.dataset.id, this.dataset.ten)" title="Quản lý biến thể size/màu">Biến thể</button>
+                                <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px;"
+                                        data-id="${sp.id}" data-masp="${fn:escapeXml(sp.maSP)}" data-ten="${fn:escapeXml(sp.tenSP)}" data-gia="${sp.giaBan}"
+                                        onclick="openPrintTagModal(this.dataset.id, this.dataset.masp, this.dataset.ten, this.dataset.gia)" title="In tem mác barcode">In tem</button>
+                                <button type="button" class="btn btn-outline btn-sm" style="height: 28px; padding: 0 8px;"
+                                        data-id="${sp.id}" data-ten="${fn:escapeXml(sp.tenSP)}" data-cat="${fn:escapeXml(sp.danhMuc)}"
+                                        data-brand="${fn:escapeXml(sp.thuongHieu)}" data-giaban="${sp.giaBan}" data-gianhap="${sp.giaNhap}"
+                                        data-sl="${sp.soLuong}" data-tt="${fn:escapeXml(sp.trangThai)}" data-chatlieu="${fn:escapeXml(sp.chatLieu)}"
+                                        data-form="${fn:escapeXml(sp.formDang)}" data-img="${fn:escapeXml(sp.hinhAnh)}" data-mota="${fn:escapeXml(sp.moTa)}"
+                                        onclick="openEditFromBtn(this)" title="Sửa thông tin">Sửa</button>
                                 <form method="post" action="${pageContext.request.contextPath}/ProductServlet" style="display:inline; margin:0;" onsubmit="return confirm('Bạn có chắc chắn muốn ngừng bán / xóa sản phẩm này?');">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="id" value="${sp.id}">
@@ -543,6 +559,11 @@ function openAdd() {
     openModal('modalSP');
 }
 
+function openEditFromBtn(btn) {
+    var d = btn.dataset;
+    openEdit(d.id, d.ten, d.cat, d.brand, d.giaban, d.gianhap, d.sl, d.tt, d.chatlieu, d.form, d.img, d.mota);
+}
+
 function openEdit(id, ten, cat, brand, giaBan, giaNhap, sl, tt, chatLieu, formDang, hinhAnh, moTa) {
     document.getElementById('modalTitle').textContent = 'Sửa thông tin sản phẩm';
     document.getElementById('fAction').value = 'edit';
@@ -833,11 +854,18 @@ function promptRefillStock(idBT, currentSL, idSP, encodedTenSP) {
     
     fetch('${pageContext.request.contextPath}/ProductServlet', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
         body: formData.toString()
-    }).then(function() {
-        alert('✅ Đã cập nhật tồn kho biến thể thành công (' + currentSL + ' -> ' + newSL + ' SP)!');
-        openProductMatrixModal(idSP, decodeURIComponent(encodedTenSP), '');
+    }).then(function(r) {
+        return r.json().then(function(data) { return { ok: r.ok && data && (data.success || data.ok), data: data }; })
+            .catch(function() { return { ok: false, data: null }; });
+    }).then(function(res) {
+        if (res.ok) {
+            alert('✅ Đã cập nhật tồn kho biến thể thành công (' + currentSL + ' -> ' + newSL + ' SP)!');
+            openProductMatrixModal(idSP, decodeURIComponent(encodedTenSP), '');
+        } else {
+            alert('❌ Không thể cập nhật tồn kho biến thể!' + (res.data && res.data.message ? ' ' + res.data.message : ''));
+        }
     }).catch(function(e) {
         alert('Lỗi cập nhật kho: ' + e.message);
     });

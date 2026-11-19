@@ -34,12 +34,26 @@ public class EmployeeHrServlet extends BaseServlet {
         String uc = req.getParameter("uc");
 
         if ("/EmployeeDetailServlet".equals(servletPath)) {
+            javax.servlet.http.HttpSession session = req.getSession(false);
+            String role = (session != null && session.getAttribute("role") != null)
+                    ? String.valueOf(session.getAttribute("role")).toUpperCase() : "";
+            boolean isAdminOrManager = "ADMIN".equals(role) || "MANAGER".equals(role);
             if ("1".equals(req.getParameter("ajaxVerifyAdmin"))) {
+                if (!isAdminOrManager) {
+                    writeErrJson(resp, HttpServletResponse.SC_FORBIDDEN, "Khong du quyen quan tri");
+                    return;
+                }
                 handleVerifyAdminPassword(req, resp);
                 return;
             }
-            int id = RequestUtil.getInt(req, "id", getSessionUserId(req, 1));
+            int ownEmpId = (session != null && session.getAttribute("nhanVienID") instanceof Number)
+                    ? ((Number) session.getAttribute("nhanVienID")).intValue() : getSessionUserId(req, 1);
+            int id = RequestUtil.getInt(req, "id", ownEmpId);
             String mode = RequestUtil.getString(req, "mode", "view");
+            if (!isAdminOrManager) {
+                id = ownEmpId;
+                mode = "view";
+            }
             Map<String, Object> nv = hrDAO.getClassicEmployeeDetail(id);
             if (nv == null) {
                 resp.sendRedirect(req.getContextPath() + "/EmployeeManagementServlet?error=not_found");
@@ -51,6 +65,12 @@ public class EmployeeHrServlet extends BaseServlet {
                 req.setAttribute("credMessage", "LỖI: Mật khẩu mới phải tối thiểu 6 ký tự (gồm chữ và số) và khớp xác nhận.");
             } else if ("1".equals(req.getParameter("saved"))) {
                 req.setAttribute("message", "Đã lưu cập nhật hồ sơ nhân sự thành công.");
+            } else if ("1".equals(req.getParameter("phoneError"))) {
+                req.setAttribute("message", "LỖI: Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (03, 05, 07, 08, 09).");
+            } else if ("1".equals(req.getParameter("dupError"))) {
+                req.setAttribute("message", "LỖI: Email hoặc Số điện thoại đã thuộc về tài khoản khác.");
+            } else if ("1".equals(req.getParameter("lockError"))) {
+                req.setAttribute("message", "LỖI: Vui lòng nhập lý do bắt buộc khi khóa tài khoản nhân viên.");
             }
             req.setAttribute("nv", nv);
             req.setAttribute("mode", "edit".equalsIgnoreCase(mode) ? "edit" : "view");
@@ -105,14 +125,20 @@ public class EmployeeHrServlet extends BaseServlet {
                 return;
             }
             String fullName = RequestUtil.getString(req, "hoVaTen", "");
-            String phone = RequestUtil.normalizePhone(RequestUtil.getString(req, "soDienThoai", ""));
+            String rawPhone = RequestUtil.getString(req, "soDienThoai", "");
+            String phone = RequestUtil.normalizePhone(rawPhone);
+            if (!RequestUtil.isValidVnPhone(phone)) {
+                req.setAttribute("message", "LỖI: Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (đầu số 03, 05, 07, 08, 09).");
+                forwardView(req, resp, "/add-employee.jsp");
+                return;
+            }
             String email = RequestUtil.getString(req, "email", "");
-            String dob = RequestUtil.getString(req, "ngaySinh", "");
+            String dob = RequestUtil.getSafeDate(req, "ngaySinh", "");
             int createdId = hrDAO.addClassicEmployee(
                     username, PasswordUtil.hashPassword(password), fullName, phone, email, dob,
                     RequestUtil.getString(req, "cccd", ""),
-                    RequestUtil.getString(req, "ngayCapCccd", ""),
-                    RequestUtil.getString(req, "ngayHetHanCccd", ""),
+                    RequestUtil.getSafeDate(req, "ngayCapCccd", ""),
+                    RequestUtil.getSafeDate(req, "ngayHetHanCccd", ""),
                     RequestUtil.getString(req, "noiCapCccd", ""),
                     RequestUtil.getString(req, "queQuan", ""),
                     RequestUtil.getString(req, "noiThuongTru", ""),
@@ -131,14 +157,19 @@ public class EmployeeHrServlet extends BaseServlet {
         if ("/UpdateEmployeeServlet".equals(servletPath)) {
             int id = RequestUtil.getInt(req, "idNhanVien", 0);
             String fullName = RequestUtil.getString(req, "hoVaTen", "");
-            String phone = RequestUtil.normalizePhone(RequestUtil.getString(req, "soDienThoai", ""));
+            String rawPhone = RequestUtil.getString(req, "soDienThoai", "");
+            String phone = RequestUtil.normalizePhone(rawPhone);
+            if (!rawPhone.isEmpty() && !RequestUtil.isValidVnPhone(phone)) {
+                resp.sendRedirect(req.getContextPath() + "/EmployeeDetailServlet?id=" + id + "&mode=edit&phoneError=1");
+                return;
+            }
             String email = RequestUtil.getString(req, "email", "");
-            String dob = RequestUtil.getString(req, "ngaySinh", "");
-            hrDAO.updateClassicEmployee(
+            String dob = RequestUtil.getSafeDate(req, "ngaySinh", "");
+            int res = hrDAO.updateClassicEmployee(
                     id, fullName, phone, email, dob,
                     RequestUtil.getString(req, "cccd", ""),
-                    RequestUtil.getString(req, "ngayCapCccd", ""),
-                    RequestUtil.getString(req, "ngayHetHanCccd", ""),
+                    RequestUtil.getSafeDate(req, "ngayCapCccd", ""),
+                    RequestUtil.getSafeDate(req, "ngayHetHanCccd", ""),
                     RequestUtil.getString(req, "noiCapCccd", ""),
                     RequestUtil.getString(req, "queQuan", ""),
                     RequestUtil.getString(req, "noiThuongTru", ""),
@@ -146,6 +177,10 @@ public class EmployeeHrServlet extends BaseServlet {
                     RequestUtil.getString(req, "lyDoThayDoi", ""),
                     actorUserId
             );
+            if (res == -1) {
+                resp.sendRedirect(req.getContextPath() + "/EmployeeDetailServlet?id=" + id + "&mode=edit&dupError=1");
+                return;
+            }
             resp.sendRedirect(req.getContextPath() + "/EmployeeDetailServlet?id=" + id + "&mode=view&saved=1");
             return;
         }
@@ -154,6 +189,10 @@ public class EmployeeHrServlet extends BaseServlet {
             int id = RequestUtil.getInt(req, "idNhanVien", 0);
             boolean currentlyActive = "1".equals(RequestUtil.getString(req, "currentStatus", "1"));
             String reason = RequestUtil.getString(req, "lyDoThayDoi", "");
+            if (currentlyActive && reason.isEmpty()) {
+                resp.sendRedirect(req.getContextPath() + "/EmployeeDetailServlet?id=" + id + "&mode=edit&lockError=1");
+                return;
+            }
             hrDAO.toggleClassicEmployeeStatus(id, currentlyActive, reason, actorUserId);
             resp.sendRedirect(req.getContextPath() + "/EmployeeDetailServlet?id=" + id + "&mode=view&saved=1");
             return;
@@ -164,7 +203,7 @@ public class EmployeeHrServlet extends BaseServlet {
             affected = hrService.addEmployee(RequestUtil.getString(req, "employeeCode", ""),
                     null, RequestUtil.getString(req, "fullName", ""),
                     RequestUtil.getString(req, "phone", ""), RequestUtil.getString(req, "email", ""),
-                    RequestUtil.getString(req, "birthDate", ""), RequestUtil.getString(req, "hireDate", "2026-11-17"),
+                    RequestUtil.getSafeDate(req, "birthDate", ""), RequestUtil.getSafeDate(req, "hireDate", "2026-11-17"),
                     null, null, RequestUtil.getInt(req, "storeId", 1));
         } else if ("resign".equals(action)) {
             affected = hrService.resignEmployee(RequestUtil.getInt(req, "employeeId", 0));
@@ -173,10 +212,10 @@ public class EmployeeHrServlet extends BaseServlet {
                     RequestUtil.getDouble(req, "baseSalary", 8000000));
         } else if ("checkIn".equals(action)) {
             affected = hrService.checkIn(RequestUtil.getInt(req, "employeeId", 1),
-                    RequestUtil.getString(req, "workDate", "2026-11-17"));
+                    RequestUtil.getSafeDate(req, "workDate", "2026-11-17"));
         } else if ("checkOut".equals(action)) {
             affected = hrService.checkOut(RequestUtil.getInt(req, "employeeId", 1),
-                    RequestUtil.getString(req, "workDate", "2026-11-17"));
+                    RequestUtil.getSafeDate(req, "workDate", "2026-11-17"));
         }
         if (wantsJson(req)) {
             writeOkJson(resp, action, "Thanh cong", affected);

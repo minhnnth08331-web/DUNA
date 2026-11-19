@@ -25,8 +25,8 @@ public class FinanceReportServlet extends BaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String uc = RequestUtil.getString(req, "uc", "UC296");
         String keyword = RequestUtil.getString(req, "keyword", "");
-        String from = RequestUtil.getString(req, "fromDate", "2026-01-01");
-        String to = RequestUtil.getString(req, "toDate", "2027-12-31");
+        String from = RequestUtil.getSafeDate(req, "fromDate", "2026-01-01");
+        String to = RequestUtil.getSafeDate(req, "toDate", "2027-12-31");
 
         if ("export".equalsIgnoreCase(RequestUtil.getString(req, "action", ""))) {
             ExcelExportUtil.writeExcel(resp, "DUNA_Financial_Report.xlsx", "BaoCaoTaiChinh", financeService.grossProfitByProduct());
@@ -72,7 +72,7 @@ public class FinanceReportServlet extends BaseServlet {
         if ("addExpense".equals(action)) {
             affected = financeService.addExpense(RequestUtil.getInt(req, "categoryId", 1),
                     null, RequestUtil.getDouble(req, "amount", 0),
-                    RequestUtil.getString(req, "expenseDate", "2026-11-17"),
+                    RequestUtil.getSafeDate(req, "expenseDate", "2026-11-17"),
                     RequestUtil.getString(req, "description", ""), getSessionUserId(req, 1));
         } else if ("summarizeYesterday".equals(action)) {
             affected = financeService.summarizeYesterday();

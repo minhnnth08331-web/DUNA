@@ -77,10 +77,17 @@ public class ReviewSupportDAO extends BaseDAO {
     public long uc229_createSupportTicket(String ticketCode, Integer customerId, Long orderId,
                                           Integer categoryId, String subject, String priority,
                                           int senderUserId, String firstMessage) {
+        String p = priority == null ? "NORMAL" : priority.trim().toUpperCase();
+        if ("MEDIUM".equals(p)) {
+            p = "NORMAL";
+        }
+        if (!"LOW".equals(p) && !"NORMAL".equals(p) && !"HIGH".equals(p) && !"URGENT".equals(p)) {
+            p = "NORMAL";
+        }
         long ticketId = executeInsertGetId(
                 "INSERT INTO support_tickets (ticket_code, customer_id, order_id, ticket_category_id, subject, priority) "
                         + "VALUES (?, ?, ?, ?, ?, ?)",
-                ticketCode, customerId, orderId, categoryId, subject, priority);
+                ticketCode, customerId, orderId, categoryId, subject, p);
         if (ticketId > 0) {
             executeUpdate("INSERT INTO support_ticket_messages (ticket_id, sender_user_id, message_content, is_staff) VALUES (?, ?, ?, 0)",
                     ticketId, senderUserId, firstMessage);

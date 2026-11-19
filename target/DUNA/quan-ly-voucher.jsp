@@ -2,6 +2,9 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<% if (request.getAttribute("vouchers") == null) {
+    response.sendRedirect(request.getContextPath() + "/VoucherServlet"); return;
+} %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -45,21 +48,21 @@
 
     <main class="page-container">
         <!-- Thông báo thành công / lỗi -->
-        <c:if test="${not empty param.success}">
+        <c:if test="${not empty param.success or param.msg == 'created' or param.msg == 'status_updated'}">
             <div class="alert alert-success">
                 <span>
                     <c:choose>
-                        <c:when test="${param.success == 'added'}">Đã khởi tạo mã voucher mới thành công!</c:when>
-                        <c:when test="${param.success == 'batch'}">Đã tự động phát hành hàng loạt lô voucher mới vào hệ thống!</c:when>
-                        <c:otherwise>Cập nhật trạng thái voucher thành công!</c:otherwise>
+                        <c:when test="${param.success == 'added' or param.msg == 'created'}">Đã khởi tạo mã voucher mới thành công! Mã có thể sử dụng ngay tại quầy bán hàng POS.</c:when>
+                        <c:when test="${param.success == 'batch'}">Đã tự động phát hành hàng loạt <c:out value="${not empty param.count ? param.count : ''}"/> mã voucher mới vào hệ thống!</c:when>
+                        <c:otherwise>Cập nhật trạng thái voucher thành công và đã đồng bộ với quầy bán hàng!</c:otherwise>
                     </c:choose>
                 </span>
                 <button type="button" onclick="this.parentElement.style.display='none'" class="close-btn" style="position:static; margin-left:auto;">&times;</button>
             </div>
         </c:if>
-        <c:if test="${not empty param.error or not empty error}">
+        <c:if test="${not empty param.error or not empty error or param.msg == 'exists'}">
             <div class="alert alert-danger">
-                <span>Lỗi: ${not empty error ? error : (param.error == 'exist' ? 'Mã voucher đã tồn tại trong hệ thống!' : 'Vui lòng điền đầy đủ thông tin.')}</span>
+                <span>Lỗi: <c:out value="${not empty error ? error : ((param.error == 'exist' or param.msg == 'exists') ? 'Mã voucher đã tồn tại trong hệ thống!' : 'Vui lòng điền đầy đủ thông tin.')}"/></span>
                 <button type="button" onclick="this.parentElement.style.display='none'" class="close-btn" style="position:static; margin-left:auto;">&times;</button>
             </div>
         </c:if>
@@ -94,9 +97,9 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-label">Đã Sử Dụng / Hết Lượt</div>
+                <div class="stat-label">Đã Sử Dụng (Tổng Lượt)</div>
                 <div class="stat-value" style="color: var(--warning);">
-                    <fmt:formatNumber value="${not empty stat_used ? stat_used : 0}" type="number"/> <span style="font-size:14px; font-weight:600; color:var(--muted)">mã</span>
+                    <fmt:formatNumber value="${not empty stat_used ? stat_used : 0}" type="number"/> <span style="font-size:14px; font-weight:600; color:var(--muted)">lượt</span>
                 </div>
             </div>
 
@@ -145,8 +148,9 @@
 
                 <select name="trangThai" class="form-control" style="width:auto; min-width: 170px;" onchange="this.form.submit()">
                     <option value="" ${empty trangThai ? 'selected' : ''}>— Tất cả trạng thái —</option>
-                    <option value="available" ${trangThai == 'available' ? 'selected' : ''}>Sẵn sàng (Chưa dùng)</option>
+                    <option value="available" ${trangThai == 'available' ? 'selected' : ''}>Sẵn sàng (Áp dụng được)</option>
                     <option value="used" ${trangThai == 'used' ? 'selected' : ''}>Đã sử dụng (Hết lượt)</option>
+                    <option value="expired" ${trangThai == 'expired' ? 'selected' : ''}>Hết hạn</option>
                     <option value="locked" ${trangThai == 'locked' ? 'selected' : ''}>Bị khóa / Tạm dừng</option>
                 </select>
 
@@ -195,10 +199,13 @@
                                     <td style="font-weight: 600;">${v.TenChuongTrinh}</td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${not empty v.GiamGia and v.GiamGia <= 100}">
+                                            <c:when test="${v.LoaiGiam == 'PERCENT' or (not empty v.GiamGia and v.GiamGia <= 100)}">
                                                 <span class="badge badge-warning">
                                                     Giảm ${v.GiamGia}%
                                                 </span>
+                                                <c:if test="${not empty v.GiamToiDa and v.GiamToiDa > 0}">
+                                                    <div style="font-size:11px; color:var(--muted); margin-top:2px;">Tối đa <fmt:formatNumber value="${v.GiamToiDa}" type="number" groupingUsed="true"/> đ</div>
+                                                </c:if>
                                             </c:when>
                                             <c:otherwise>
                                                 <span class="price text-right" style="font-weight: 700; color: var(--text-primary);">
@@ -208,9 +215,12 @@
                                         </c:choose>
                                     </td>
                                     <td style="font-size: 13px; color: var(--muted);">
-                                        Đơn từ <strong style="color:var(--text-primary); font-variant-numeric: tabular-nums;"><fmt:formatNumber value="${not empty v.DonToiThieu ? v.DonToiThieu : (v.GiamGia * 5)}" type="number" groupingUsed="true"/> đ</strong>
+                                        Đơn từ <strong style="color:var(--text-primary); font-variant-numeric: tabular-nums;"><fmt:formatNumber value="${not empty v.DonToiThieu ? v.DonToiThieu : 0}" type="number" groupingUsed="true"/> đ</strong>
+                                        <c:if test="${not empty v.NgayKetThuc}">
+                                            <div style="font-size:11px; color:var(--muted); margin-top:2px;">HSD: ${v.NgayKetThuc}</div>
+                                        </c:if>
                                     </td>
-                                    <td class="text-center" style="font-weight: 700; font-variant-numeric: tabular-nums;">${v.SoLuong}</td>
+                                    <td class="text-center" style="font-weight: 700; font-variant-numeric: tabular-nums;">${v.SoLuong > 0 ? v.SoLuong : '∞'}</td>
                                     <td class="text-center" style="font-weight: 700; font-variant-numeric: tabular-nums; color: ${v.DaSuDung > 0 ? 'var(--warning)' : 'var(--muted)'};">${v.DaSuDung}</td>
                                     <td class="text-center">
                                         <c:if test="${not empty v.DonHangSuDung and v.DonHangSuDung != 'null'}">
@@ -221,10 +231,13 @@
                                     </td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${v.TrangThai == 0}">
+                                            <c:when test="${v.TrangThaiCode == 'locked' or v.TrangThai == 0}">
                                                 <span class="badge badge-danger">Đã khóa</span>
                                             </c:when>
-                                            <c:when test="${v.SoLuong <= 0}">
+                                            <c:when test="${v.TrangThaiCode == 'expired'}">
+                                                <span class="badge badge-neutral">Hết hạn</span>
+                                            </c:when>
+                                            <c:when test="${v.TrangThaiCode == 'used'}">
                                                 <span class="badge badge-warning">Hết lượt</span>
                                             </c:when>
                                             <c:otherwise>
@@ -274,20 +287,21 @@
                     <div class="form-group">
                         <label for="vipGiamGia">Mệnh giá giảm & Điều kiện áp dụng:</label>
                         <input type="hidden" name="donToiThieu" id="vipDonToiThieu" value="3000000">
+                        <input type="hidden" name="giamToiDa" id="vipGiamToiDa" value="1500000">
                         <select name="giamGia" id="vipGiamGia" class="form-control" onchange="updateVipDonToiThieu(this)" required>
                             <optgroup label="Giảm theo số tiền (VNĐ)">
-                                <option value="600000" data-min="2200000">Giảm 600.000 VNĐ — Đơn từ 2.200.000 VNĐ</option>
-                                <option value="750000" data-min="2400000">Giảm 750.000 VNĐ — Đơn từ 2.400.000 VNĐ</option>
-                                <option value="950000" data-min="2600000">Giảm 950.000 VNĐ — Đơn từ 2.600.000 VNĐ</option>
-                                <option value="1200000" data-min="2800000">Giảm 1.200.000 VNĐ — Đơn từ 2.800.000 VNĐ</option>
-                                <option value="1500000" data-min="3000000" selected>Giảm 1.500.000 VNĐ — Đơn từ 3.000.000 VNĐ</option>
+                                <option value="600000" data-min="2200000" data-max="600000">Giảm 600.000 VNĐ — Đơn từ 2.200.000 VNĐ</option>
+                                <option value="750000" data-min="2400000" data-max="750000">Giảm 750.000 VNĐ — Đơn từ 2.400.000 VNĐ</option>
+                                <option value="950000" data-min="2600000" data-max="950000">Giảm 950.000 VNĐ — Đơn từ 2.600.000 VNĐ</option>
+                                <option value="1200000" data-min="2800000" data-max="1200000">Giảm 1.200.000 VNĐ — Đơn từ 2.800.000 VNĐ</option>
+                                <option value="1500000" data-min="3000000" data-max="1500000" selected>Giảm 1.500.000 VNĐ — Đơn từ 3.000.000 VNĐ</option>
                             </optgroup>
                             <optgroup label="Giảm theo %">
-                                <option value="30" data-min="3600000">Giảm 30% — Đơn từ 3.6 Triệu (Tối đa 1.5 Triệu)</option>
-                                <option value="35" data-min="4000000">Giảm 35% — Đơn từ 4 Triệu (Tối đa 1.8 Triệu)</option>
-                                <option value="40" data-min="4400000">Giảm 40% — Đơn từ 4.4 Triệu (Tối đa 2.2 Triệu)</option>
-                                <option value="45" data-min="4700000">Giảm 45% — Đơn từ 4.7 Triệu (Tối đa 2.6 Triệu)</option>
-                                <option value="50" data-min="5000000">Giảm 50% — Đơn từ 5 Triệu (Tối đa 3.2 Triệu)</option>
+                                <option value="30" data-min="3600000" data-max="1500000">Giảm 30% — Đơn từ 3.6 Triệu (Tối đa 1.5 Triệu)</option>
+                                <option value="35" data-min="4000000" data-max="1800000">Giảm 35% — Đơn từ 4 Triệu (Tối đa 1.8 Triệu)</option>
+                                <option value="40" data-min="4400000" data-max="2200000">Giảm 40% — Đơn từ 4.4 Triệu (Tối đa 2.2 Triệu)</option>
+                                <option value="45" data-min="4700000" data-max="2600000">Giảm 45% — Đơn từ 4.7 Triệu (Tối đa 2.6 Triệu)</option>
+                                <option value="50" data-min="5000000" data-max="3200000">Giảm 50% — Đơn từ 5 Triệu (Tối đa 3.2 Triệu)</option>
                             </optgroup>
                         </select>
                     </div>
@@ -322,20 +336,22 @@
 
                     <div class="form-group">
                         <label for="batchAmount">Chọn mệnh giá & Điều kiện cho lô mã:</label>
+                        <input type="hidden" name="batchMinOrder" id="batchMinOrder" value="500000">
+                        <input type="hidden" name="batchMaxDiscount" id="batchMaxDiscount" value="100000">
                         <select name="batchAmount" id="batchAmount" class="form-control" onchange="updateBatchPrefix()" required>
                             <optgroup label="Giảm theo số tiền (VNĐ)">
-                                <option value="100000" data-prefix="YN100">Giảm 100.000 VNĐ — Đơn từ 500.000 VNĐ (Mã YN100...)</option>
-                                <option value="200000" data-prefix="YN200">Giảm 200.000 VNĐ — Đơn từ 1 Triệu (Mã YN200...)</option>
-                                <option value="300000" data-prefix="YN300">Giảm 300.000 VNĐ — Đơn từ 1.5 Triệu (Mã YN300...)</option>
-                                <option value="400000" data-prefix="YN400">Giảm 400.000 VNĐ — Đơn từ 2 Triệu (Mã YN400...)</option>
-                                <option value="500000" data-prefix="YN500">Giảm 500.000 VNĐ — Đơn từ 2.5 Triệu (Mã YN500...)</option>
+                                <option value="100000" data-prefix="YN100" data-min="500000" data-max="100000">Giảm 100.000 VNĐ — Đơn từ 500.000 VNĐ (Mã YN100...)</option>
+                                <option value="200000" data-prefix="YN200" data-min="1000000" data-max="200000">Giảm 200.000 VNĐ — Đơn từ 1 Triệu (Mã YN200...)</option>
+                                <option value="300000" data-prefix="YN300" data-min="1500000" data-max="300000">Giảm 300.000 VNĐ — Đơn từ 1.5 Triệu (Mã YN300...)</option>
+                                <option value="400000" data-prefix="YN400" data-min="2000000" data-max="400000">Giảm 400.000 VNĐ — Đơn từ 2 Triệu (Mã YN400...)</option>
+                                <option value="500000" data-prefix="YN500" data-min="2500000" data-max="500000">Giảm 500.000 VNĐ — Đơn từ 2.5 Triệu (Mã YN500...)</option>
                             </optgroup>
                             <optgroup label="Giảm theo %">
-                                <option value="5" data-prefix="YN5P">Giảm 5% — Đơn từ 800.000 VNĐ (Tối đa 100k - Mã YN5P...)</option>
-                                <option value="10" data-prefix="YN10P">Giảm 10% — Đơn từ 1.5 Triệu (Tối đa 300k - Mã YN10P...)</option>
-                                <option value="15" data-prefix="YN15P">Giảm 15% — Đơn từ 2.2 Triệu (Tối đa 500k - Mã YN15P...)</option>
-                                <option value="20" data-prefix="YN20P">Giảm 20% — Đơn từ 2.7 Triệu (Tối đa 750k - Mã YN20P...)</option>
-                                <option value="25" data-prefix="YN25P">Giảm 25% — Đơn từ 3.1 Triệu (Tối đa 1 Triệu - Mã YN25P...)</option>
+                                <option value="5" data-prefix="YN5P" data-min="800000" data-max="100000">Giảm 5% — Đơn từ 800.000 VNĐ (Tối đa 100k - Mã YN5P...)</option>
+                                <option value="10" data-prefix="YN10P" data-min="1500000" data-max="300000">Giảm 10% — Đơn từ 1.5 Triệu (Tối đa 300k - Mã YN10P...)</option>
+                                <option value="15" data-prefix="YN15P" data-min="2200000" data-max="500000">Giảm 15% — Đơn từ 2.2 Triệu (Tối đa 500k - Mã YN15P...)</option>
+                                <option value="20" data-prefix="YN20P" data-min="2700000" data-max="750000">Giảm 20% — Đơn từ 2.7 Triệu (Tối đa 750k - Mã YN20P...)</option>
+                                <option value="25" data-prefix="YN25P" data-min="3100000" data-max="1000000">Giảm 25% — Đơn từ 3.1 Triệu (Tối đa 1 Triệu - Mã YN25P...)</option>
                             </optgroup>
                         </select>
                     </div>
@@ -408,16 +424,24 @@
         }
         
         function updateVipDonToiThieu(sel) {
-            const min = sel.options[sel.selectedIndex].getAttribute('data-min');
+            const opt = sel.options[sel.selectedIndex];
+            const min = opt.getAttribute('data-min');
+            const max = opt.getAttribute('data-max');
             if (min && document.getElementById('vipDonToiThieu')) {
                 document.getElementById('vipDonToiThieu').value = min;
+            }
+            if (max && document.getElementById('vipGiamToiDa')) {
+                document.getElementById('vipGiamToiDa').value = max;
             }
         }
         
         function updateBatchPrefix() {
             const sel = document.getElementById('batchAmount');
+            const opt = sel.options[sel.selectedIndex];
             const amount = parseInt(sel.value, 10);
-            const customPrefix = sel.options[sel.selectedIndex].getAttribute('data-prefix');
+            const customPrefix = opt.getAttribute('data-prefix');
+            const minVal = opt.getAttribute('data-min');
+            const maxVal = opt.getAttribute('data-max');
             let prefix = '';
             if (customPrefix) {
                 prefix = customPrefix;
@@ -428,6 +452,12 @@
             }
             document.getElementById('batchPrefix').value = prefix;
             document.getElementById('displayPrefix').value = prefix + ' + [5 Ký tự ngẫu nhiên]';
+            if (minVal && document.getElementById('batchMinOrder')) {
+                document.getElementById('batchMinOrder').value = minVal;
+            }
+            if (maxVal && document.getElementById('batchMaxDiscount')) {
+                document.getElementById('batchMaxDiscount').value = maxVal;
+            }
         }
 
         function onSelectBatchQty(val) {

@@ -62,7 +62,7 @@ public final class Tv4UcDispatcher {
             case "UC229": {
                 String code = "TK-" + (System.currentTimeMillis() % 1000000L);
                 String subj = "[" + str(req, "category", "SIZE_ADVICE") + "] " + str(req, "subject", "Hỗ trợ chọn size sơ mi");
-                long tid = rsSvc.createTicket(code, numInt(req, "customerId", 1), numLong(req, "orderId", 1L), null, subj, str(req, "priority", "MEDIUM"), uid, "Khách hàng gửi yêu cầu hỗ trợ từ hệ thống DUNA.");
+                long tid = rsSvc.createTicket(code, numInt(req, "customerId", 1), numLong(req, "orderId", 7L), null, subj, str(req, "priority", "NORMAL"), uid, "Khách hàng gửi yêu cầu hỗ trợ từ hệ thống DUNA.");
                 return wrapAffected(uc, tid > 0 ? 1 : 0, "Đã tạo ticket hỗ trợ " + code, "Không thể tạo ticket");
             }
             case "UC230":
@@ -108,7 +108,7 @@ public final class Tv4UcDispatcher {
             case "UC249":
                 return wrapAffected(uc, notiSvc.updateTemplate(numInt(req, "templateId", 1), str(req, "subject", "DUNA - Cập nhật đơn hàng"), str(req, "body", "Đơn hàng của bạn đang được xử lý.")), "Đã cập nhật mẫu thông báo", "Không tìm thấy mẫu thông báo");
             case "UC250":
-                return wrapAffected(uc, notiSvc.notifyOrderStatus(numLong(req, "orderId", 1L), numInt(req, "templateId", 1), str(req, "title", "Đơn hàng đã xác nhận")), "Đã tạo thông báo đổi trạng thái đơn hàng", "Không thể gửi thông báo đơn hàng");
+                return wrapAffected(uc, notiSvc.notifyOrderStatus(numLong(req, "orderId", 7L), numInt(req, "templateId", 1), str(req, "title", "Đơn hàng đã xác nhận")), "Đã tạo thông báo đổi trạng thái đơn hàng", "Không thể gửi thông báo đơn hàng");
             case "UC251":
                 return notiSvc.listUnread(numInt(req, "userId", 1), kw);
             case "UC252":
@@ -140,7 +140,7 @@ public final class Tv4UcDispatcher {
                 return wrapAffected(uc, oid > 0 ? 1 : 0, "Đã xuất đơn tại quầy " + code, "Tồn kho không đủ hoặc lỗi ca POS");
             }
             case "UC263":
-                return wrapAffected(uc, posSvc.recordCashTxn(numInt(req, "posSessionId", 1), str(req, "txnType", "OUT"), numDouble(req, "amount", 50000), str(req, "note", "Mua túi giấy gói hàng")), "Đã ghi nhận thu/chi két tiền mặt", "Không tìm thấy ca POS đang mở");
+                return wrapAffected(uc, posSvc.recordCashTxn(numInt(req, "posSessionId", 1), str(req, "txnType", "CASH_OUT"), numDouble(req, "amount", 50000), str(req, "note", "Mua túi giấy gói hàng")), "Đã ghi nhận thu/chi két tiền mặt", "Không tìm thấy ca POS đang mở");
             case "UC264":
                 return wrapAffected(uc, posSvc.closeSession(numInt(req, "sessionId", 999), numDouble(req, "closingCash", 2000000)), "Đã đóng ca & chốt quỹ két tiền mặt", "Không tìm thấy ca POS đang mở");
             case "UC265":
@@ -151,7 +151,7 @@ public final class Tv4UcDispatcher {
             case "UC267":
                 return hrSvc.listEmployees(kw);
             case "UC268":
-                return wrapAffected(uc, hrSvc.addEmployee(str(req, "employeeCode", "NV-TEST01"), null, str(req, "fullName", "Phạm Minh Tuấn"), str(req, "phone", "0977665544"), str(req, "email", "tuan.nv@duna.vn"), str(req, "birthDate", "1999-04-12"), "2026-11-17", 1, 1, numInt(req, "storeId", 1)), "Đã thêm mới hồ sơ nhân viên", "Mã nhân viên đã tồn tại");
+                return wrapAffected(uc, hrSvc.addEmployee(str(req, "employeeCode", "NV-TEST01"), null, str(req, "fullName", "Phạm Minh Tuấn"), str(req, "phone", "0977665544"), str(req, "email", "tuan.nv@duna.vn"), safeDate(req, "birthDate", "1999-04-12"), "2026-11-17", 1, 1, numInt(req, "storeId", 1)), "Đã thêm mới hồ sơ nhân viên", "Mã nhân viên đã tồn tại");
             case "UC269":
                 return wrapAffected(uc, hrSvc.updatePositionAndStore(numInt(req, "employeeId", 1), numInt(req, "positionId", 1), numInt(req, "storeId", 1)), "Đã cập nhật chức vụ & điều chuyển cửa hàng", "Không tìm thấy nhân viên");
             case "UC270":
@@ -163,22 +163,22 @@ public final class Tv4UcDispatcher {
             case "UC273":
                 return wrapAffected(uc, hrSvc.addWorkShift(str(req, "shiftName", "Ca Tối Cuối Tuần"), str(req, "startTime", "18:00"), str(req, "endTime", "22:00")), "Đã thêm ca làm việc mới", "Tên ca đã tồn tại");
             case "UC274":
-                return wrapAffected(uc, hrSvc.assignShift(numInt(req, "employeeId", 1), numInt(req, "shiftId", 1), numInt(req, "storeId", 1), str(req, "workDate", "2026-11-18")), "Đã phân ca làm việc cho nhân viên", "Ca làm việc bị trùng hoặc lỗi");
+                return wrapAffected(uc, hrSvc.assignShift(numInt(req, "employeeId", 1), numInt(req, "shiftId", 1), numInt(req, "storeId", 1), safeDate(req, "workDate", "2026-11-18")), "Đã phân ca làm việc cho nhân viên", "Ca làm việc bị trùng hoặc lỗi");
             case "UC275":
-                return hrSvc.getWeeklySchedule(numInt(req, "storeId", 0), str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31"));
+                return hrSvc.getWeeklySchedule(numInt(req, "storeId", 0), safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31"));
             case "UC276":
-                return wrapAffected(uc, hrSvc.checkIn(numInt(req, "employeeId", 1), str(req, "workDate", "2026-11-17")), "Đã chấm công vào ca (Check-in)", "Không tìm thấy phân ca hoặc đã chấm công");
+                return wrapAffected(uc, hrSvc.checkIn(numInt(req, "employeeId", 1), safeDate(req, "workDate", "2026-11-17")), "Đã chấm công vào ca (Check-in)", "Không tìm thấy phân ca hoặc đã chấm công");
             case "UC277":
-                return wrapAffected(uc, hrSvc.checkOut(numInt(req, "employeeId", 1), str(req, "workDate", "2026-11-17")), "Đã chấm công ra ca (Check-out)", "Chưa check-in hoặc không tìm thấy ca");
+                return wrapAffected(uc, hrSvc.checkOut(numInt(req, "employeeId", 1), safeDate(req, "workDate", "2026-11-17")), "Đã chấm công ra ca (Check-out)", "Chưa check-in hoặc không tìm thấy ca");
             case "UC278":
-                return hrSvc.monthlyAttendance(str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31"));
+                return hrSvc.monthlyAttendance(safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31"));
 
             case "UC279":
-                return finSvc.listExpenses(str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31"), kw);
+                return finSvc.listExpenses(safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31"), kw);
             case "UC280":
                 return wrapAffected(uc, finSvc.addExpenseCategory(str(req, "categoryName", "Chi phí quảng cáo TikTok")), "Đã thêm loại chi phí vận hành", "Tên loại chi phí đã tồn tại");
             case "UC281":
-                return wrapAffected(uc, finSvc.addExpense(numInt(req, "categoryId", 1), numInt(req, "storeId", 1), numDouble(req, "amount", 1500000), str(req, "expenseDate", "2026-11-17"), str(req, "description", "Chi phí điện nước cửa hàng"), uid), "Đã ghi nhận khoản chi phí phát sinh", "Không thể ghi nhận chi phí");
+                return wrapAffected(uc, finSvc.addExpense(numInt(req, "categoryId", 1), numInt(req, "storeId", 1), numDouble(req, "amount", 1500000), safeDate(req, "expenseDate", "2026-11-17"), str(req, "description", "Chi phí điện nước cửa hàng"), uid), "Đã ghi nhận khoản chi phí phát sinh", "Không thể ghi nhận chi phí");
             case "UC282":
                 return wrapAffected(uc, finSvc.updateExpense(numInt(req, "expenseId", 1), numDouble(req, "amount", 1500000), str(req, "description", "Đã điều chỉnh chứng từ")), "Đã cập nhật chứng từ chi phí", "Không tìm thấy khoản chi phí");
             case "UC283":
@@ -186,7 +186,7 @@ public final class Tv4UcDispatcher {
             case "UC284":
                 return wrapAffected(uc, finSvc.summarizeYesterday(), "Đã tổng hợp số liệu doanh thu ngày hôm trước", "Đã tổng hợp trước đó hoặc không có đơn mới");
             case "UC285":
-                return finSvc.listDailySummaries(str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31"));
+                return finSvc.listDailySummaries(safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31"));
             case "UC286":
                 return finSvc.monthlyRevenue(numInt(req, "year", 2026));
             case "UC287":
@@ -194,7 +194,7 @@ public final class Tv4UcDispatcher {
             case "UC288":
                 return finSvc.revenueByChannelAndStore();
             case "UC289":
-                return finSvc.topProductsByRevenue(str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31"));
+                return finSvc.topProductsByRevenue(safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31"));
             case "UC290":
                 return finSvc.grossProfitByProduct();
             case "UC291":
@@ -206,7 +206,7 @@ public final class Tv4UcDispatcher {
             case "UC294":
                 return finSvc.newCustomersByMonth();
             case "UC295":
-                return wrapMap(finSvc.monthlyNetProfit(str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31")), uc, "Chưa có dữ liệu lợi nhuận ròng trong kỳ");
+                return wrapMap(finSvc.monthlyNetProfit(safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31")), uc, "Chưa có dữ liệu lợi nhuận ròng trong kỳ");
             case "UC296":
                 return wrapMap(finSvc.getDashboard(), uc, "Chưa có số liệu Dashboard điều hành");
 

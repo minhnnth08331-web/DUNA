@@ -1,5 +1,7 @@
 package com.duna.common.filter;
 
+import com.duna.common.uc.UcRegistry;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -24,9 +26,14 @@ public class AuthFilter implements Filter {
 
     private static final Set<String> ADMIN_ONLY_PATHS = new HashSet<>(Arrays.asList(
             "/roles", "/users", "/hr", "/EmployeeManagementServlet", "/AddEmployeeServlet",
-            "/UpdateEmployeeServlet", "/ToggleEmployeeStatusServlet", "/finance",
-            "/system", "/marketing", "/notifications", "/procurement", "/categories",
-            "/promotions", "/vouchers", "/VoucherServlet", "/uc-run"
+            "/UpdateEmployeeServlet", "/ToggleEmployeeStatusServlet", "/ChangeCredentialsServlet",
+            "/finance", "/system", "/marketing", "/notifications", "/procurement", "/categories",
+            "/promotions", "/vouchers", "/VoucherServlet", "/uc-hub", "/uc-run",
+            "/order-export", "/loyalty", "/payments", "/refunds", "/returns", "/reviews",
+            "/support", "/shipping",
+            "/bao-cao-thong-ke.jsp", "/add-employee.jsp", "/employee-detail.jsp",
+            "/employee-management.jsp", "/quan-ly-voucher.jsp", "/quan-ly-san-pham.jsp",
+            "/quan-ly-khach-hang.jsp", "/quan-ly-hoa-don.jsp", "/ban-hang.jsp"
     ));
 
     @Override
@@ -40,7 +47,9 @@ public class AuthFilter implements Filter {
         HttpServletResponse response = (HttpServletResponse) res;
         String ctx = request.getContextPath();
         String uri = request.getRequestURI();
-        String path = uri.startsWith(ctx) ? uri.substring(ctx.length()) : uri;
+        String rawPath = uri.startsWith(ctx) ? uri.substring(ctx.length()) : uri;
+        // Chuan hoa duong dan, loai bo matrix param (;jsessionid=..., ;x=.css) chong bypass RBAC
+        String path = rawPath.replaceAll(";[^/]*", "").replaceAll("/+", "/");
 
         if (isPublicResource(path)) {
             chain.doFilter(req, res);
@@ -66,7 +75,7 @@ public class AuthFilter implements Filter {
         boolean isAdminOrManager = "ADMIN".equals(role) || "MANAGER".equals(role);
         boolean isStaff = "STAFF".equals(role) || "EMPLOYEE".equals(role);
 
-        if (!isAdminOrManager && isRestrictedForNonAdmin(path, request, isStaff)) {
+        if (!isAdminOrManager && isRestrictedForNonAdmin(path, request, session, isStaff)) {
             if (isJsonRequest(request)) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.setContentType("application/json; charset=UTF-8");
@@ -94,12 +103,47 @@ public class AuthFilter implements Filter {
                 || path.endsWith(".svg") || path.startsWith("/img/");
     }
 
-    private boolean isRestrictedForNonAdmin(String path, HttpServletRequest request, boolean isStaff) {
+    private boolean isRestrictedForNonAdmin(String path, HttpServletRequest request, HttpSession session, boolean isStaff) {
         if (ADMIN_ONLY_PATHS.contains(path)) {
             return true;
         }
-        if ("/OrderServlet".equals(path) && "report".equalsIgnoreCase(request.getParameter("view"))) {
-            return true;
+        if ("/EmployeeDetailServlet".equals(path)) {
+            if (!isStaff || !"GET".equalsIgnoreCase(request.getMethod())) {
+                return true;
+            }
+            if ("edit".equalsIgnoreCase(request.getParameter("mode"))
+                    || "1".equals(request.getParameter("ajaxVerifyAdmin"))) {
+                return true;
+            }
+            String reqId = request.getParameter("id");
+            if (reqId != null && !reqId.trim().isEmpty()) {
+                Object ownEmp = session != null ? session.getAttribute("nhanVienID") : null;
+                Object ownUser = session != null ? session.getAttribute("userId") : null;
+                String trimmed = reqId.trim();
+                boolean matchesOwn = (ownEmp != null && trimmed.equals(String.valueOf(ownEmp)))
+                        || (ownUser != null && trimmed.equals(String.valueOf(ownUser)));
+                if (!matchesOwn) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if ("/OrderServlet".equals(path) || "/orders".equals(path)) {
+            if (!isStaff) {
+                return true;
+            }
+            if ("report".equalsIgnoreCase(request.getParameter("view"))) {
+                return true;
+            }
+            if ("POST".equalsIgnoreCase(request.getMethod())
+                    && "updateVAT".equalsIgnoreCase(request.getParameter("action"))) {
+                return true;
+            }
+        }
+        if ("/ThanhVien2Servlet".equals(path) || "/thanhvien2".equals(path)) {
+            if (!isStaff) {
+                return true;
+            }
         }
         if ("/ProductServlet".equals(path)) {
             String act = request.getParameter("action");
@@ -111,6 +155,20 @@ public class AuthFilter implements Filter {
         }
         if (("/products".equals(path) || "/variants".equals(path)) && "POST".equalsIgnoreCase(request.getMethod())) {
             return true;
+        }
+        // Chan goi UC ghi hoac UC cheo phan he qua tham so ?uc=... doi voi tai khoan khong phai Admin/Manager
+        String ucParam = request.getParameter("uc");
+        if (ucParam != null && !ucParam.trim().isEmpty()) {
+            UcRegistry.UcMeta meta = UcRegistry.findByCode(ucParam.trim().toUpperCase());
+            if (meta == null || !"READ".equalsIgnoreCase(meta.getMode())) {
+                return true;
+            }
+            String normalizedPath = "/OrderServlet".equals(path) ? "/orders"
+                    : ("/CustomerServlet".equals(path) ? "/customers"
+                    : ("/ProductServlet".equals(path) ? "/products" : path));
+            if (!normalizedPath.equals(meta.getRoute())) {
+                return true;
+            }
         }
         if (!isStaff && ("/pos".equals(path) || "/stores".equals(path) || "/inventory".equals(path)
                 || "/warehouses".equals(path) || "/customers".equals(path) || "/CustomerServlet".equals(path))) {

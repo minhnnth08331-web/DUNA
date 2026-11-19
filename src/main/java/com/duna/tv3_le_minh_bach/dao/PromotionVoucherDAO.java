@@ -50,14 +50,131 @@ public class PromotionVoucherDAO extends BaseDAO {
         return executeUpdate(sql, voucherId, voucherId, voucherId);
     }
 
+    // UC196: Kiem tra ma voucher hop le khi thanh toan (chi tiet tung ly do, dong bo 100% voi Quan ly Voucher)
+    public Map<String, Object> validateVoucherDetailed(String voucherCode, double orderAmount, Integer customerUserId) {
+        Map<String, Object> res = new java.util.LinkedHashMap<>();
+        String code = voucherCode == null ? "" : voucherCode.trim().toUpperCase();
+        if (code.isEmpty()) {
+            res.put("valid", Boolean.FALSE);
+            res.put("amount", 0L);
+            res.put("discountVoucher", 0L);
+            res.put("message", "Vui lòng nhập mã voucher!");
+            return res;
+        }
+        String sql = "SELECT TOP 1 v.voucher_id, v.voucher_code, v.voucher_name, v.discount_type, "
+                + "v.discount_value, ISNULL(v.max_discount_amount, 0) AS max_discount_amount, "
+                + "ISNULL(v.min_order_value, 0) AS min_order_value, v.usage_limit, v.per_user_limit, "
+                + "v.used_count, v.is_active, "
+                + "CASE WHEN GETDATE() < v.start_date THEN 1 ELSE 0 END AS is_not_started, "
+                + "CASE WHEN GETDATE() > v.end_date THEN 1 ELSE 0 END AS is_expired "
+                + "FROM vouchers v WHERE UPPER(LTRIM(RTRIM(v.voucher_code))) = ?";
+        Map<String, Object> v = queryFirstRow(sql, code);
+        if (v == null) {
+            res.put("valid", Boolean.FALSE);
+            res.put("amount", 0L);
+            res.put("discountVoucher", 0L);
+            res.put("message", "Mã voucher \"" + code + "\" không tồn tại trong hệ thống!");
+            return res;
+        }
+
+        int vid = ((Number) v.get("voucher_id")).intValue();
+        String actualCode = String.valueOf(v.get("voucher_code"));
+        String vName = v.get("voucher_name") != null ? String.valueOf(v.get("voucher_name")) : actualCode;
+        boolean active = Boolean.TRUE.equals(v.get("is_active"))
+                || (v.get("is_active") instanceof Number && ((Number) v.get("is_active")).intValue() == 1);
+        int notStarted = v.get("is_not_started") instanceof Number ? ((Number) v.get("is_not_started")).intValue() : 0;
+        int expired = v.get("is_expired") instanceof Number ? ((Number) v.get("is_expired")).intValue() : 0;
+        int usedCount = v.get("used_count") instanceof Number ? ((Number) v.get("used_count")).intValue() : 0;
+        Integer usageLimit = v.get("usage_limit") instanceof Number ? ((Number) v.get("usage_limit")).intValue() : null;
+        Integer perUserLimit = v.get("per_user_limit") instanceof Number ? ((Number) v.get("per_user_limit")).intValue() : null;
+        double minOrder = v.get("min_order_value") instanceof Number ? ((Number) v.get("min_order_value")).doubleValue() : 0;
+        double val = v.get("discount_value") instanceof Number ? ((Number) v.get("discount_value")).doubleValue() : 0;
+        double maxD = v.get("max_discount_amount") instanceof Number ? ((Number) v.get("max_discount_amount")).doubleValue() : 0;
+        String type = v.get("discount_type") != null ? String.valueOf(v.get("discount_type")) : "FIXED";
+
+        if (!active) {
+            res.put("valid", Boolean.FALSE);
+            res.put("amount", 0L);
+            res.put("discountVoucher", 0L);
+            res.put("message", "Mã voucher \"" + actualCode + "\" đang bị khóa / tạm dừng!");
+            return res;
+        }
+        if (notStarted == 1) {
+            res.put("valid", Boolean.FALSE);
+            res.put("amount", 0L);
+            res.put("discountVoucher", 0L);
+            res.put("message", "Mã voucher \"" + actualCode + "\" chưa đến thời gian áp dụng!");
+            return res;
+        }
+        if (expired == 1) {
+            res.put("valid", Boolean.FALSE);
+            res.put("amount", 0L);
+            res.put("discountVoucher", 0L);
+            res.put("message", "Mã voucher \"" + actualCode + "\" đã hết hạn sử dụng!");
+            return res;
+        }
+        if (usageLimit != null && usedCount >= usageLimit) {
+            res.put("valid", Boolean.FALSE);
+            res.put("amount", 0L);
+            res.put("discountVoucher", 0L);
+            res.put("message", "Mã voucher \"" + actualCode + "\" đã hết lượt sử dụng (" + usedCount + "/" + usageLimit + ")!");
+            return res;
+        }
+        if (orderAmount < minOrder) {
+            res.put("valid", Boolean.FALSE);
+            res.put("amount", 0L);
+            res.put("discountVoucher", 0L);
+            res.put("minOrder", Math.round(minOrder));
+            res.put("message", "Đơn hàng chưa đạt giá trị tối thiểu " + formatVnd(minOrder) + " đ để áp dụng mã \"" + actualCode + "\"!");
+            return res;
+        }
+        if (customerUserId != null && customerUserId > 0 && perUserLimit != null && perUserLimit > 0) {
+            int customerUsed = queryInt("SELECT COUNT(*) FROM voucher_usages WHERE voucher_id = ? AND user_id = ?", vid, customerUserId);
+            if (customerUsed >= perUserLimit) {
+                res.put("valid", Boolean.FALSE);
+                res.put("amount", 0L);
+                res.put("discountVoucher", 0L);
+                res.put("message", "Khách hàng này đã dùng hết lượt mã \"" + actualCode + "\" (tối đa " + perUserLimit + " lượt/khách)!");
+                return res;
+            }
+        }
+
+        double rawCalc = "PERCENT".equalsIgnoreCase(type) ? (orderAmount * val / 100.0) : val;
+        if ("PERCENT".equalsIgnoreCase(type) && maxD > 0 && rawCalc > maxD) {
+            rawCalc = maxD;
+        }
+        if (rawCalc > orderAmount) {
+            rawCalc = orderAmount;
+        }
+        long finalDiscount = Math.max(0L, Math.round(rawCalc));
+
+        res.put("valid", Boolean.TRUE);
+        res.put("voucherId", vid);
+        res.put("code", actualCode);
+        res.put("voucherName", vName);
+        res.put("discountType", type);
+        res.put("discountValue", Math.round(val));
+        res.put("maxDiscount", Math.round(maxD));
+        res.put("minOrder", Math.round(minOrder));
+        res.put("amount", finalDiscount);
+        res.put("discountVoucher", finalDiscount);
+        res.put("message", "Áp dụng thành công mã " + actualCode + " (Giảm " + formatVnd(finalDiscount) + " đ)");
+        return res;
+    }
+
+    private String formatVnd(double amount) {
+        return String.format(java.util.Locale.GERMAN, "%,d", Math.round(amount));
+    }
+
     // UC196: Kiem tra ma voucher hop le khi thanh toan
     public Map<String, Object> uc196_validateVoucher(String voucherCode, double orderAmount, int userId) {
-        String sql = "SELECT TOP 1 v.voucher_id, v.voucher_code, v.discount_type, v.discount_value, v.max_discount_amount "
-                + "FROM vouchers v WHERE v.voucher_code = ? AND v.is_active = 1 "
+        String sql = "SELECT TOP 1 v.voucher_id, v.voucher_code, v.voucher_name, v.discount_type, v.discount_value, "
+                + "ISNULL(v.max_discount_amount, 0) AS max_discount_amount, ISNULL(v.min_order_value, 0) AS min_order_value "
+                + "FROM vouchers v WHERE UPPER(LTRIM(RTRIM(v.voucher_code))) = UPPER(?) AND v.is_active = 1 "
                 + "AND GETDATE() BETWEEN v.start_date AND v.end_date AND ? >= v.min_order_value "
                 + "AND (v.usage_limit IS NULL OR v.used_count < v.usage_limit) "
-                + "AND (SELECT COUNT(*) FROM voucher_usages vu WHERE vu.voucher_id = v.voucher_id AND vu.user_id = ?) < v.per_user_limit";
-        return queryFirstRow(sql, voucherCode, orderAmount, userId);
+                + "AND (? <= 0 OR v.per_user_limit IS NULL OR (SELECT COUNT(*) FROM voucher_usages vu WHERE vu.voucher_id = v.voucher_id AND vu.user_id = ?) < v.per_user_limit)";
+        return queryFirstRow(sql, voucherCode == null ? "" : voucherCode.trim(), orderAmount, userId, userId);
     }
 
     // UC197: Ghi nhan luot su dung voucher khi dat hang thanh cong
@@ -162,7 +279,7 @@ public class PromotionVoucherDAO extends BaseDAO {
         return queryRows(sql);
     }
 
-    // ==================== CLASSIC UI ADAPTERS (quan-ly-voucher.jsp) ====================
+    // ==================== CLASSIC UI ADAPTERS (quan-ly-voucher.jsp & ban-hang.jsp) ====================
 
     public List<Map<String, Object>> listClassicVouchers(String search, String giamGia, String trangThai) {
         String s = search == null ? "" : search.trim();
@@ -172,23 +289,33 @@ public class PromotionVoucherDAO extends BaseDAO {
         StringBuilder sql = new StringBuilder(
                 "SELECT TOP 300 v.voucher_id AS ID_Voucher, v.voucher_code AS MaVoucher, "
                 + "v.voucher_name AS TenChuongTrinh, "
+                + "v.discount_type AS LoaiGiam, "
                 + "CAST(v.discount_value AS BIGINT) AS GiamGia, "
-                + "CAST(v.min_order_value AS BIGINT) AS DonToiThieu, "
-                + "CASE WHEN v.usage_limit IS NOT NULL AND v.used_count >= v.usage_limit THEN 0 ELSE ISNULL(v.usage_limit, 100) END AS SoLuong, "
+                + "CAST(ISNULL(v.max_discount_amount, 0) AS BIGINT) AS GiamToiDa, "
+                + "CAST(ISNULL(v.min_order_value, 0) AS BIGINT) AS DonToiThieu, "
+                + "ISNULL(v.usage_limit, 0) AS SoLuong, "
                 + "v.used_count AS DaSuDung, "
+                + "CASE WHEN v.usage_limit IS NULL THEN 999 WHEN v.usage_limit > v.used_count THEN v.usage_limit - v.used_count ELSE 0 END AS ConLai, "
                 + "CAST(v.is_active AS INT) AS TrangThai, "
+                + "CASE WHEN v.is_active = 0 THEN 'locked' "
+                + "     WHEN GETDATE() < v.start_date OR GETDATE() > v.end_date THEN 'expired' "
+                + "     WHEN v.usage_limit IS NOT NULL AND v.used_count >= v.usage_limit THEN 'used' "
+                + "     ELSE 'available' END AS TrangThaiCode, "
+                + "CONVERT(VARCHAR(10), v.start_date, 103) AS NgayBatDau, "
+                + "CONVERT(VARCHAR(10), v.end_date, 103) AS NgayKetThuc, "
                 + "(SELECT TOP 1 o.order_code FROM voucher_usages vu JOIN orders o ON vu.order_id = o.order_id "
                 + " WHERE vu.voucher_id = v.voucher_id ORDER BY vu.used_at DESC) AS DonHangSuDung "
                 + "FROM vouchers v WHERE 1=1 "
         );
         java.util.List<Object> params = new java.util.ArrayList<>();
         if (!s.isEmpty()) {
-            sql.append("AND (v.voucher_code LIKE ? OR v.voucher_name LIKE ?) ");
+            sql.append("AND (v.voucher_code LIKE ? OR v.voucher_name LIKE ? OR EXISTS (SELECT 1 FROM voucher_usages vu JOIN orders o ON vu.order_id = o.order_id WHERE vu.voucher_id = v.voucher_id AND o.order_code LIKE ?)) ");
             String pat = likePattern(s);
             params.add(pat);
             params.add(pat);
+            params.add(pat);
         }
-        if (!g.isEmpty()) {
+        if (!g.isEmpty() && !"ALL".equalsIgnoreCase(g)) {
             try {
                 double gv = Double.parseDouble(g);
                 if (gv <= 100) {
@@ -201,9 +328,11 @@ public class PromotionVoucherDAO extends BaseDAO {
             }
         }
         if ("available".equalsIgnoreCase(st)) {
-            sql.append("AND v.is_active = 1 AND (v.usage_limit IS NULL OR v.used_count < v.usage_limit) ");
+            sql.append("AND v.is_active = 1 AND GETDATE() BETWEEN v.start_date AND v.end_date AND (v.usage_limit IS NULL OR v.used_count < v.usage_limit) ");
         } else if ("used".equalsIgnoreCase(st)) {
             sql.append("AND v.usage_limit IS NOT NULL AND v.used_count >= v.usage_limit ");
+        } else if ("expired".equalsIgnoreCase(st)) {
+            sql.append("AND v.is_active = 1 AND (GETDATE() < v.start_date OR GETDATE() > v.end_date) ");
         } else if ("locked".equalsIgnoreCase(st)) {
             sql.append("AND v.is_active = 0 ");
         }
@@ -215,34 +344,49 @@ public class PromotionVoucherDAO extends BaseDAO {
         Map<String, Object> stats = new java.util.LinkedHashMap<>();
         stats.put("stat_total", queryInt("SELECT COUNT(*) FROM vouchers"));
         stats.put("stat_available", queryInt(
-                "SELECT COUNT(*) FROM vouchers WHERE is_active = 1 AND (usage_limit IS NULL OR used_count < usage_limit)"));
+                "SELECT COUNT(*) FROM vouchers WHERE is_active = 1 AND GETDATE() BETWEEN start_date AND end_date AND (usage_limit IS NULL OR used_count < usage_limit)"));
         stats.put("stat_used", queryInt("SELECT ISNULL(SUM(used_count), 0) FROM vouchers"));
         stats.put("stat_discount", queryDouble("SELECT ISNULL(SUM(discount_amount), 0) FROM voucher_usages"));
         return stats;
     }
 
     public int createClassicVipVoucher(String code, String tenChuongTrinh, double giamGia, double donToiThieu, int soLuong) {
+        return createClassicVipVoucher(code, tenChuongTrinh, giamGia, donToiThieu, 0, soLuong);
+    }
+
+    public int createClassicVipVoucher(String code, String tenChuongTrinh, double giamGia, double donToiThieu, double giamToiDa, int soLuong) {
         String cleanCode = (code == null ? "" : code.trim().toUpperCase().replaceAll("[^A-Z0-9]", ""));
         if (!cleanCode.startsWith("VIP")) {
             cleanCode = "VIP" + cleanCode;
         }
         String type = giamGia <= 100 ? "PERCENT" : "FIXED";
-        double maxDiscount = giamGia <= 100 ? Math.max(donToiThieu * 0.5, 100000) : giamGia;
+        double maxDiscount;
+        if ("PERCENT".equals(type)) {
+            maxDiscount = giamToiDa > 0 ? giamToiDa : Math.max(donToiThieu * 0.5, 100000);
+        } else {
+            maxDiscount = giamGia;
+        }
         String sql = "IF NOT EXISTS (SELECT 1 FROM vouchers WHERE voucher_code = ?) "
                 + "INSERT INTO vouchers (voucher_code, voucher_name, discount_type, discount_value, max_discount_amount, "
                 + "min_order_value, usage_limit, per_user_limit, start_date, end_date, is_active) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, 1, GETDATE(), DATEADD(YEAR, 1, GETDATE()), 1)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, 1, DATEADD(MINUTE, -1, GETDATE()), DATEADD(YEAR, 1, GETDATE()), 1)";
         return executeUpdate(sql, cleanCode, cleanCode,
                 (tenChuongTrinh == null || tenChuongTrinh.trim().isEmpty()) ? "Voucher VIP DUNA" : tenChuongTrinh.trim(),
                 type, giamGia, maxDiscount, donToiThieu, Math.max(1, soLuong));
     }
 
     public int generateClassicBatchVouchers(String prefix, String campaignName, double amount, int qty) {
-        String cleanPrefix = (prefix == null || prefix.trim().isEmpty()) ? "DUNA" : prefix.trim().toUpperCase();
+        return generateClassicBatchVouchers(prefix, campaignName, amount, 0, 0, qty);
+    }
+
+    public int generateClassicBatchVouchers(String prefix, String campaignName, double amount, double minOrderInput, double maxDiscountInput, int qty) {
+        String cleanPrefix = (prefix == null || prefix.trim().isEmpty()) ? "DUNA" : prefix.trim().toUpperCase().replaceAll("[^A-Z0-9]", "");
         String name = (campaignName == null || campaignName.trim().isEmpty()) ? "Lô voucher DUNA" : campaignName.trim();
         String type = amount <= 100 ? "PERCENT" : "FIXED";
-        double minOrder = amount <= 100 ? amount * 150000 : amount * 5;
-        double maxDiscount = amount <= 100 ? Math.max(minOrder * 0.3, 100000) : amount;
+        double minOrder = minOrderInput > 0 ? minOrderInput : (amount <= 100 ? amount * 150000 : amount * 5);
+        double maxDiscount = "PERCENT".equals(type)
+                ? (maxDiscountInput > 0 ? maxDiscountInput : Math.max(minOrder * 0.3, 100000))
+                : amount;
         int safeQty = Math.min(Math.max(1, qty), 500);
         int inserted = 0;
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -250,7 +394,7 @@ public class PromotionVoucherDAO extends BaseDAO {
         String sql = "IF NOT EXISTS (SELECT 1 FROM vouchers WHERE voucher_code = ?) "
                 + "INSERT INTO vouchers (voucher_code, voucher_name, discount_type, discount_value, max_discount_amount, "
                 + "min_order_value, usage_limit, per_user_limit, start_date, end_date, is_active) "
-                + "VALUES (?, ?, ?, ?, ?, ?, 1, 1, GETDATE(), DATEADD(YEAR, 1, GETDATE()), 1)";
+                + "VALUES (?, ?, ?, ?, ?, ?, 1, 1, DATEADD(MINUTE, -1, GETDATE()), DATEADD(YEAR, 1, GETDATE()), 1)";
         for (int i = 0; i < safeQty; i++) {
             StringBuilder suffix = new StringBuilder();
             for (int j = 0; j < 5; j++) {

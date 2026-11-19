@@ -658,6 +658,18 @@
     <c:if test="${param.created == '1'}">
         <div class="alert alert-success" style="margin-bottom: 24px;">Thanh toán thành công. Hóa đơn vừa tạo đã được lưu vào hệ thống sổ cái DUNA.</div>
     </c:if>
+    <c:if test="${param.success == 'exchange'}">
+        <div class="alert alert-success" style="margin-bottom: 24px;">Đổi Size / Màu thành công. Tồn kho và tổng tiền hóa đơn đã được cập nhật đồng bộ.</div>
+    </c:if>
+    <c:if test="${param.error == 'exchange_out_of_stock'}">
+        <div class="alert alert-danger" style="margin-bottom: 24px;">Không thể đổi Size / Màu: Biến thể mới không đủ tồn kho cho số lượng đã mua!</div>
+    </c:if>
+    <c:if test="${param.error == 'exchange_failed'}">
+        <div class="alert alert-danger" style="margin-bottom: 24px;">Không thể đổi Size / Màu: Biến thể mới trùng với biến thể hiện tại hoặc không hợp lệ.</div>
+    </c:if>
+    <c:if test="${param.error == 'status_update_failed'}">
+        <div class="alert alert-danger" style="margin-bottom: 24px;">Không thể cập nhật trạng thái: Đơn hàng không ở trạng thái cho phép thao tác này.</div>
+    </c:if>
 
     <!-- PAGE HEADER: Flex layout, generous breathing room between Title and Action Button -->
     <div class="orders-page-header">
@@ -1047,11 +1059,19 @@ function printInvoice(id) {
 
             if (!vatVal) {
                 var curVat = ${not empty currentVat ? currentVat : 8};
-                var calculatedVAT = Math.round((data.tongTien || 0) * curVat / (100 + curVat));
+                var calculatedVAT = (data.tienVAT !== undefined && data.tienVAT !== null)
+                    ? Number(data.tienVAT)
+                    : Math.round((data.tongTien || 0) * curVat / (100 + curVat));
                 vatVal = Number(calculatedVAT).toLocaleString('vi-VN') + ' VNĐ';
                 if (document.getElementById('prVatPctLabel')) document.getElementById('prVatPctLabel').textContent = curVat;
             }
-            if (!giamGiaVal) giamGiaVal = '0 VNĐ';
+            if (!voucherVal && data.voucherDiscount && Number(data.voucherDiscount) > 0) {
+                voucherVal = '- ' + Number(data.voucherDiscount).toLocaleString('vi-VN') + ' VNĐ';
+            }
+            if (!giamGiaVal) {
+                var vipOnly = Math.max(0, Number(data.tongGiamGia || 0) - Number(data.voucherDiscount || 0));
+                giamGiaVal = vipOnly > 0 ? ('- ' + vipOnly.toLocaleString('vi-VN') + ' VNĐ') : '0 VNĐ';
+            }
             if (!voucherVal) voucherVal = '0 VNĐ';
             if (!khachDuaVal) khachDuaVal = Number(data.tongTien || 0).toLocaleString('vi-VN') + ' VNĐ';
             if (!tienThuaVal) tienThuaVal = '0 VNĐ';
@@ -1122,14 +1142,19 @@ function cancelOrder(form, orderId) {
     var formData = new URLSearchParams();
     formData.append('action', 'changeStatus');
     formData.append('id', orderId);
+    formData.append('status', 'Đã hủy');
     formData.append('trangThai', 'Đã hủy');
+    formData.append('ajax', '1');
     
     fetch('${pageContext.request.contextPath}/OrderServlet', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
         body: formData.toString()
     }).then(function(response) {
-        if (response.ok) {
+        return response.json().then(function(data) { return { ok: response.ok && data && data.ok, data: data }; })
+            .catch(function() { return { ok: false, data: null }; });
+    }).then(function(res) {
+        if (res.ok) {
             var row = form.closest('tr');
             if (row) {
                 var statusSpan = row.querySelector('.status');
@@ -1153,7 +1178,7 @@ function cancelOrder(form, orderId) {
                 cancelStatEl.textContent = parseInt(cancelStatEl.textContent) + 1;
             }
         } else {
-            alert('Có lỗi xảy ra khi hủy hóa đơn.');
+            alert((res.data && res.data.message) ? res.data.message : 'Có lỗi xảy ra khi hủy hóa đơn.');
             if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg><span>Hủy</span>'; }
         }
     }).catch(function(e) {
@@ -1183,14 +1208,23 @@ function openExchangeModal(idDH, idCT, idSP, tenSP, donGia) {
         .then(function(r){ return r.json(); })
         .then(function(data){
             exVariantList = data || [];
-            if (!data || data.length === 0) {
+            var inStock = (data || []).filter(function(v) { return Number(v.soLuong || 0) > 0; });
+            if (!data || data.length === 0 || inStock.length === 0) {
                 sel.innerHTML = '<option value="">Không có biến thể nào còn tồn kho để đổi!</option>';
             } else {
+                var firstInStockAssigned = false;
                 sel.innerHTML = data.map(function(v, idx){
                     var idBT = v.id || v.idBienThe || (idx + 1);
                     var sz = v.size || v.trongLuong || '-';
-                    return '<option value="' + idBT + '" data-price="' + v.giaBan + '" ' + (idx === 0 ? 'selected' : '') + '>'
-                        + tenSP + ' — Màu: ' + v.mauSac + ' | Size: ' + sz + ' (Giá: ' + Number(v.giaBan).toLocaleString('vi-VN') + ' đ | Còn: ' + v.soLuong + ')'
+                    var qty = Number(v.soLuong || 0);
+                    var isOut = qty <= 0;
+                    var selAttr = '';
+                    if (!isOut && !firstInStockAssigned) {
+                        selAttr = 'selected';
+                        firstInStockAssigned = true;
+                    }
+                    return '<option value="' + idBT + '" data-price="' + v.giaBan + '" ' + selAttr + (isOut ? ' disabled' : '') + '>'
+                        + tenSP + ' — Màu: ' + v.mauSac + ' | Size: ' + sz + ' (Giá: ' + Number(v.giaBan).toLocaleString('vi-VN') + ' đ | ' + (isOut ? 'HẾT HÀNG' : ('Còn: ' + qty)) + ')'
                         + '</option>';
                 }).join('');
                 calcExchangeDiff();

@@ -162,7 +162,7 @@
                             <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 11px; height: 24px;" onclick="openVoucherLookupModal()" title="Tra cứu danh sách voucher khả dụng">Tra cứu Voucher</button>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <input type="text" id="voucherInput" class="form-control font-mono" placeholder="Nhập mã voucher (Ví dụ: YN100K, VIP...)" autocomplete="off" style="text-transform: uppercase;">
+                            <input type="text" id="voucherInput" class="form-control font-mono" placeholder="Nhập mã voucher (Ví dụ: DUNA100, VIP15P...)" autocomplete="off" style="text-transform: uppercase;">
                             <button type="button" class="btn btn-secondary" onclick="applyVoucher()" style="white-space: nowrap; padding: 0 16px;">Áp dụng</button>
                             <button type="button" id="btnCancelVoucher" onclick="cancelVoucher()" class="btn btn-outline" style="color: var(--color-danger); border-color: var(--color-danger); display: none;" title="Hủy mã voucher">Hủy</button>
                         </div>
@@ -469,13 +469,18 @@
             <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: var(--color-text);">Thêm Nhanh Khách Hàng Mới</h3>
         </div>
         <form id="formAddKH" onsubmit="return submitAddKH(event)">
+            <div id="khAddError" class="alert alert-danger" style="display:none; margin-bottom:12px; font-size:13px;"></div>
             <div class="form-group">
                 <label class="form-label">Họ và tên *</label>
                 <input type="text" id="khName" class="form-control" required placeholder="Ví dụ: Nguyễn Văn A">
             </div>
             <div class="form-group">
                 <label class="form-label">Số điện thoại *</label>
-                <input type="tel" id="khSdt" class="form-control font-mono" required placeholder="0912345678" maxlength="10">
+                <input type="tel" id="khSdt" class="form-control font-mono" required placeholder="0912345678" maxlength="10"
+                       pattern="0[35789][0-9]{8}"
+                       title="Số điện thoại Việt Nam phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (03, 05, 07, 08, 09)"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10); var e = document.getElementById('khAddError'); if (e) e.style.display='none';">
+                <small style="display:block; margin-top:4px; font-size:11.5px; color:var(--color-text-muted);">Bắt đầu bằng số 0, đủ 10 chữ số (đầu số 03, 05, 07, 08, 09)</small>
             </div>
             <div class="form-group">
                 <label class="form-label">Email</label>
@@ -589,9 +594,11 @@
             <select id="lookupStatusFilter" class="form-select" onchange="filterVoucherLookup()" style="width: 190px;">
                 <option value="ALL">— Tất cả trạng thái —</option>
                 <option value="available">Sẵn sàng</option>
-                <option value="used">Đã sử dụng</option>
+                <option value="used">Hết lượt</option>
+                <option value="expired">Hết hạn</option>
                 <option value="locked">Đã khóa</option>
             </select>
+            <button type="button" class="btn btn-outline" onclick="loadLookupVouchersFromServer()" title="Tải lại từ Quản lý Voucher">Làm mới</button>
         </div>
         <div id="voucherLookupContainer" style="overflow-y: auto; max-height: 400px; border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
             <div style="text-align: center; padding: 32px; color: var(--color-text-muted);">Đang tải danh sách voucher...</div>
@@ -766,12 +773,7 @@ function openProductInfoModal(id, ten, ma) {
 </script>
 
 <script>
-var ALL_LOOKUP_VOUCHERS = [
-    { code: 'VIP15P', title: 'Đặc quyền khách VIP: Giảm 15% tổng hóa đơn', discount: 'Giảm 15%', minOrder: 800000, stock: 50, used: 3, status: 'ready' },
-    { code: 'DUNA100K', title: 'Giảm trực tiếp 100.000 VNĐ cho đơn từ 1.2 Triệu', discount: '100.000 đ', minOrder: 1200000, stock: 30, used: 5, status: 'ready' },
-    { code: 'DUNA50K', title: 'Giảm trực tiếp 50.000 VNĐ cho đơn từ 600K', discount: '50.000 đ', minOrder: 600000, stock: 50, used: 8, status: 'ready' },
-    { code: 'DUNA10', title: 'Giảm 10% đơn hàng thời trang nam DUNA', discount: 'Giảm 10%', minOrder: 500000, stock: 100, used: 12, status: 'ready' }
-];
+var ALL_LOOKUP_VOUCHERS = [];
 
 function openVoucherLookupModal() {
     var inp = document.getElementById('lookupSearchInput');
@@ -779,7 +781,44 @@ function openVoucherLookupModal() {
     var sel = document.getElementById('lookupStatusFilter');
     if (sel) sel.value = 'ALL';
     openModal('modalVoucherLookup');
-    filterVoucherLookup();
+    loadLookupVouchersFromServer();
+}
+
+function loadLookupVouchersFromServer() {
+    var container = document.getElementById('voucherLookupContainer');
+    var countLbl = document.getElementById('lookupCountLabel');
+    if (container) {
+        container.innerHTML = '<div style="text-align:center;padding:35px;color:var(--color-text-muted);font-weight:600;">Đang tải danh sách voucher đồng bộ từ Quản lý Voucher...</div>';
+    }
+    fetch('${pageContext.request.contextPath}/OrderServlet?ajaxLookupVouchers=1&_t=' + Date.now())
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            ALL_LOOKUP_VOUCHERS = (data && Array.isArray(data.vouchers)) ? data.vouchers : [];
+            filterVoucherLookup();
+        })
+        .catch(function() {
+            ALL_LOOKUP_VOUCHERS = [];
+            if (countLbl) countLbl.textContent = 'Đang hiển thị: 0 / 0 mã voucher';
+            if (container) {
+                container.innerHTML = '<div style="text-align:center;padding:35px;color:var(--color-danger);font-weight:600;">Không thể tải danh sách voucher từ máy chủ. Vui lòng thử lại!</div>';
+            }
+        });
+}
+
+function selectVoucherFromLookup(code) {
+    var input = document.getElementById('voucherInput');
+    if (input) input.value = code;
+    closeModal('modalVoucherLookup');
+    if (cart && cart.length > 0) {
+        applyVoucher(false);
+    } else {
+        var resultEl = document.getElementById('voucherResult');
+        if (resultEl) {
+            resultEl.className = 'alert alert-info';
+            resultEl.textContent = 'Đã điền mã ' + code + '. Thêm sản phẩm vào giỏ rồi bấm "Áp dụng" để tính giảm giá.';
+            resultEl.style.display = 'block';
+        }
+    }
 }
 
 function filterVoucherLookup() {
@@ -787,20 +826,22 @@ function filterVoucherLookup() {
     var st = document.getElementById('lookupStatusFilter').value || 'ALL';
     var container = document.getElementById('voucherLookupContainer');
     var countLbl = document.getElementById('lookupCountLabel');
-    
+
     var filtered = ALL_LOOKUP_VOUCHERS.filter(function(v) {
-        var matchKw = (!kw || v.code.toLowerCase().indexOf(kw) > -1 || v.title.toLowerCase().indexOf(kw) > -1);
+        var c = (v.code || '').toLowerCase();
+        var t = (v.title || '').toLowerCase();
+        var matchKw = (!kw || c.indexOf(kw) > -1 || t.indexOf(kw) > -1);
         var matchSt = (st === 'ALL' || v.status === st);
         return matchKw && matchSt;
     });
-    
+
     if (countLbl) countLbl.textContent = 'Đang hiển thị: ' + filtered.length + ' / ' + ALL_LOOKUP_VOUCHERS.length + ' mã voucher';
-    
+
     if (!filtered.length) {
         container.innerHTML = '<div style="text-align:center;padding:35px;color:var(--color-text-muted);font-weight:600;">Không tìm thấy mã voucher nào phù hợp bộ lọc!</div>';
         return;
     }
-    
+
     var html = '<table class="data-table" style="margin: 0;">';
     html += '<thead>';
     html += '  <tr>';
@@ -808,30 +849,45 @@ function filterVoucherLookup() {
     html += '    <th>Tên Chương Trình</th>';
     html += '    <th class="th-money">Mức Giảm</th>';
     html += '    <th>Điều Kiện Áp Dụng</th>';
+    html += '    <th style="text-align:center;">Lượt dùng</th>';
     html += '    <th style="text-align:center;">Trạng Thái</th>';
+    html += '    <th style="text-align:center;">Thao tác</th>';
     html += '  </tr>';
     html += '</thead>';
     html += '<tbody>';
-    
+
     filtered.forEach(function(v) {
         var statusBadge = '';
         if (v.status === 'available') {
             statusBadge = '<span class="badge badge-success">Sẵn sàng</span>';
         } else if (v.status === 'used') {
-            statusBadge = '<span class="badge badge-warning">Đã sử dụng</span>';
+            statusBadge = '<span class="badge badge-warning">Hết lượt</span>';
+        } else if (v.status === 'expired') {
+            statusBadge = '<span class="badge badge-neutral">Hết hạn</span>';
         } else {
             statusBadge = '<span class="badge badge-danger">Đã khóa</span>';
         }
-        
+
+        var isPct = (v.discountType === 'PERCENT') || (Number(v.amount || 0) <= 100);
+        var discLabel = isPct
+            ? ('Giảm ' + Number(v.amount || 0) + '%' + (Number(v.maxCap || 0) > 0 ? '<div style="font-size:11px;font-weight:500;color:var(--color-text-muted);">Tối đa ' + money(v.maxCap) + '</div>' : ''))
+            : money(v.amount || 0);
+        var usageLabel = Number(v.used || 0) + ' / ' + (Number(v.stock || 0) > 0 ? Number(v.stock) : '∞');
+        var actionBtn = v.status === 'available'
+            ? '<button type="button" class="btn btn-primary" style="padding:3px 10px;font-size:11.5px;" onclick="selectVoucherFromLookup(\'' + escHtml(v.code || '') + '\')">Chọn</button>'
+            : '<span style="color:var(--color-text-muted);font-size:11.5px;">—</span>';
+
         html += '<tr>';
-        html += '  <td class="font-mono" style="font-weight: 700; color: var(--color-primary);">' + v.code + '</td>';
-        html += '  <td style="font-weight: 600;">' + v.title + '</td>';
-        html += '  <td class="money font-mono" style="font-weight: 700; color: var(--color-accent);">' + (v.amount <= 100 ? ('Giảm ' + v.amount + '%' + (v.maxCap ? ' (Tối đa ' + money(v.maxCap) + ')' : '')) : money(v.amount)) + '</td>';
-        html += '  <td style="font-size: 12.5px; color: var(--color-text-muted);">Đơn tối thiểu ' + money(v.minOrder) + '</td>';
+        html += '  <td class="font-mono" style="font-weight: 700; color: var(--color-primary);">' + escHtml(v.code || '') + '</td>';
+        html += '  <td style="font-weight: 600;">' + escHtml(v.title || '') + '</td>';
+        html += '  <td class="money font-mono" style="font-weight: 700; color: var(--color-accent);">' + discLabel + '</td>';
+        html += '  <td style="font-size: 12.5px; color: var(--color-text-muted);">Đơn tối thiểu ' + money(v.minOrder || 0) + (v.endDate ? '<div style="font-size:11px;">HSD: ' + escHtml(v.endDate) + '</div>' : '') + '</td>';
+        html += '  <td class="font-mono" style="text-align:center;font-size:12.5px;">' + usageLabel + '</td>';
         html += '  <td style="text-align:center;">' + statusBadge + '</td>';
+        html += '  <td style="text-align:center;">' + actionBtn + '</td>';
         html += '</tr>';
     });
-    
+
     html += '</tbody></table>';
     container.innerHTML = html;
 }
@@ -910,6 +966,9 @@ var selectedBank = 'VCB';
 var appliedVoucherCode = '';
 var appliedVoucherAmount = 0;
 var appliedVoucherMinOrder = 0;
+var appliedVoucherType = '';
+var appliedVoucherValue = 0;
+var appliedVoucherMaxCap = 0;
 
 function money(v) { return Number(v||0).toLocaleString('vi-VN') + ' đ'; }
 
@@ -979,8 +1038,8 @@ function selectCustomer(kh) {
         '</div><button type="button" class="btn btn-outline" onclick="clearCustomer()" style="font-size:11px;padding:2px 8px;color:var(--color-danger);border-color:var(--color-danger);">Bỏ chọn</button></div>' +
         offlineReminderHtml;
     calculateTotals();
-    if (typeof appliedVoucherCode !== 'undefined' && appliedVoucherCode && appliedVoucherCode.toUpperCase().startsWith('VIP')) {
-        setTimeout(function(){ applyVoucher(); }, 100);
+    if (appliedVoucherCode && cart.length > 0) {
+        setTimeout(function(){ applyVoucher(true); }, 100);
     }
 }
 
@@ -999,8 +1058,8 @@ function clearCustomer() {
         sel.selectedIndex = 0;
     }
     calculateTotals();
-    if (typeof appliedVoucherCode !== 'undefined' && appliedVoucherCode && appliedVoucherCode.toUpperCase().startsWith('VIP')) {
-        setTimeout(function(){ applyVoucher(); }, 100);
+    if (appliedVoucherCode && cart.length > 0) {
+        setTimeout(function(){ applyVoucher(true); }, 100);
     }
 }
 
@@ -1059,19 +1118,25 @@ function addProductFromButton(btn) {
     var mauEl = document.getElementById('mau_'+id);
     var tlEl = document.getElementById('tl_'+id);
     var tonKho = parseInt(btn.getAttribute('data-stock')||'0', 10);
+    var giaBan = btn.getAttribute('data-price');
     var jsonEl = document.getElementById('vjson_' + id);
     if (jsonEl) {
         try {
             var variants = JSON.parse(jsonEl.textContent || '[]');
             var selMau = mauEl ? mauEl.value.trim() : '';
             var selTl = tlEl ? tlEl.value.trim() : '';
-            var found = variants.find(function(v) { return v.mau === selMau && v.tl === selTl; });
-            if (!found && variants.length > 0) found = variants.find(function(v) { return v.mau === selMau; }) || variants[0];
-            if (found && found.sl !== undefined) tonKho = found.sl;
+            var found = variants.find(function(v) { return (v.mau || v.mauSac) === selMau && (v.tl || v.trongLuong) === selTl; });
+            if (!found && variants.length > 0) found = variants.find(function(v) { return (v.mau || v.mauSac) === selMau; }) || variants[0];
+            if (found) {
+                var vStock = found.soLuong !== undefined ? found.soLuong : found.sl;
+                var vPrice = found.giaBan !== undefined ? found.giaBan : found.gia;
+                if (vStock !== undefined) tonKho = Number(vStock);
+                if (vPrice !== undefined) giaBan = vPrice;
+            }
         } catch(e) {}
     }
     return addToCart(id, btn.getAttribute('data-masp'), btn.getAttribute('data-name'),
-              btn.getAttribute('data-price'), tonKho,
+              giaBan, tonKho,
               mauEl?mauEl.value:'', tlEl?tlEl.value:'');
 }
 
@@ -1237,26 +1302,36 @@ function handlePosBarcodeInput(event) {
         fetch(scannerContextPath + '/ThanhVien2Servlet?action=uc25&barcode=' + encodeURIComponent(val))
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (data && data.idSanPham) {
+                var pid = data ? (data.id || data.idSanPham) : null;
+                if (data && data.found !== false && pid) {
+                    var sz = data.trongLuong || data.size || '';
                     var pData = {
                         found: true,
-                        id: data.idSanPham,
-                        idBT: data.idBienThe || data.id,
-                        maSP: 'SP00' + data.idSanPham,
-                        tenSP: 'Sản phẩm DUNA ' + (data.mauSac ? '(' + data.mauSac + ' - ' + (data.size || data.trongLuong) + ')' : ''),
-                        giaBan: data.giaBan,
-                        soLuong: data.soLuong,
-                        mauSac: data.mauSac,
-                        trongLuong: data.size || data.trongLuong
+                        id: pid,
+                        idBT: data.idBT || data.idBienThe || pid,
+                        maSP: data.maSP || ('SP' + pid),
+                        tenSP: data.tenSP || ('Sản phẩm DUNA #' + pid),
+                        giaBan: Number(data.giaBan || 0),
+                        soLuong: Number(data.soLuong || 0),
+                        mauSac: data.mauSac || '',
+                        trongLuong: sz
                     };
-                    addToCartByBarcode(pData);
-                    playBeep();
-                    showFeedbackToast('Đã thêm: ' + pData.tenSP);
-                    event.target.value = '';
-                    if (statusEl) {
-                        statusEl.className = 'alert alert-success';
-                        statusEl.textContent = 'Đã thêm: ' + pData.tenSP;
-                        setTimeout(function() { statusEl.style.display = 'none'; }, 2500);
+                    if (addToCartByBarcode(pData)) {
+                        playBeep();
+                        var label = pData.tenSP + (pData.mauSac || pData.trongLuong ? ' (' + pData.mauSac + (pData.trongLuong ? ' - ' + pData.trongLuong : '') + ')' : '');
+                        showFeedbackToast('Đã thêm: ' + label);
+                        event.target.value = '';
+                        if (statusEl) {
+                            statusEl.className = 'alert alert-success';
+                            statusEl.textContent = 'Đã thêm: ' + label;
+                            setTimeout(function() { statusEl.style.display = 'none'; }, 2500);
+                        }
+                    } else {
+                        playErrorBeep();
+                        if (statusEl) {
+                            statusEl.className = 'alert alert-danger';
+                            statusEl.textContent = 'Sản phẩm ' + pData.tenSP + ' đã hết hàng hoặc vượt tồn kho (' + pData.soLuong + ')!';
+                        }
                     }
                 } else {
                     if (statusEl) {
@@ -1306,6 +1381,9 @@ function calculateTotals() {
         appliedVoucherCode = '';
         appliedVoucherAmount = 0;
         appliedVoucherMinOrder = 0;
+        appliedVoucherType = '';
+        appliedVoucherValue = 0;
+        appliedVoucherMaxCap = 0;
         if(document.getElementById('voucherInput')) document.getElementById('voucherInput').value = '';
         var resEl = document.getElementById('voucherResult');
         if (resEl) { resEl.className = 'voucher-result'; resEl.textContent = ''; resEl.style.display = 'none'; }
@@ -1313,6 +1391,9 @@ function calculateTotals() {
     } else if (appliedVoucherCode && appliedVoucherMinOrder > 0 && subtotal < appliedVoucherMinOrder) {
         appliedVoucherCode = '';
         appliedVoucherAmount = 0;
+        appliedVoucherType = '';
+        appliedVoucherValue = 0;
+        appliedVoucherMaxCap = 0;
         var reqMin = appliedVoucherMinOrder;
         appliedVoucherMinOrder = 0;
         if(document.getElementById('voucherInput')) document.getElementById('voucherInput').value = '';
@@ -1323,10 +1404,14 @@ function calculateTotals() {
             resEl.style.display = 'block';
         }
         if (document.getElementById('btnCancelVoucher')) document.getElementById('btnCancelVoucher').style.display = 'none';
+    } else if (appliedVoucherCode && appliedVoucherType === 'PERCENT' && appliedVoucherValue > 0) {
+        var recalcV = Math.round(subtotal * appliedVoucherValue / 100);
+        if (appliedVoucherMaxCap > 0 && recalcV > appliedVoucherMaxCap) recalcV = appliedVoucherMaxCap;
+        appliedVoucherAmount = Math.min(recalcV, subtotal);
     }
 
     var disc = Math.round(subtotal * currentDiscountPct / 100);
-    var voucherDisc = appliedVoucherAmount > 0 ? Math.min(appliedVoucherAmount, subtotal - disc) : 0;
+    var voucherDisc = appliedVoucherAmount > 0 ? Math.min(appliedVoucherAmount, Math.max(0, subtotal - disc)) : 0;
     var taxableBase = Math.max(0, subtotal - disc - voucherDisc);
     var vat = Math.round(taxableBase * VAT_PCT / 100); 
     var grand = taxableBase + vat;
@@ -1346,9 +1431,13 @@ function calculateTotals() {
     document.getElementById('discountAmountPost').value = disc;
     document.getElementById('vatAmountPost').value = vat;
     document.getElementById('customerPaidPost').value = paid;
+    if (document.getElementById('voucherCodePost')) document.getElementById('voucherCodePost').value = appliedVoucherCode || '';
+    if (document.getElementById('voucherAmountPost')) document.getElementById('voucherAmountPost').value = voucherDisc || 0;
     
     var vRow = document.getElementById('voucherSummaryRow');
     if (vRow) vRow.style.display = voucherDisc > 0 ? 'flex' : 'none';
+    var vLbl = document.getElementById('voucherSummaryLabel');
+    if (vLbl) vLbl.textContent = appliedVoucherCode ? ('Mã Voucher (' + appliedVoucherCode + '):') : 'Mã Voucher:';
     var vText = document.getElementById('voucherAmountText');
     if (vText) vText.textContent = '- ' + money(voucherDisc);
     if (currentPayMethod === 'bank') updateQR(grand);
@@ -1384,9 +1473,10 @@ function selectBank(el, code, name) {
     document.getElementById('bankGuide').innerHTML = info ? info.guide : '';
     var subtotal = cart.reduce(function(t,i){return t+i.gia*i.qty},0);
     var disc = Math.round(subtotal * currentDiscountPct / 100);
-    var afterDisc = subtotal - disc;
-    var vat = Math.round(subtotal * VAT_PCT / 100);
-    var grand = afterDisc + vat;
+    var voucherDisc = appliedVoucherAmount > 0 ? Math.min(appliedVoucherAmount, Math.max(0, subtotal - disc)) : 0;
+    var taxableBase = Math.max(0, subtotal - disc - voucherDisc);
+    var vat = Math.round(taxableBase * VAT_PCT / 100);
+    var grand = taxableBase + vat;
     updateQR(grand);
 }
 
@@ -1409,7 +1499,7 @@ function updateQR(amount) {
     var stEl = document.getElementById('qrStatusText');
     if (stEl) stEl.textContent = "Chờ khách quét QR & xác nhận trên điện thoại...";
 
-    var custName = typeof selectedCustomer !== 'undefined' && selectedCustomer ? (selectedCustomer.hoTen || "Khách hàng") : "Khách vãng lai";
+    var custName = (typeof selectedKH !== 'undefined' && selectedKH) ? (selectedKH.ten || "Khách hàng") : "Khách vãng lai";
     var bankName = info.name || selectedBank;
     
     fetch("${pageContext.request.contextPath}/QRConfirmServlet?action=init&amount=" + amount + "&bank=" + encodeURIComponent(bankName) + "&customer=" + encodeURIComponent(custName))
@@ -1475,10 +1565,10 @@ function submitInvoice(type) {
 
     var subtotal = cart.reduce(function(t,i){return t+i.gia*i.qty},0);
     var disc = Math.round(subtotal * currentDiscountPct / 100);
-    var voucherDisc = appliedVoucherAmount > 0 ? Math.min(appliedVoucherAmount, subtotal - disc) : 0;
-    var afterDisc = subtotal - disc - voucherDisc;
-    var vat = Math.round(subtotal * VAT_PCT / 100);
-    var grand = afterDisc + vat;
+    var voucherDisc = appliedVoucherAmount > 0 ? Math.min(appliedVoucherAmount, Math.max(0, subtotal - disc)) : 0;
+    var taxableBase = Math.max(0, subtotal - disc - voucherDisc);
+    var vat = Math.round(taxableBase * VAT_PCT / 100);
+    var grand = taxableBase + vat;
 
     if (type === 'paid' && currentPayMethod === 'cash') {
         var paidStr = (document.getElementById('customerPaidInput').value || '').replace(/[^0-9]/g, '');
@@ -1563,11 +1653,19 @@ function printInvoice(id) {
             });
 
             if (!vatVal) {
-                var calculatedVAT = Math.round((data.tongTien || 0) * VAT_PCT / (100 + VAT_PCT));
+                var calculatedVAT = (data.tienVAT !== undefined && data.tienVAT !== null)
+                    ? Number(data.tienVAT)
+                    : Math.round((data.tongTien || 0) * VAT_PCT / (100 + VAT_PCT));
                 vatVal = Number(calculatedVAT).toLocaleString('vi-VN') + ' VNĐ';
                 if (document.getElementById('prVatPctLabel')) document.getElementById('prVatPctLabel').textContent = VAT_PCT;
             }
-            if (!giamGiaVal) giamGiaVal = '0 VNĐ';
+            if (!voucherVal && data.voucherDiscount && Number(data.voucherDiscount) > 0) {
+                voucherVal = '- ' + Number(data.voucherDiscount).toLocaleString('vi-VN') + ' VNĐ';
+            }
+            if (!giamGiaVal) {
+                var vipOnly = Math.max(0, Number(data.tongGiamGia || 0) - Number(data.voucherDiscount || 0));
+                giamGiaVal = vipOnly > 0 ? ('- ' + vipOnly.toLocaleString('vi-VN') + ' VNĐ') : '0 VNĐ';
+            }
             if (!voucherVal) voucherVal = '0 VNĐ';
             if (!khachDuaVal) khachDuaVal = Number(data.tongTien || 0).toLocaleString('vi-VN') + ' VNĐ';
             if (!tienThuaVal) tienThuaVal = '0 VNĐ';
@@ -1622,29 +1720,62 @@ function submitAddKH(event) {
     var name = document.getElementById('khName').value.trim();
     var sdt = document.getElementById('khSdt').value.trim();
     var email = document.getElementById('khEmail').value.trim();
-    if (!name || !sdt) { alert('Vui lòng nhập họ tên và SĐT.'); return false; }
+    var errEl = document.getElementById('khAddError');
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    if (!name || !sdt) {
+        if (errEl) { errEl.textContent = 'Vui lòng nhập họ tên và số điện thoại!'; errEl.style.display = 'block'; }
+        return false;
+    }
+    if (!/^0[35789][0-9]{8}$/.test(sdt)) {
+        if (errEl) {
+            errEl.textContent = 'Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (đầu số 03, 05, 07, 08, 09).';
+            errEl.style.display = 'block';
+        }
+        document.getElementById('khSdt').focus();
+        return false;
+    }
     fetch('${pageContext.request.contextPath}/OrderServlet?action=uc34&name='+encodeURIComponent(name)+'&phone='+encodeURIComponent(sdt)+'&email='+encodeURIComponent(email))
         .then(function(r){return r.json()})
         .then(function(data){
-            var khId = data.idKhachHang || data.id;
-            if (!khId) { alert(data.message||'Lỗi thêm khách hàng.'); return; }
-            var newKH = {id:khId, ten:(data.hoVaTen||name), sdt:(data.soDienThoai||sdt), hang:'Thường', discountPct:0};
-            ALL_KH.push(newKH);
-            var sel = document.getElementById('customerSelectBox');
-            if (sel) {
-                var opt = document.createElement('option');
-                opt.value = newKH.id;
-                opt.text = newKH.ten + ' (' + newKH.sdt + ')';
-                opt.setAttribute('data-ten', newKH.ten);
-                opt.setAttribute('data-sdt', newKH.sdt);
-                opt.setAttribute('data-hang', 'Thường');
-                opt.setAttribute('data-discount', 0);
-                sel.appendChild(opt);
+            if (!data || data.success === false) {
+                var msg = (data && data.message) ? data.message : 'Lỗi thêm khách hàng.';
+                if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } else { alert(msg); }
+                return;
             }
-            selectCustomer(newKH);
+            var khId = data.idKhachHang || data.id;
+            if (!khId) {
+                var msg2 = data.message || 'Lỗi thêm khách hàng.';
+                if (errEl) { errEl.textContent = msg2; errEl.style.display = 'block'; } else { alert(msg2); }
+                return;
+            }
+            var newKH = {
+                id: Number(khId),
+                ten: (data.ten || data.hoVaTen || name),
+                sdt: (data.sdt || data.soDienThoai || sdt),
+                hang: (data.hang || 'Thành Viên'),
+                discountPct: Number(data.discountPct || 0)
+            };
+            var existingInList = ALL_KH.find(function(k) { return Number(k.id) === newKH.id; });
+            if (!existingInList) {
+                ALL_KH.push(newKH);
+                var sel = document.getElementById('customerSelectBox');
+                if (sel) {
+                    var opt = document.createElement('option');
+                    opt.value = newKH.id;
+                    opt.text = newKH.ten + ' (' + newKH.sdt + ')' + (newKH.hang && newKH.hang !== 'Thường' && newKH.hang !== 'Thành Viên' ? ' — ' + newKH.hang : '');
+                    opt.setAttribute('data-ten', newKH.ten);
+                    opt.setAttribute('data-sdt', newKH.sdt);
+                    opt.setAttribute('data-hang', newKH.hang);
+                    opt.setAttribute('data-discount', newKH.discountPct);
+                    sel.appendChild(opt);
+                }
+            }
+            selectCustomer(existingInList || newKH);
             closeModal('modalAddKH');
             document.getElementById('formAddKH').reset();
-        }).catch(function(){alert('Lỗi kết nối.');});
+        }).catch(function(){
+            if (errEl) { errEl.textContent = 'Lỗi kết nối máy chủ.'; errEl.style.display = 'block'; } else { alert('Lỗi kết nối.'); }
+        });
     return false;
 }
 
@@ -1664,6 +1795,9 @@ function cancelVoucher() {
     appliedVoucherCode = '';
     appliedVoucherAmount = 0;
     appliedVoucherMinOrder = 0;
+    appliedVoucherType = '';
+    appliedVoucherValue = 0;
+    appliedVoucherMaxCap = 0;
     if (document.getElementById('voucherInput')) document.getElementById('voucherInput').value = '';
     var resEl = document.getElementById('voucherResult');
     if (resEl) { resEl.className = 'voucher-result'; resEl.textContent = ''; resEl.style.display = 'none'; }
@@ -1671,28 +1805,27 @@ function cancelVoucher() {
     calculateTotals();
 }
 
-function applyVoucher() {
+function applyVoucher(isRevalidate) {
     if (!cart.length) {
-        alert('Vui lòng thêm sản phẩm vào đơn hàng trước khi áp dụng voucher!');
+        if (!isRevalidate) alert('Vui lòng thêm sản phẩm vào đơn hàng trước khi áp dụng voucher!');
         return;
     }
     var resultEl = document.getElementById('voucherResult');
     var code = (document.getElementById('voucherInput').value || '').trim().toUpperCase();
     if (!code) {
-        resultEl.className = 'alert alert-danger';
-        resultEl.textContent = 'Vui lòng nhập mã voucher vào ô.';
+        if (!isRevalidate) {
+            resultEl.className = 'alert alert-danger';
+            resultEl.textContent = 'Vui lòng nhập mã voucher vào ô.';
+            resultEl.style.display = 'block';
+        }
         return;
     }
 
-    if (!cart.length || cart.reduce(function(t,i){return t+i.gia*i.qty},0) === 0) {
+    var currentSubtotal = Math.round(cart.reduce(function(t,i){return t+i.gia*i.qty},0));
+    if (currentSubtotal <= 0) {
         resultEl.className = 'alert alert-warning';
         resultEl.textContent = 'Vui lòng thêm sản phẩm vào đơn trước khi áp dụng voucher.';
         resultEl.style.display = 'block';
-        return;
-    }
-
-    if (appliedVoucherCode && appliedVoucherCode.toUpperCase() === code) {
-        cancelVoucher();
         return;
     }
 
@@ -1701,24 +1834,34 @@ function applyVoucher() {
     resultEl.textContent = 'Đang kiểm tra tính hợp lệ của mã...';
     resultEl.style.display = 'block';
 
-    var currentSubtotal = Math.round(cart.reduce(function(t,i){return t+i.gia*i.qty},0));
-    fetch('${pageContext.request.contextPath}/OrderServlet?action=uc36&code=' + encodeURIComponent(finalCode) + '&subtotal=' + currentSubtotal)
+    var custId = (selectedKH && selectedKH.id) ? selectedKH.id : 0;
+    var url = '${pageContext.request.contextPath}/OrderServlet?action=uc36&code=' + encodeURIComponent(finalCode)
+            + '&subtotal=' + currentSubtotal + '&customerId=' + custId;
+    fetch(url)
         .then(function(r){return r.json();})
         .then(function(data){
-            var dv = data.discountVoucher || 0;
-            if (dv > 0) {
-                var discAmt = dv <= 100 ? Math.round(currentSubtotal * dv / 100) : dv;
-                appliedVoucherCode = finalCode;
+            var discAmt = Number(data && (data.amount !== undefined ? data.amount : data.discountVoucher) || 0);
+            if (data && data.valid && discAmt > 0) {
+                appliedVoucherCode = data.code || finalCode;
                 appliedVoucherAmount = discAmt;
+                appliedVoucherType = data.discountType || '';
+                appliedVoucherValue = Number(data.discountValue || 0);
+                appliedVoucherMaxCap = Number(data.maxDiscount || 0);
+                appliedVoucherMinOrder = Number(data.minOrder || 0);
+                if (document.getElementById('voucherInput')) document.getElementById('voucherInput').value = appliedVoucherCode;
                 resultEl.className = 'alert alert-success';
-                resultEl.textContent = 'Áp dụng thành công mã ' + finalCode + ' (Giảm ' + money(discAmt) + ')';
+                resultEl.textContent = data.message || ('Áp dụng thành công mã ' + appliedVoucherCode + ' (Giảm ' + money(discAmt) + ')');
                 if (document.getElementById('btnCancelVoucher')) document.getElementById('btnCancelVoucher').style.display = 'inline-block';
                 calculateTotals();
             } else {
                 appliedVoucherCode = '';
                 appliedVoucherAmount = 0;
+                appliedVoucherType = '';
+                appliedVoucherValue = 0;
+                appliedVoucherMaxCap = 0;
+                appliedVoucherMinOrder = 0;
                 resultEl.className = 'alert alert-danger';
-                resultEl.textContent = 'Mã voucher không hợp lệ, đã hết hạn hoặc chưa đạt giá trị tối thiểu!';
+                resultEl.textContent = (data && data.message) ? data.message : 'Mã voucher không hợp lệ, đã hết hạn hoặc chưa đạt giá trị tối thiểu!';
                 if (document.getElementById('btnCancelVoucher')) document.getElementById('btnCancelVoucher').style.display = 'none';
                 calculateTotals();
             }
@@ -1764,10 +1907,10 @@ function submitInvoiceBank() {
     if (!cart.length) { alert('Giỏ hàng trống!'); return; }
     var subtotal = cart.reduce(function(t,i){return t+i.gia*i.qty},0);
     var disc = Math.round(subtotal * currentDiscountPct / 100);
-    var voucherDisc = appliedVoucherAmount > 0 ? Math.min(appliedVoucherAmount, subtotal - disc) : 0;
-    var afterDisc = subtotal - disc - voucherDisc;
-    var vat = Math.round(subtotal * VAT_PCT / 100);
-    var grand = afterDisc + vat;
+    var voucherDisc = appliedVoucherAmount > 0 ? Math.min(appliedVoucherAmount, Math.max(0, subtotal - disc)) : 0;
+    var taxableBase = Math.max(0, subtotal - disc - voucherDisc);
+    var vat = Math.round(taxableBase * VAT_PCT / 100);
+    var grand = taxableBase + vat;
     document.getElementById('voucherCodePost').value = appliedVoucherCode || '';
     document.getElementById('voucherAmountPost').value = voucherDisc || 0;
     document.getElementById('discountAmountPost').value = disc;
@@ -1924,23 +2067,30 @@ function onBarcodeDetected(decodedText) {
     fetch(scannerContextPath + '/ThanhVien2Servlet?action=uc25&barcode=' + encodeURIComponent(barcode))
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            if (data && data.idSanPham) {
+            var pid = data ? (data.id || data.idSanPham) : null;
+            if (data && data.found !== false && pid) {
+                var sz = data.trongLuong || data.size || '';
                 var pData = {
                     found: true,
-                    id: data.idSanPham,
-                    idBT: data.idBienThe || data.id,
-                    maSP: 'SP00' + data.idSanPham,
-                    tenSP: 'Sản phẩm DUNA ' + (data.mauSac ? '(' + data.mauSac + ' - ' + (data.size || data.trongLuong) + ')' : ''),
-                    giaBan: data.giaBan,
-                    soLuong: data.soLuong,
-                    mauSac: data.mauSac,
-                    trongLuong: data.size || data.trongLuong
+                    id: pid,
+                    idBT: data.idBT || data.idBienThe || pid,
+                    maSP: data.maSP || ('SP' + pid),
+                    tenSP: data.tenSP || ('Sản phẩm DUNA #' + pid),
+                    giaBan: Number(data.giaBan || 0),
+                    soLuong: Number(data.soLuong || 0),
+                    mauSac: data.mauSac || '',
+                    trongLuong: sz
                 };
-                setScanStatus('success', 'Tìm thấy sản phẩm. Đang đưa vào giỏ hàng...');
-                showScanResult(pData);
-                addToCartByBarcode(pData);
-                playBeep();
-                showFeedbackToast('Đã thêm: ' + pData.tenSP);
+                if (addToCartByBarcode(pData)) {
+                    setScanStatus('success', 'Tìm thấy sản phẩm. Đang đưa vào giỏ hàng...');
+                    showScanResult(pData);
+                    playBeep();
+                    showFeedbackToast('Đã thêm: ' + pData.tenSP);
+                } else {
+                    setScanStatus('error', 'Sản phẩm đã hết hàng hoặc vượt tồn kho (' + pData.soLuong + ')!');
+                    showScanResult(pData);
+                    playErrorBeep();
+                }
                 clearTimeout(scanDebounceTimer);
                 scanDebounceTimer = setTimeout(function() {
                     lastScannedBarcode = '';
@@ -1963,28 +2113,33 @@ function onBarcodeDetected(decodedText) {
 }
 
 function addToCartByBarcode(product) {
+    var maxStock = Number(product.soLuong || 0);
+    if (maxStock <= 0) {
+        return false;
+    }
     var existIdx = cart.findIndex(function(c) {
-        return c.id == product.id && c.mauSac == product.mauSac && c.trongLuong == product.trongLuong;
+        return c.id == product.id && (c.mauSac || '') === (product.mauSac || '') && (c.trongLuong || '') === (product.trongLuong || '');
     });
     if (existIdx >= 0) {
-        var maxStock = product.soLuong || 1;
-        if (cart[existIdx].qty < maxStock) {
-            cart[existIdx].qty++;
+        if (cart[existIdx].qty >= maxStock) {
+            return false;
         }
+        cart[existIdx].qty++;
     } else {
         cart.push({
             id: product.id,
             idBT: product.idBT,
             maSP: product.maSP || ('SP' + product.id),
-            tenSP: product.tenSP + (product.mauSac ? ' (' + product.mauSac + (product.trongLuong ? ', ' + product.trongLuong : '') + ')' : ''),
-            gia: product.giaBan,
-            tonKho: product.soLuong,
+            tenSP: product.tenSP,
+            gia: Number(product.giaBan || 0),
+            tonKho: maxStock,
             qty: 1,
-            mauSac: product.mauSac,
-            trongLuong: product.trongLuong
+            mauSac: product.mauSac || '',
+            trongLuong: product.trongLuong || ''
         });
     }
     renderCart();
+    return true;
 }
 
 function showScanResult(product) {
@@ -2094,29 +2249,32 @@ function updateCardBarcode(spId) {
     var selMau = mauEl ? mauEl.value.trim() : '';
     var selTl = tlEl ? tlEl.value.trim() : '';
     
-    var found = variants.find(function(v) { return v.mau === selMau && v.tl === selTl; });
+    var found = variants.find(function(v) { return (v.mau || v.mauSac) === selMau && (v.tl || v.trongLuong) === selTl; });
     if (!found && variants.length > 0) {
-        found = variants.find(function(v) { return v.mau === selMau; }) || variants[0];
+        found = variants.find(function(v) { return (v.mau || v.mauSac) === selMau; }) || variants[0];
     }
     
     if (found) {
+        var vPrice = found.giaBan !== undefined ? found.giaBan : found.gia;
+        var vStock = found.soLuong !== undefined ? found.soLuong : found.sl;
+        var vIdBT = found.idBienThe !== undefined ? found.idBienThe : (found.idBT !== undefined ? found.idBT : found.id);
         var priceEl = document.getElementById('price_display_' + spId);
-        if (priceEl && found.gia !== undefined) {
-            priceEl.textContent = Number(found.gia).toLocaleString('vi-VN') + ' đ';
+        if (priceEl && vPrice !== undefined) {
+            priceEl.textContent = Number(vPrice).toLocaleString('vi-VN') + ' đ';
         }
         var stockEl = document.getElementById('stock_display_' + spId);
-        if (stockEl && found.sl !== undefined) {
-            stockEl.textContent = 'Tồn: ' + found.sl;
+        if (stockEl && vStock !== undefined) {
+            stockEl.textContent = 'Tồn: ' + vStock;
         }
         var qtyInput = document.getElementById('qty_' + spId);
-        if (qtyInput && found.sl !== undefined) {
-            qtyInput.setAttribute('max', found.sl);
+        if (qtyInput && vStock !== undefined) {
+            qtyInput.setAttribute('max', vStock);
         }
         var btn = document.querySelector('button[data-id="' + spId + '"]');
         if (btn) {
-            if (found.gia !== undefined) btn.setAttribute('data-price', found.gia);
-            if (found.sl !== undefined) btn.setAttribute('data-stock', found.sl);
-            if (found.idBT !== undefined) btn.setAttribute('data-idbt', found.idBT);
+            if (vPrice !== undefined) btn.setAttribute('data-price', vPrice);
+            if (vStock !== undefined) btn.setAttribute('data-stock', vStock);
+            if (vIdBT !== undefined) btn.setAttribute('data-idbt', vIdBT);
             if (found.barcode !== undefined) btn.setAttribute('data-barcode', found.barcode);
         }
     }

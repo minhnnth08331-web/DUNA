@@ -1,6 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
+    if (request.getAttribute("nv") == null) {
+        response.sendRedirect(request.getContextPath() + "/EmployeeManagementServlet");
+        return;
+    }
     String mode = (String) request.getAttribute("mode");
     if (mode == null || !mode.equals("edit")) {
         mode = "view";
@@ -85,7 +89,7 @@
         <div class="panel" style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
             <div style="display: flex; align-items: center; gap: 16px;">
                 <div style="width: 52px; height: 52px; border-radius: var(--radius-control); background: var(--raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: var(--text-primary); font-family: var(--font-brand);">
-                    ${nv.hoVaTen.substring(0, 1)}
+                    ${not empty nv.hoVaTen ? nv.hoVaTen.substring(0, 1) : 'N'}
                 </div>
                 <div>
                     <h2 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">${nv.hoVaTen}</h2>
@@ -277,12 +281,10 @@
                                 </div>
                                 <div>
                                     <label>Số điện thoại</label>
-                                    <div class="phone-wrap">
-                                        <span class="phone-prefix">(+84)</span>
-                                        <input type="tel" name="soDienThoai" id="fPhone" class="form-control"
-                                            value="${not empty nv.soDienThoai && nv.soDienThoai.startsWith('0') ? nv.soDienThoai.substring(1) : nv.soDienThoai}"
-                                            placeholder="912 345 678" maxlength="10">
-                                    </div>
+                                    <input type="tel" name="soDienThoai" id="fPhone" class="form-control"
+                                        value="${nv.soDienThoai}"
+                                        placeholder="0912345678 (bắt đầu bằng 0, 10 chữ số)" maxlength="10"
+                                        pattern="0(3|5|7|8|9)[0-9]{8}" title="Số điện thoại bắt đầu bằng số 0 và gồm đúng 10 chữ số">
                                     <div style="color: var(--negative); font-size: 12.5px; margin-top: 4px;" id="errPhone"></div>
                                 </div>
                                 <div class="full">
@@ -406,22 +408,33 @@
                 <c:if test="${nv.isAdmin == 'false'}">
                 <div class="detail-view-card" style="margin-top: 20px;">
                     <h3 style="color: var(--negative);">Thay Đổi Trạng Thái Khóa Tài Khoản</h3>
-                    <form action="ToggleEmployeeStatusServlet" method="POST">
+                    <form action="ToggleEmployeeStatusServlet" method="POST" onsubmit="return validateToggleStatus(this);">
                         <input type="hidden" name="idNhanVien" value="${nv.id}">
                         <input type="hidden" name="currentStatus" value="${nv.trangThai == 'Hoạt động' ? '1' : '2'}">
                         <div style="margin-bottom: 14px;">
                             <label style="display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px;">
                                 Lý do thay đổi trạng thái ${nv.trangThai == 'Hoạt động' ? '(bắt buộc khi khóa)' : '(tùy chọn khi mở)'}:
                             </label>
-                            <input type="text" name="lyDoThayDoi" class="form-control"
+                            <input type="text" name="lyDoThayDoi" class="form-control" ${nv.trangThai == 'Hoạt động' ? 'required' : ''}
                                 placeholder="${nv.trangThai == 'Hoạt động' ? 'Nhập lý do khóa tài khoản...' : 'Bỏ trống hoặc nhập lý do để mở khóa...'}">
                         </div>
-                        <button type="submit" class="btn ${nv.trangThai == 'Hoạt động' ? 'btn-danger' : 'btn-success'}"
-                            onclick="return confirm('Xác nhận thay đổi trạng thái tài khoản?');">
+                        <button type="submit" class="btn ${nv.trangThai == 'Hoạt động' ? 'btn-danger' : 'btn-success'}">
                             ${nv.trangThai == 'Hoạt động' ? 'Khóa Tài Khoản Nhân Viên' : 'Mở Khóa Tài Khoản Nhân Viên'}
                         </button>
                     </form>
                 </div>
+                <script>
+                    function validateToggleStatus(form) {
+                        var isLocking = form.querySelector('input[name="currentStatus"]').value === '1';
+                        var reasonEl = form.querySelector('input[name="lyDoThayDoi"]');
+                        if (isLocking && (!reasonEl || reasonEl.value.trim() === '')) {
+                            alert('Vui lòng nhập lý do khóa tài khoản nhân viên!');
+                            if (reasonEl) reasonEl.focus();
+                            return false;
+                        }
+                        return confirm('Xác nhận thay đổi trạng thái tài khoản?');
+                    }
+                </script>
                 </c:if>
                 <c:if test="${nv.isAdmin == 'true'}">
                 <div class="alert alert-warning" style="margin-top: 20px;">
@@ -441,9 +454,9 @@
 
                     var phone = phoneEl ? phoneEl.value.trim() : '';
                     if (phone !== '') {
-                        var cleanPhone = phone.replace(/[\s\-]/g, '');
-                        if (!/^(0\d{9}|[1-9]\d{8})$/.test(cleanPhone)) {
-                            if (errPhone) errPhone.textContent = 'Số điện thoại hợp lệ là 10 số (bắt đầu bằng 0) hoặc 9 số.';
+                        var cleanPhone = phone.replace(/[\s.\-()]/g, '');
+                        if (!/^0(3|5|7|8|9)\d{8}$/.test(cleanPhone)) {
+                            if (errPhone) errPhone.textContent = 'Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (03, 05, 07, 08, 09).';
                             if (phoneEl) phoneEl.focus();
                             return false;
                         }

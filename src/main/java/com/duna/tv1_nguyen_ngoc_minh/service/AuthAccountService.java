@@ -109,6 +109,9 @@ public class AuthAccountService {
             return -2L;
         }
         String normPhone = RequestUtil.normalizePhone(phone);
+        if (!RequestUtil.isValidVnPhone(normPhone)) {
+            return -3L;
+        }
         String hash = PasswordUtil.hashPassword(rawPassword);
         return userDAO.uc014_registerCustomerUser(email.trim(), normPhone, hash, fullName.trim());
     }

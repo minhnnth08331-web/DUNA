@@ -35,7 +35,7 @@ public final class Tv2UcDispatcher {
             case "UC095": return wrapAffected(uc, invSvc.reserveStock(numInt(req, "variantId", 1), numInt(req, "warehouseId", 1), numInt(req, "qty", 1)), "Đã giữ chỗ tồn kho", "Tồn khả dụng không đủ");
             case "UC096": return wrapAffected(uc, invSvc.releaseStock(numInt(req, "variantId", 1), numInt(req, "warehouseId", 1), numInt(req, "qty", 1)), "Đã giải phóng giữ chỗ tồn kho", "Không có số lượng đang giữ");
             case "UC097": return invSvc.listInventoryLogs(kw);
-            case "UC098": return invSvc.filterLogs(str(req, "changeType", ""), str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31"));
+            case "UC098": return invSvc.filterLogs(str(req, "changeType", ""), safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31"));
             case "UC099": return wrapAffected(uc, invSvc.adjustStock(numInt(req, "variantId", 1), numInt(req, "warehouseId", 1), numInt(req, "newQty", 50), numInt(req, "delta", 0), str(req, "reason", "Kiểm kê định kỳ"), uid), "Đã điều chỉnh tồn kho & ghi log", "Không tìm thấy biến thể trong kho");
             case "UC100": return invSvc.listSuppliers(kw);
             case "UC101": return wrapAffected(uc, invSvc.createSupplier(str(req, "supplierCode", "NCC-HN05"), str(req, "supplierName", "Xưởng Dệt Kim Thăng Long"), str(req, "contactPerson", "Anh Hùng"), str(req, "phone", "0911223344"), "", "Hà Nội", str(req, "taxCode", "0109988776"), "Công nợ 30 ngày"), "Đã thêm nhà cung cấp", "Mã NCC đã tồn tại");
@@ -79,31 +79,32 @@ public final class Tv2UcDispatcher {
 
             case "UC126": return ordSvc.listOrders(kw, 0, 40);
             case "UC127": return ordSvc.searchOrders(kw);
-            case "UC128": return ordSvc.filterOrders(str(req, "status", ""), str(req, "channel", ""), str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31"), kw);
+            case "UC128": return ordSvc.filterOrders(str(req, "status", ""), str(req, "channel", ""), safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31"), kw);
             case "UC129": {
-                List<Map<String, Object>> items = ordSvc.getOrderItems(numLong(req, "orderId", 1));
-                return items.isEmpty() ? wrapMap(ordSvc.getOrderHeader(numLong(req, "orderId", 1)), uc, "Chi tiết đơn hàng") : items;
+                long oid = numLong(req, "orderId", 7L);
+                List<Map<String, Object>> items = ordSvc.getOrderItems(oid);
+                return items.isEmpty() ? wrapMap(ordSvc.getOrderHeader(oid), uc, "Chi tiết đơn hàng") : items;
             }
             case "UC130": return ordSvc.listCustomerOrders(numInt(req, "customerId", 1), kw);
             case "UC131": return wrapScalar(uc, ordSvc.nextOrderCode(), "Mã đơn hàng tự động tiếp theo");
             case "UC132": return wrapAffected(uc, ordSvc.placeOrderFromCart(numInt(req, "customerId", 1), uid, str(req, "receiverName", "Trần Văn Nam"), str(req, "receiverPhone", "0912345678"), str(req, "shippingAddress", "Hà Nội"), 390000, 30000, numInt(req, "cartId", 1)), "Đã đặt đơn hàng online từ giỏ", "Không tạo được đơn (kiểm tra giỏ hàng)");
             case "UC133": return wrapAffected(uc, ordSvc.createPhoneOrder(numInt(req, "customerId", 1), uid, str(req, "receiverName", "Khách gọi hotline"), str(req, "receiverPhone", "0912345678"), str(req, "shippingAddress", "12 Nguyễn Trãi, Hà Nội"), numDouble(req, "subtotal", 390000), numDouble(req, "shipFee", 30000), "Tạo đơn qua điện thoại"), "Đã tạo đơn hàng qua điện thoại", "Không tạo được đơn");
-            case "UC134": return wrapAffected(uc, ordSvc.confirmOrder(numLong(req, "orderId", 1), uid, "Xác nhận đơn"), "Đã xác nhận đơn hàng", "Đơn không ở trạng thái PENDING");
-            case "UC135": return wrapAffected(uc, ordSvc.packOrder(numLong(req, "orderId", 1), uid), "Đã chuyển trạng thái đóng gói", "Đơn không ở trạng thái CONFIRMED");
-            case "UC136": return wrapAffected(uc, ordSvc.shipOrder(numLong(req, "orderId", 1), uid), "Đã chuyển đang giao ĐVVC", "Đơn không ở trạng thái PACKING");
-            case "UC137": return wrapAffected(uc, ordSvc.deliverOrder(numLong(req, "orderId", 1), uid), "Đã xác nhận giao thành công & thu COD", "Đơn không ở trạng thái SHIPPING");
-            case "UC138": return wrapAffected(uc, ordSvc.completeOrder(numLong(req, "orderId", 1)), "Đã hoàn tất đơn & cộng chi tiêu khách", "Đơn không ở trạng thái DELIVERED");
+            case "UC134": return wrapAffected(uc, ordSvc.confirmOrder(numLong(req, "orderId", 7L), uid, "Xác nhận đơn"), "Đã xác nhận đơn hàng", "Đơn không ở trạng thái PENDING");
+            case "UC135": return wrapAffected(uc, ordSvc.packOrder(numLong(req, "orderId", 7L), uid), "Đã chuyển trạng thái đóng gói", "Đơn không ở trạng thái CONFIRMED");
+            case "UC136": return wrapAffected(uc, ordSvc.shipOrder(numLong(req, "orderId", 7L), uid), "Đã chuyển đang giao ĐVVC", "Đơn không ở trạng thái PACKING");
+            case "UC137": return wrapAffected(uc, ordSvc.deliverOrder(numLong(req, "orderId", 7L), uid), "Đã xác nhận giao thành công & thu COD", "Đơn không ở trạng thái SHIPPING");
+            case "UC138": return wrapAffected(uc, ordSvc.completeOrder(numLong(req, "orderId", 7L)), "Đã hoàn tất đơn & cộng chi tiêu khách", "Đơn không ở trạng thái DELIVERED");
             case "UC139": return wrapAffected(uc, ordSvc.cancelOrder(numLong(req, "orderId", 999), str(req, "reasonCode", "CUSTOMER_REQUEST"), str(req, "reasonDetail", "Khách đổi ý"), uid), "Đã hủy đơn & trả giữ chỗ kho", "Đơn không ở trạng thái cho phép hủy");
-            case "UC140": return wrapAffected(uc, ordSvc.addNote(numLong(req, "orderId", 1), uid, str(req, "content", "Giao giờ hành chính"), bool(req, "internal", true)), "Đã thêm ghi chú đơn hàng", "Không thêm được ghi chú");
-            case "UC141": return ordSvc.listNotes(numLong(req, "orderId", 1), kw);
-            case "UC142": return wrapAffected(uc, ordSvc.updateShippingAddress(numLong(req, "orderId", 1), str(req, "receiverName", "Trần Văn Nam"), str(req, "phone", "0912345678"), str(req, "address", "Số 88 Cầu Giấy")), "Đã cập nhật địa chỉ giao", "Chỉ sửa được đơn PENDING/CONFIRMED");
-            case "UC143": return ordSvc.listStatusHistory(numLong(req, "orderId", 1), kw);
-            case "UC144": return wrapAffected(uc, ordSvc.issueInvoice("INV-" + (System.currentTimeMillis() % 100000), numLong(req, "orderId", 1), str(req, "buyerName", "Trần Văn Nam"), str(req, "companyName", "DUNA Client"), str(req, "taxCode", "0101234567"), "Hà Nội"), "Đã xuất hóa đơn VAT", "Đơn đã xuất hóa đơn hoặc chưa hoàn tất");
+            case "UC140": return wrapAffected(uc, ordSvc.addNote(numLong(req, "orderId", 7L), uid, str(req, "content", "Giao giờ hành chính"), bool(req, "internal", true)), "Đã thêm ghi chú đơn hàng", "Không thêm được ghi chú");
+            case "UC141": return ordSvc.listNotes(numLong(req, "orderId", 7L), kw);
+            case "UC142": return wrapAffected(uc, ordSvc.updateShippingAddress(numLong(req, "orderId", 7L), str(req, "receiverName", "Trần Văn Nam"), str(req, "phone", "0912345678"), str(req, "address", "Số 88 Cầu Giấy")), "Đã cập nhật địa chỉ giao", "Chỉ sửa được đơn PENDING/CONFIRMED");
+            case "UC143": return ordSvc.listStatusHistory(numLong(req, "orderId", 7L), str(req, "statusFilter", kw));
+            case "UC144": return wrapAffected(uc, ordSvc.issueInvoice("INV-" + (System.currentTimeMillis() % 100000), numLong(req, "orderId", 7L), str(req, "buyerName", "Trần Văn Nam"), str(req, "companyName", "DUNA Client"), str(req, "taxCode", "0101234567"), "Hà Nội"), "Đã xuất hóa đơn VAT", "Đơn đã xuất hóa đơn hoặc chưa hoàn tất");
             case "UC145": return ordSvc.findInvoices(kw);
             case "UC146": return wrapAffected(uc, ordSvc.cancelInvoice(numInt(req, "invoiceId", 999)), "Đã hủy hóa đơn", "Không tìm thấy hóa đơn");
             case "UC147": {
                 String rc = "RET-" + (System.currentTimeMillis() % 100000);
-                return wrapAffected(uc, ordSvc.createReturnRequest(rc, numLong(req, "orderId", 1), numInt(req, "customerId", 1), str(req, "requestType", "EXCHANGE"), str(req, "reason", "Đổi size"), 1L, 1, null, "Khách yêu cầu"), "Đã tạo yêu cầu đổi trả " + rc, "Không tạo được yêu cầu");
+                return wrapAffected(uc, ordSvc.createReturnRequest(rc, numLong(req, "orderId", 7L), numInt(req, "customerId", 1), str(req, "requestType", "EXCHANGE"), str(req, "reason", "Đổi size"), 8L, 1, null, "Khách yêu cầu"), "Đã tạo yêu cầu đổi trả " + rc, "Không tạo được yêu cầu");
             }
             case "UC148": return ordSvc.listReturns(str(req, "status", ""), kw);
             case "UC149": return wrapAffected(uc, ordSvc.approveReturn(numInt(req, "returnId", 1), uid), "Đã duyệt yêu cầu đổi trả", "Không ở trạng thái PENDING");

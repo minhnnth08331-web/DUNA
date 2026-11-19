@@ -130,14 +130,19 @@ public class AuthServlet extends BaseServlet {
             if (id > 0) {
                 writeOkJson(resp, "UC014", "Dang ky thanh cong", id);
             } else {
-                writeErrJson(resp, 400, id == -2L ? "Mat khau yeu (>= 6 ky tu, co chu & so)" : "Email hoac SDT da ton tai");
+                String msg = id == -2L ? "Mat khau yeu (>= 6 ky tu, co chu & so)"
+                        : (id == -3L ? "So dien thoai khong hop le (phai bat dau bang 0, gom 10 chu so)" : "Email hoac SDT da ton tai");
+                writeErrJson(resp, 400, msg);
             }
             return;
         }
         if (id > 0) {
             resp.sendRedirect(req.getContextPath() + "/login.jsp?registered=1");
         } else {
-            req.setAttribute("errorMessage", id == -2L ? "Mat khau phai >= 6 ky tu, gom ca chu va so." : "Email hoac so dien thoai da duoc su dung.");
+            String msg = id == -2L ? "Mật khẩu phải >= 6 ký tự, gồm cả chữ và số."
+                    : (id == -3L ? "Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (03, 05, 07, 08, 09)."
+                    : "Email hoặc số điện thoại đã được sử dụng.");
+            req.setAttribute("errorMessage", msg);
             forwardView(req, resp, "/WEB-INF/views/tv1_nguyen_ngoc_minh/register.jsp");
         }
     }
@@ -156,10 +161,17 @@ public class AuthServlet extends BaseServlet {
     }
 
     private void handleChangeCredentialsFromEmployeeDetail(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        int empOrUserId = RequestUtil.getInt(req, "idNhanVien", 1);
+        HttpSession session = req.getSession(false);
+        String role = (session != null && session.getAttribute("role") != null)
+                ? String.valueOf(session.getAttribute("role")).toUpperCase() : "";
+        if (!"ADMIN".equals(role) && !"MANAGER".equals(role)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
+            return;
+        }
+        int empOrUserId = RequestUtil.getInt(req, "idNhanVien", 0);
         String newPw = RequestUtil.getString(req, "newPassword", "");
         String confirmPw = RequestUtil.getString(req, "confirmPassword", "");
-        if (!newPw.equals(confirmPw) || !PasswordUtil.isStrongPassword(newPw)) {
+        if (empOrUserId <= 0 || !newPw.equals(confirmPw) || !PasswordUtil.isStrongPassword(newPw)) {
             resp.sendRedirect(req.getContextPath() + "/EmployeeDetailServlet?id=" + empOrUserId + "&credError=1");
             return;
         }

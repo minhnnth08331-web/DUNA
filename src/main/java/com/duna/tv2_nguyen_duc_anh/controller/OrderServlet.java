@@ -51,25 +51,48 @@ public class OrderServlet extends BaseServlet {
 
         if ("uc34".equalsIgnoreCase(action) || "1".equals(req.getParameter("ajaxAddKH"))) {
             String name = RequestUtil.getString(req, "name", "");
-            String phone = RequestUtil.normalizePhone(RequestUtil.getString(req, "phone", ""));
+            String rawPhone = RequestUtil.getString(req, "phone", "");
+            String email = RequestUtil.getString(req, "email", "");
+            String phone = RequestUtil.normalizePhone(rawPhone);
             Map<String, Object> res = new LinkedHashMap<>();
-            if (name.isEmpty() || phone.isEmpty()) {
+            if (name.isEmpty() || rawPhone.isEmpty()) {
                 res.put("success", Boolean.FALSE);
                 res.put("message", "Vui lòng nhập họ tên và số điện thoại!");
                 writeJson(resp, 200, res);
                 return;
             }
-            List<Map<String, Object>> existedList = customerService.searchCustomers(phone);
-            boolean existed = !existedList.isEmpty();
-            if (!existed) {
-                customerService.addWalkInCustomer(name, phone, "MALE");
-                existedList = customerService.searchCustomers(phone);
+            if (!RequestUtil.isValidVnPhone(phone)) {
+                res.put("success", Boolean.FALSE);
+                res.put("message", "Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (đầu số 03, 05, 07, 08, 09).");
+                writeJson(resp, 200, res);
+                return;
             }
-            int cid = existedList.isEmpty() ? 0 : ((Number) existedList.get(0).get("customer_id")).intValue();
+            Map<String, Object> existedRow = customerService.findByExactPhone(phone);
+            boolean existed = existedRow != null;
+            if (!existed) {
+                int created = customerService.addCustomerFull(name, phone, email, "MALE", "", "");
+                if (created <= 0) {
+                    res.put("success", Boolean.FALSE);
+                    res.put("message", "Không thể thêm khách hàng (SĐT không hợp lệ hoặc đã tồn tại).");
+                    writeJson(resp, 200, res);
+                    return;
+                }
+                existedRow = customerService.findByExactPhone(phone);
+            }
+            int cid = existedRow == null ? 0 : ((Number) existedRow.get("customer_id")).intValue();
+            String finalTen = existedRow == null ? name : String.valueOf(existedRow.get("full_name"));
+            String finalHang = existedRow == null ? "Thành Viên" : String.valueOf(existedRow.get("tier_name"));
+            int finalDisc = (existedRow != null && existedRow.get("discount_percent") instanceof Number)
+                    ? ((Number) existedRow.get("discount_percent")).intValue() : 0;
             res.put("success", Boolean.TRUE);
             res.put("id", cid);
-            res.put("ten", existedList.isEmpty() ? name : existedList.get(0).get("full_name"));
+            res.put("idKhachHang", cid);
+            res.put("ten", finalTen);
+            res.put("hoVaTen", finalTen);
             res.put("sdt", phone);
+            res.put("soDienThoai", phone);
+            res.put("hang", finalHang);
+            res.put("discountPct", finalDisc);
             res.put("existed", existed);
             writeJson(resp, 200, res);
             return;
@@ -77,40 +100,53 @@ public class OrderServlet extends BaseServlet {
 
         if ("uc36".equalsIgnoreCase(action) || "1".equals(req.getParameter("ajaxCheckVoucher"))) {
             String code = RequestUtil.getString(req, "code", "").toUpperCase();
-            double orderAmt = RequestUtil.getDouble(req, "amount", RequestUtil.getDouble(req, "orderAmount", 500000));
-            Map<String, Object> v = promotionService.validateVoucher(code, orderAmt, getSessionUserId(req, 1));
-            Map<String, Object> res = new LinkedHashMap<>();
-            if (v != null) {
-                String type = String.valueOf(v.get("discount_type"));
-                double val = ((Number) v.get("discount_value")).doubleValue();
-                double maxD = v.get("max_discount_amount") != null ? ((Number) v.get("max_discount_amount")).doubleValue() : 0;
-                double calc = "PERCENT".equalsIgnoreCase(type) ? (orderAmt * val / 100.0) : val;
-                if (maxD > 0 && calc > maxD) calc = maxD;
-                res.put("valid", Boolean.TRUE);
-                res.put("amount", Math.round(calc));
-                res.put("message", "Áp dụng thành công mã " + code + "!");
-            } else {
-                res.put("valid", Boolean.FALSE);
-                res.put("message", "Mã voucher không hợp lệ hoặc chưa đủ điều kiện áp dụng!");
+            double orderAmt = RequestUtil.getDouble(req, "subtotal",
+                    RequestUtil.getDouble(req, "amount", RequestUtil.getDouble(req, "orderAmount", 0)));
+            int customerId = RequestUtil.getInt(req, "customerId", RequestUtil.getInt(req, "idKH", 0));
+            Integer customerUserId = null;
+            if (customerId > 0) {
+                Map<String, Object> cDetail = customerService.getCustomerDetail(customerId);
+                if (cDetail != null && cDetail.get("user_id") instanceof Number) {
+                    customerUserId = ((Number) cDetail.get("user_id")).intValue();
+                }
             }
+            Map<String, Object> res = promotionService.validateVoucherDetailed(code, orderAmt, customerUserId);
             writeJson(resp, 200, res);
             return;
         }
 
         if ("1".equals(req.getParameter("ajaxLookupVouchers"))) {
-            List<Map<String, Object>> vRaw = promotionService.listVouchers("");
+            String vSearch = RequestUtil.getString(req, "search", "");
+            String vStatus = RequestUtil.getString(req, "status", "");
+            List<Map<String, Object>> vRaw = promotionService.listClassicVouchers(vSearch, "", "ALL".equalsIgnoreCase(vStatus) ? "" : vStatus);
             List<Map<String, Object>> outList = new ArrayList<>();
             for (Map<String, Object> v : vRaw) {
+                String loai = String.valueOf(v.get("LoaiGiam"));
+                long giamVal = v.get("GiamGia") instanceof Number ? ((Number) v.get("GiamGia")).longValue() : 0L;
+                long maxCap = v.get("GiamToiDa") instanceof Number ? ((Number) v.get("GiamToiDa")).longValue() : 0L;
+                long minOrder = v.get("DonToiThieu") instanceof Number ? ((Number) v.get("DonToiThieu")).longValue() : 0L;
+                int stock = v.get("SoLuong") instanceof Number ? ((Number) v.get("SoLuong")).intValue() : 0;
+                int used = v.get("DaSuDung") instanceof Number ? ((Number) v.get("DaSuDung")).intValue() : 0;
+                int remaining = v.get("ConLai") instanceof Number ? ((Number) v.get("ConLai")).intValue() : 0;
+                String statusCode = v.get("TrangThaiCode") != null ? String.valueOf(v.get("TrangThaiCode")) : "available";
+
                 Map<String, Object> item = new LinkedHashMap<>();
-                item.put("code", v.get("voucher_code"));
-                item.put("title", v.get("voucher_name"));
-                item.put("discount", "PERCENT".equals(String.valueOf(v.get("discount_type")))
-                        ? "Giảm " + v.get("discount_value") + "%"
-                        : "Giảm " + v.get("discount_value") + " đ");
-                item.put("minOrder", v.get("min_order_value"));
-                item.put("stock", v.get("usage_limit") != null ? v.get("usage_limit") : 999);
-                item.put("used", v.get("used_count"));
-                item.put("status", Boolean.TRUE.equals(v.get("is_active")) ? "Hoạt động" : "Tạm khóa");
+                item.put("id", v.get("ID_Voucher"));
+                item.put("code", v.get("MaVoucher"));
+                item.put("title", v.get("TenChuongTrinh"));
+                item.put("discountType", loai);
+                item.put("amount", giamVal);
+                item.put("maxCap", "PERCENT".equalsIgnoreCase(loai) ? maxCap : 0L);
+                item.put("discount", "PERCENT".equalsIgnoreCase(loai)
+                        ? "Giảm " + giamVal + "%"
+                        : "Giảm " + giamVal + " đ");
+                item.put("minOrder", minOrder);
+                item.put("stock", stock);
+                item.put("used", used);
+                item.put("remaining", remaining);
+                item.put("status", statusCode);
+                item.put("startDate", v.get("NgayBatDau"));
+                item.put("endDate", v.get("NgayKetThuc"));
                 outList.add(item);
             }
             Map<String, Object> res = new LinkedHashMap<>();
@@ -176,10 +212,10 @@ public class OrderServlet extends BaseServlet {
             forwardView(req, resp, "/WEB-INF/views/tv2_nguyen_duc_anh/orders.jsp");
             return;
         }
-        String trangThai = RequestUtil.getString(req, "trangThai", "");
-        String payMethod = RequestUtil.getString(req, "pay", "");
-        String fromDate = RequestUtil.getString(req, "fromDate", "");
-        String toDate = RequestUtil.getString(req, "toDate", "");
+        String trangThai = RequestUtil.getString(req, "status", RequestUtil.getString(req, "trangThai", ""));
+        String payMethod = RequestUtil.getString(req, "pay", RequestUtil.getString(req, "paymentMethod", ""));
+        String fromDate = RequestUtil.getSafeDate(req, "fromDate", "");
+        String toDate = RequestUtil.getSafeDate(req, "toDate", "");
         int page = Math.max(1, RequestUtil.getInt(req, "page", 1));
         int pageSize = 20;
 
@@ -191,7 +227,7 @@ public class OrderServlet extends BaseServlet {
             writeOkJson(resp, "UC126", "Thanh cong", listDH);
             return;
         }
-        Map<String, Object> kpi = orderDAO.buildClassicReportData(2026, 11, 2026, 11, 2026);
+        Map<String, Object> kpi = orderDAO.getClassicOrderKpiCounts();
         req.setAttribute("stat_totalOrders", kpi.get("stat_totalOrders"));
         req.setAttribute("stat_completedOrders", kpi.get("stat_completedOrders"));
         req.setAttribute("stat_cancelledOrders", kpi.get("stat_cancelledOrders"));
@@ -199,7 +235,9 @@ public class OrderServlet extends BaseServlet {
         req.setAttribute("currentPage", page);
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("p_search", search);
+        req.setAttribute("p_status", trangThai);
         req.setAttribute("p_trangThai", trangThai);
+        req.setAttribute("p_pay", payMethod);
         req.setAttribute("p_paymentMethod", payMethod);
         req.setAttribute("p_fromDate", fromDate);
         req.setAttribute("p_toDate", toDate);
@@ -242,8 +280,12 @@ public class OrderServlet extends BaseServlet {
             String[] prices = req.getParameterValues("donGia[]");
             String[] colors = req.getParameterValues("mauSac[]");
             String[] sizes = req.getParameterValues("trongLuong[]");
-            if (spIds == null || spIds.length == 0) {
-                resp.sendRedirect(req.getContextPath() + "/OrderServlet?view=sell&error=emptyCart");
+            if (spIds == null || spIds.length == 0 || qtys == null || prices == null) {
+                if (wantsJson(req)) {
+                    writeErrJson(resp, 400, "Gio hang khong hop le hoac dang trong");
+                } else {
+                    resp.sendRedirect(req.getContextPath() + "/OrderServlet?view=sell&error=emptyCart");
+                }
                 return;
             }
             boolean isPaid = !"hold".equalsIgnoreCase(RequestUtil.getString(req, "invoiceType", "paid"));
@@ -251,16 +293,18 @@ public class OrderServlet extends BaseServlet {
             long holdId = RequestUtil.getLong(req, "holdId", 0L);
             String payMethod = RequestUtil.getString(req, "thanhToan", "Tiền mặt");
             String vCode = RequestUtil.getString(req, "voucherCode", "");
-            double disc = RequestUtil.getDouble(req, "discountAmount", 0) + RequestUtil.getDouble(req, "voucherAmount", 0);
+            double vipDisc = RequestUtil.getDouble(req, "discountAmount", 0);
+            double voucherDisc = RequestUtil.getDouble(req, "voucherAmount", 0);
             double vat = RequestUtil.getDouble(req, "vatAmount", 0);
             String note = RequestUtil.getString(req, "ghiChu", "");
-            if (!vCode.isEmpty() && !note.toLowerCase().contains("voucher")) {
-                note = (note.isEmpty() ? "" : note + " | ") + "Voucher (" + vCode + ")";
-            }
             long orderId = orderDAO.saveClassicPosOrder(holdId, custId > 0 ? custId : null, userId, isPaid,
-                    payMethod, vCode, disc, vat, note, spIds, qtys, prices, colors, sizes);
+                    payMethod, vCode, vipDisc, voucherDisc, vat, note, spIds, qtys, prices, colors, sizes);
             if (wantsJson(req)) {
-                writeOkJson(resp, "UC262", "Tao don POS thanh cong", orderId);
+                if (orderId <= 0) {
+                    writeErrJson(resp, 400, "Khong the tao don hang: du lieu san pham khong hop le");
+                } else {
+                    writeOkJson(resp, "UC262", "Tao don POS thanh cong", orderId);
+                }
                 return;
             }
             if (orderId <= 0) {
@@ -273,14 +317,26 @@ public class OrderServlet extends BaseServlet {
 
         if ("changeStatus".equalsIgnoreCase(action) || "cancel".equalsIgnoreCase(action)) {
             long id = RequestUtil.getLong(req, "id", RequestUtil.getLong(req, "orderId", 0L));
-            String st = RequestUtil.getString(req, "status", "");
-            if ("cancel".equalsIgnoreCase(action) || st.contains("hủy") || "CANCELLED".equalsIgnoreCase(st)) {
-                orderService.cancelOrder(id, "STAFF_CANCEL", "Hủy từ sổ hóa đơn", userId);
+            String st = RequestUtil.getString(req, "status", RequestUtil.getString(req, "trangThai", ""));
+            String stLower = st.toLowerCase();
+            int affected;
+            if ("cancel".equalsIgnoreCase(action) || stLower.contains("hủy") || stLower.contains("huy") || "CANCELLED".equalsIgnoreCase(st)) {
+                affected = orderService.cancelOrder(id, "STAFF_CANCEL", "Hóa đơn chờ bị hủy từ sổ hóa đơn", userId);
             } else {
-                orderService.deliverOrder(id, userId);
-                orderService.completeOrder(id);
+                int delivered = orderService.deliverOrder(id, userId);
+                int completed = orderService.completeOrder(id);
+                affected = Math.max(delivered, completed);
             }
-            resp.sendRedirect(req.getContextPath() + "/OrderServlet?success=1");
+            if (wantsJson(req) || "1".equals(req.getParameter("ajax"))) {
+                Map<String, Object> out = new LinkedHashMap<>();
+                out.put("ok", affected > 0);
+                out.put("success", affected > 0);
+                out.put("affected", affected);
+                out.put("message", affected > 0 ? "Cập nhật trạng thái đơn hàng thành công" : "Đơn hàng không ở trạng thái cho phép cập nhật");
+                writeJson(resp, affected > 0 ? 200 : 400, out);
+                return;
+            }
+            resp.sendRedirect(req.getContextPath() + "/OrderServlet?" + (affected > 0 ? "success=1" : "error=status_update_failed"));
             return;
         }
 
@@ -288,8 +344,12 @@ public class OrderServlet extends BaseServlet {
             long idDH = RequestUtil.getLong(req, "idDH", 0L);
             long idCT = RequestUtil.getLong(req, "idCT", 0L);
             int idBienTheMoi = RequestUtil.getInt(req, "idBienTheMoi", 0);
-            orderDAO.exchangeOrderItem(idDH, idCT, idBienTheMoi, 1);
-            resp.sendRedirect(req.getContextPath() + "/OrderServlet?success=exchange");
+            int exRes = orderDAO.exchangeOrderItem(idDH, idCT, idBienTheMoi, 0);
+            if (exRes > 0) {
+                resp.sendRedirect(req.getContextPath() + "/OrderServlet?success=exchange");
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/OrderServlet?error=" + (exRes == -1 ? "exchange_out_of_stock" : "exchange_failed"));
+            }
             return;
         }
 

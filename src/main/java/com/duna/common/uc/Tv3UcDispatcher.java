@@ -30,7 +30,7 @@ public final class Tv3UcDispatcher {
         int uid = sessionUser(req);
         switch (uc) {
             case "UC152": {
-                long id = paySvc.createRefund(numLong(req, "orderId", 1L), null, null, numDouble(req, "amount", 390000), str(req, "method", "BANK"));
+                long id = paySvc.createRefund(numLong(req, "orderId", 7L), null, null, numDouble(req, "amount", 390000), str(req, "method", "BANK"));
                 return wrapAffected(uc, id > 0 ? 1 : 0, "Đã tạo phiếu hoàn tiền #" + id, "Không thể tạo phiếu hoàn tiền");
             }
             case "UC153":
@@ -44,7 +44,7 @@ public final class Tv3UcDispatcher {
             case "UC157":
                 return paySvc.getOrderStatsByStatus();
             case "UC158":
-                return paySvc.getOrdersForExport(str(req, "fromDate", "2026-01-01"), str(req, "toDate", "2027-12-31"));
+                return paySvc.getOrdersForExport(safeDate(req, "fromDate", "2026-01-01"), safeDate(req, "toDate", "2027-12-31"));
             case "UC159":
                 return paySvc.listPaymentMethods(kw);
             case "UC160":
@@ -52,11 +52,11 @@ public final class Tv3UcDispatcher {
             case "UC161":
                 return wrapAffected(uc, paySvc.togglePaymentMethod(numInt(req, "methodId", 3)), "Đã bật/tắt phương thức thanh toán", "Không tìm thấy phương thức thanh toán");
             case "UC162": {
-                long pid = paySvc.createCodPayment(numLong(req, "orderId", 1L), numDouble(req, "amount", 500000));
+                long pid = paySvc.createCodPayment(numLong(req, "orderId", 7L), numDouble(req, "amount", 500000));
                 return wrapAffected(uc, pid > 0 ? 1 : 0, "Đã tạo bản ghi thanh toán COD #" + pid, "Không thể tạo bản ghi COD");
             }
             case "UC163": {
-                long pid = paySvc.createOnlinePayment(numLong(req, "orderId", 1L), "VNPAY", numDouble(req, "amount", 500000), "VNP-" + System.currentTimeMillis());
+                long pid = paySvc.createOnlinePayment(numLong(req, "orderId", 7L), "VNPAY", numDouble(req, "amount", 500000), "VNP-" + System.currentTimeMillis());
                 return wrapAffected(uc, pid > 0 ? 1 : 0, "Đã tạo yêu cầu thanh toán VNPay #" + pid, "Không thể tạo giao dịch VNPay");
             }
             case "UC164":
@@ -64,13 +64,13 @@ public final class Tv3UcDispatcher {
             case "UC165":
                 return wrapAffected(uc, paySvc.markPaymentFailed(numLong(req, "paymentId", 1L), str(req, "gateway", "VNPAY"), str(req, "responseCode", "24"), numDouble(req, "amount", 500000)), "Đã đánh dấu giao dịch thất bại", "Không tìm thấy giao dịch thanh toán");
             case "UC166": {
-                long pid = payDao.uc166_createMomoPayment(numLong(req, "orderId", 1L), numDouble(req, "amount", 500000), "MOMO-" + System.currentTimeMillis());
+                long pid = payDao.uc166_createMomoPayment(numLong(req, "orderId", 7L), numDouble(req, "amount", 500000), "MOMO-" + System.currentTimeMillis());
                 return wrapAffected(uc, pid > 0 ? 1 : 0, "Đã tạo yêu cầu ví MoMo #" + pid, "Không thể tạo giao dịch MoMo");
             }
             case "UC167":
                 return paySvc.listTransactions(numLong(req, "orderId", 0L), kw);
             case "UC168":
-                return wrapAffected(uc, paySvc.createCodReconciliation(numInt(req, "carrierId", 1), str(req, "periodFrom", "2026-11-01"), str(req, "periodTo", "2026-11-30"), uid), "Đã tạo phiên đối soát COD", "Không thể tạo phiên đối soát");
+                return wrapAffected(uc, paySvc.createCodReconciliation(numInt(req, "carrierId", 1), safeDate(req, "periodFrom", "2026-11-01"), safeDate(req, "periodTo", "2026-11-30"), uid), "Đã tạo phiên đối soát COD", "Không thể tạo phiên đối soát");
             case "UC169":
                 return wrapAffected(uc, paySvc.completeCodReconciliation(numInt(req, "reconciliationId", 1)), "Đã xác nhận hoàn tất đối soát COD", "Không tìm thấy phiên đối soát");
             case "UC170":
@@ -111,7 +111,7 @@ public final class Tv3UcDispatcher {
                 return wrapScalar(uc, fee, "Phí vận chuyển dự kiến (VNĐ)");
             }
             case "UC187":
-                return wrapAffected(uc, shipSvc.createShipment(numLong(req, "orderId", 1L), numInt(req, "carrierId", 1), numInt(req, "shippingMethodId", 1), str(req, "trackingCode", "VD-DN202601"), numDouble(req, "shippingFee", 25000), numDouble(req, "codAmount", 0), numInt(req, "weightGram", 500)), "Đã tạo vận đơn gửi ĐVVC", "Mã vận đơn đã tồn tại hoặc lỗi dữ liệu");
+                return wrapAffected(uc, shipSvc.createShipment(numLong(req, "orderId", 7L), numInt(req, "carrierId", 1), numInt(req, "shippingMethodId", 1), str(req, "trackingCode", "VD-DN202601"), numDouble(req, "shippingFee", 25000), numDouble(req, "codAmount", 0), numInt(req, "weightGram", 500)), "Đã tạo vận đơn gửi ĐVVC", "Mã vận đơn đã tồn tại hoặc lỗi dữ liệu");
             case "UC188":
                 return wrapAffected(uc, shipSvc.updateTracking(str(req, "trackingCode", "VD-DN202601"), str(req, "newStatus", "IN_TRANSIT"), str(req, "location", "Kho trung chuyển Hà Nội"), str(req, "note", "Đang giao")), "Đã cập nhật hành trình vận đơn", "Không tìm thấy mã vận đơn");
             case "UC189":
@@ -122,9 +122,9 @@ public final class Tv3UcDispatcher {
             case "UC191":
                 return promoSvc.listVouchers(kw);
             case "UC192":
-                return wrapAffected(uc, promoSvc.createVoucher(str(req, "voucherCode", "DUNA15"), str(req, "voucherName", "Ưu đãi DUNA 15%"), str(req, "discountType", "PERCENT"), numDouble(req, "discountValue", 15), numDouble(req, "maxDiscountAmount", 200000), numDouble(req, "minOrderValue", 500000), numInt(req, "usageLimit", 100), numInt(req, "perUserLimit", 1), str(req, "startDate", "2026-01-01"), str(req, "endDate", "2027-06-30")), "Đã thêm mới Voucher", "Mã Voucher đã tồn tại");
+                return wrapAffected(uc, promoSvc.createVoucher(str(req, "voucherCode", "DUNA15"), str(req, "voucherName", "Ưu đãi DUNA 15%"), str(req, "discountType", "PERCENT"), numDouble(req, "discountValue", 15), numDouble(req, "maxDiscountAmount", 200000), numDouble(req, "minOrderValue", 500000), numInt(req, "usageLimit", 100), numInt(req, "perUserLimit", 1), safeDate(req, "startDate", "2026-01-01"), safeDate(req, "endDate", "2027-06-30")), "Đã thêm mới Voucher", "Mã Voucher đã tồn tại");
             case "UC193":
-                return wrapAffected(uc, promoSvc.updateVoucher(numInt(req, "voucherId", 1), numDouble(req, "minOrderValue", 500000), str(req, "endDate", "2027-06-30"), numInt(req, "usageLimit", 100)), "Đã cập nhật điều kiện Voucher", "Không tìm thấy Voucher");
+                return wrapAffected(uc, promoSvc.updateVoucher(numInt(req, "voucherId", 1), numDouble(req, "minOrderValue", 500000), safeDate(req, "endDate", "2027-06-30"), numInt(req, "usageLimit", 100)), "Đã cập nhật điều kiện Voucher", "Không tìm thấy Voucher");
             case "UC194":
                 return wrapAffected(uc, promoSvc.toggleVoucher(numInt(req, "voucherId", 1)), "Đã bật/tắt trạng thái Voucher", "Không tìm thấy Voucher");
             case "UC195":
@@ -132,13 +132,13 @@ public final class Tv3UcDispatcher {
             case "UC196":
                 return wrapMap(promoSvc.validateVoucher(str(req, "keyword", "DUNA100"), numDouble(req, "orderAmount", 600000), uid), uc, "Voucher không hợp lệ hoặc chưa đạt ngưỡng tối thiểu");
             case "UC197":
-                return wrapAffected(uc, promoSvc.recordVoucherUsage(numInt(req, "voucherId", 1), numInt(req, "userId", 4), numLong(req, "orderId", 1L), numDouble(req, "discountAmount", 100000)), "Đã ghi nhận lượt sử dụng Voucher", "Không thể ghi nhận lượt sử dụng");
+                return wrapAffected(uc, promoSvc.recordVoucherUsage(numInt(req, "voucherId", 1), numInt(req, "userId", 4), numLong(req, "orderId", 7L), numDouble(req, "discountAmount", 100000)), "Đã ghi nhận lượt sử dụng Voucher", "Không thể ghi nhận lượt sử dụng");
             case "UC198":
                 return promoSvc.getVoucherAnalytics();
             case "UC199":
                 return promoSvc.listPromotions(kw);
             case "UC200":
-                return wrapAffected(uc, promoSvc.createPromotion(str(req, "promotionName", "DUNA Smart Casual Week"), str(req, "promoType", "PERCENT"), numDouble(req, "discountValue", 15), str(req, "startDate", "2026-11-01"), str(req, "endDate", "2027-01-31"), "img/duna-logo.png"), "Đã tạo chương trình khuyến mãi", "Không thể tạo chương trình");
+                return wrapAffected(uc, promoSvc.createPromotion(str(req, "promotionName", "DUNA Smart Casual Week"), str(req, "promoType", "PERCENT"), numDouble(req, "discountValue", 15), safeDate(req, "startDate", "2026-11-01"), safeDate(req, "endDate", "2027-01-31"), "img/duna-logo.png"), "Đã tạo chương trình khuyến mãi", "Không thể tạo chương trình");
             case "UC201":
                 return wrapAffected(uc, promoSvc.assignProduct(numInt(req, "promotionId", 1), numInt(req, "productId", 1)), "Đã gán sản phẩm vào chương trình KM", "Sản phẩm đã có trong chương trình");
             case "UC202":
@@ -165,9 +165,9 @@ public final class Tv3UcDispatcher {
             case "UC212":
                 return wrapMap(loySvc.getBalance(numInt(req, "customerId", 2)), uc, "Không tìm thấy ví điểm của khách hàng");
             case "UC213":
-                return wrapAffected(uc, loySvc.earnPoints(numInt(req, "accountId", 1), numLong(req, "orderId", 1L), numInt(req, "points", 50), str(req, "description", "Tích điểm đơn hoàn tất")), "Đã cộng điểm thưởng", "Không tìm thấy ví điểm");
+                return wrapAffected(uc, loySvc.earnPoints(numInt(req, "accountId", 1), numLong(req, "orderId", 7L), numInt(req, "points", 50), str(req, "description", "Tích điểm đơn hoàn tất")), "Đã cộng điểm thưởng", "Không tìm thấy ví điểm");
             case "UC214":
-                return wrapAffected(uc, loySvc.redeemPoints(numInt(req, "accountId", 2), numLong(req, "orderId", 1L), numInt(req, "points", 10), str(req, "description", "Đổi điểm giảm giá đơn")), "Đã trừ điểm thanh toán đơn", "Số dư điểm không đủ");
+                return wrapAffected(uc, loySvc.redeemPoints(numInt(req, "accountId", 2), numLong(req, "orderId", 7L), numInt(req, "points", 10), str(req, "description", "Đổi điểm giảm giá đơn")), "Đã trừ điểm thanh toán đơn", "Số dư điểm không đủ");
             case "UC215":
                 return wrapAffected(uc, loySvc.adjustPoints(numInt(req, "accountId", 1), numInt(req, "deltaPoints", 20), str(req, "reason", "Thưởng sinh nhật hội viên")), "Đã điều chỉnh điểm thủ công", "Không tìm thấy ví điểm");
             case "UC216":

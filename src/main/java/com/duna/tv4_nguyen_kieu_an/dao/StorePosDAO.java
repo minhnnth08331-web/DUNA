@@ -95,8 +95,17 @@ public class StorePosDAO extends BaseDAO {
 
     // UC263: Ghi nhan thu chi phat sinh trong ket tien mat
     public int uc263_recordCashDrawerTxn(int posSessionId, String txnType, double amount, String note) {
+        String normType = txnType == null ? "CASH_OUT" : txnType.trim().toUpperCase();
+        if ("IN".equals(normType)) {
+            normType = "CASH_IN";
+        } else if ("OUT".equals(normType)) {
+            normType = "CASH_OUT";
+        }
+        if (!"SALE".equals(normType) && !"CASH_IN".equals(normType) && !"CASH_OUT".equals(normType) && !"REFUND".equals(normType)) {
+            normType = "CASH_OUT";
+        }
         return executeUpdate("INSERT INTO cash_drawer_transactions (pos_session_id, txn_type, amount, note) VALUES (?, ?, ?, ?)",
-                posSessionId, txnType, amount, note);
+                posSessionId, normType, amount, note);
     }
 
     // UC264: Dong ca ban hang va doi chieu tien mat thuc te

@@ -1,6 +1,7 @@
 package com.duna.tv1_nguyen_ngoc_minh.dao;
 
 import com.duna.common.util.BaseDAO;
+import com.duna.common.util.RequestUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -42,35 +43,85 @@ public class CustomerDAO extends BaseDAO {
 
     // UC031: Them moi khach hang vang lai mua tai quay (dong bo 1:1 tai khoan users + vi diem)
     public int uc031_addWalkInCustomer(String code, String fullName, String phone, String gender) {
-        if (queryInt("SELECT COUNT(*) FROM customers WHERE phone = ?", phone) > 0) {
+        return addClassicCustomerFull(code, fullName, phone, "", gender, "", "");
+    }
+
+    public int addClassicCustomerFull(String code, String fullName, String phone, String email,
+                                      String gender, String birthDate, String address) {
+        String normPhone = RequestUtil.normalizePhone(phone);
+        if (!RequestUtil.isValidVnPhone(normPhone)) {
+            return -2;
+        }
+        String cleanName = fullName == null ? "" : fullName.trim();
+        if (cleanName.isEmpty()) {
+            return -3;
+        }
+        if (queryInt("SELECT COUNT(*) FROM customers WHERE phone = ?", normPhone) > 0) {
             return 0;
         }
-        String genEmail = (code == null ? "kh" : code.trim().toLowerCase()) + "@duna-member.vn";
+        String cleanEmail = email == null ? "" : email.trim();
+        String finalEmail = !cleanEmail.isEmpty()
+                ? cleanEmail
+                : ((code == null ? "kh" : code.trim().toLowerCase()) + "@duna-member.vn");
+        if (queryInt("SELECT COUNT(*) FROM users WHERE email = ?", finalEmail) > 0) {
+            finalEmail = (code == null ? "kh" : code.trim().toLowerCase()) + "@duna-member.vn";
+        }
         String defaultHash = "a54126ab084dee02e0d353876d89bb04347688ca817ccaa2fcf52713f0cc6a61";
         Integer existingUserId = queryOne("SELECT TOP 1 user_id FROM users WHERE email = ? OR (phone IS NOT NULL AND phone = ?)",
-                rs -> rs.getInt(1), genEmail, phone);
+                rs -> rs.getInt(1), finalEmail, normPhone);
         long uid = existingUserId != null ? existingUserId.longValue() : executeInsertGetId(
                 "INSERT INTO users (email, phone, password_hash, full_name, role_id, status, email_verified) "
-                        + "SELECT ?, NULLIF(?, ''), ?, ?, role_id, 'ACTIVE', 1 FROM roles WHERE role_code = 'CUSTOMER'",
-                genEmail, phone == null ? "" : phone, defaultHash, fullName);
-        String sql = "INSERT INTO customers (user_id, customer_code, full_name, phone, email, gender, tier_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, (SELECT TOP 1 tier_id FROM membership_tiers ORDER BY min_spend ASC))";
-        long newCustId = executeInsertGetId(sql, uid > 0 ? uid : null, code, fullName, phone, genEmail, gender == null ? "MALE" : gender);
+                        + "SELECT ?, ?, ?, ?, role_id, 'ACTIVE', 1 FROM roles WHERE role_code = 'CUSTOMER'",
+                finalEmail, normPhone, defaultHash, cleanName);
+        String g = ("Nữ".equalsIgnoreCase(gender) || "FEMALE".equalsIgnoreCase(gender)) ? "FEMALE" : "MALE";
+        String safeDob = RequestUtil.sanitizeDate(birthDate, "");
+        String sql = "INSERT INTO customers (user_id, customer_code, full_name, phone, email, gender, birth_date, tier_id) "
+                + "VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''), (SELECT TOP 1 tier_id FROM membership_tiers ORDER BY min_spend ASC))";
+        long newCustId = executeInsertGetId(sql, uid > 0 ? uid : null, code, cleanName, normPhone, finalEmail,
+                g, safeDob);
         if (newCustId > 0) {
             executeUpdate("INSERT INTO loyalty_accounts (customer_id, points_balance, lifetime_points) VALUES (?, 0, 0)", newCustId);
+            if (uid > 0 && address != null && !address.trim().isEmpty()) {
+                Integer provId = queryOne("SELECT TOP 1 province_id FROM provinces ORDER BY province_id", rs -> rs.getInt(1));
+                Integer wardId = provId != null ? queryOne("SELECT TOP 1 ward_id FROM wards WHERE province_id = ? ORDER BY ward_id", rs -> rs.getInt(1), provId) : null;
+                if (provId != null && wardId != null) {
+                    executeUpdate("INSERT INTO user_addresses (user_id, receiver_name, receiver_phone, province_id, ward_id, address_line, is_default) "
+                                    + "VALUES (?, ?, ?, ?, ?, ?, 1)",
+                            uid, cleanName, normPhone, provId, wardId, address.trim());
+                }
+            }
             return 1;
         }
         return 0;
     }
 
+    public Map<String, Object> findByExactPhone(String phone) {
+        String norm = RequestUtil.normalizePhone(phone);
+        if (norm.isEmpty()) {
+            return null;
+        }
+        String sql = "SELECT TOP 1 c.customer_id, c.user_id, c.customer_code, c.full_name, c.phone, c.email, "
+                + "ISNULL(t.tier_name, N'Thành Viên') AS tier_name, CAST(ISNULL(t.discount_percent, 0) AS INT) AS discount_percent "
+                + "FROM customers c LEFT JOIN membership_tiers t ON c.tier_id = t.tier_id WHERE c.phone = ?";
+        return queryFirstRow(sql, norm);
+    }
+
     // UC032: Cap nhat thong tin lien he va ngay sinh khach hang (dong bo sang users)
     public int uc032_updateCustomer(int customerId, String phone, String email, String birthDate) {
+        String normPhone = RequestUtil.normalizePhone(phone);
+        if (!RequestUtil.isValidVnPhone(normPhone)) {
+            return -2;
+        }
+        if (queryInt("SELECT COUNT(*) FROM customers WHERE phone = ? AND customer_id <> ?", normPhone, customerId) > 0) {
+            return -4;
+        }
+        String safeDob = RequestUtil.sanitizeDate(birthDate, "");
         String sql = "UPDATE customers SET phone = ?, email = ?, birth_date = NULLIF(?, ''), updated_at = GETDATE() WHERE customer_id = ?";
-        int res = executeUpdate(sql, phone, email, birthDate == null ? "" : birthDate, customerId);
+        int res = executeUpdate(sql, normPhone, email, safeDob, customerId);
         if (res > 0) {
             executeUpdate("UPDATE users SET phone = NULLIF(?, ''), email = CASE WHEN ? <> '' THEN ? ELSE email END, updated_at = GETDATE() "
                     + "WHERE user_id = (SELECT user_id FROM customers WHERE customer_id = ?)",
-                    phone == null ? "" : phone, email == null ? "" : email, email == null ? "" : email, customerId);
+                    normPhone, email == null ? "" : email, email == null ? "" : email, customerId);
         }
         return res;
     }
@@ -158,9 +209,25 @@ public class CustomerDAO extends BaseDAO {
 
     // --- Adapter cho giao dien quan-ly-khach-hang.jsp (DUNA_MensWear 100 bang) ---
     public List<Map<String, Object>> listClassicCustomers(String search, String rank, String status, int offset, int limit) {
+        return listClassicCustomers(search, "", rank, status, "", offset, limit);
+    }
+
+    public List<Map<String, Object>> listClassicCustomers(String search, String searchType, String rank, String status,
+                                                          String expiring, int offset, int limit) {
         String kw = likePattern(search);
+        String stype = searchType == null ? "" : searchType.trim();
         String r = rank == null ? "" : rank.trim();
         String st = status == null ? "" : status.trim();
+        int expDays = 0;
+        if (expiring != null && !expiring.trim().isEmpty()) {
+            try {
+                expDays = Integer.parseInt(expiring.trim());
+            } catch (NumberFormatException ignored) {
+                expDays = 0;
+            }
+        }
+        String baseCycleExpr = "ISNULL((SELECT MAX(o.ordered_at) FROM orders o WHERE o.customer_id = c.customer_id AND o.status IN ('COMPLETED', 'DELIVERED')), c.created_at)";
+        String searchCond = buildCustomerSearchCondition(stype);
         String sql = "SELECT c.customer_id AS id, ISNULL(c.user_id, 0) AS userId, c.customer_code AS maKH, c.full_name AS hoTen, "
                 + "ISNULL(c.phone, '') AS sdt, ISNULL(c.email, '') AS email, "
                 + "CASE WHEN c.gender = 'FEMALE' THEN N'Nữ' ELSE N'Nam' END AS gioiTinh, "
@@ -174,39 +241,78 @@ public class CustomerDAO extends BaseDAO {
                 + "ISNULL(c.total_orders, 0) AS orderCount, "
                 + "ISNULL((SELECT SUM(oi.quantity) FROM orders o JOIN order_items oi ON oi.order_id = o.order_id "
                 + "        WHERE o.customer_id = c.customer_id AND o.status IN ('COMPLETED', 'DELIVERED')), 0) AS tongSP, "
-                + "CONVERT(VARCHAR(10), DATEADD(MONTH, 3, c.created_at), 103) AS hanReset, "
-                + "DATEDIFF(DAY, GETDATE(), DATEADD(MONTH, 3, DATEADD(YEAR, 1, c.created_at))) AS daysLeft, "
+                + "CONVERT(VARCHAR(10), DATEADD(MONTH, 3, " + baseCycleExpr + "), 103) AS hanReset, "
+                + "DATEDIFF(DAY, GETDATE(), DATEADD(MONTH, 3, " + baseCycleExpr + ")) AS daysLeft, "
                 + "CASE WHEN c.is_active = 1 THEN 'active' ELSE 'locked' END AS trangThai "
                 + "FROM customers c LEFT JOIN membership_tiers t ON c.tier_id = t.tier_id "
                 + "LEFT JOIN loyalty_accounts la ON la.customer_id = c.customer_id "
-                + "WHERE (c.customer_code LIKE ? OR c.full_name LIKE ? OR ISNULL(c.phone, '') LIKE ? OR ISNULL(c.email, '') LIKE ?) "
+                + "WHERE " + searchCond + " "
                 + "AND (? = '' OR ? = 'ALL' OR t.tier_name LIKE ?) "
                 + "AND (? = '' OR ? = 'ALL' OR ((? = '1' OR ? = 'active') AND c.is_active = 1) OR ((? = '0' OR ? = 'locked') AND c.is_active = 0)) "
+                + "AND (? <= 0 OR (ISNULL(t.discount_percent, 0) > 0 AND DATEDIFF(DAY, GETDATE(), DATEADD(MONTH, 3, " + baseCycleExpr + ")) BETWEEN 0 AND ?)) "
                 + "ORDER BY c.customer_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
         String rPat = r.isEmpty() ? "" : "%" + r + "%";
-        return queryRows(sql, kw, kw, kw, kw, r, r, rPat, st, st, st, st, st, st, Math.max(0, offset), Math.max(1, limit));
+        if ("maKH".equalsIgnoreCase(stype) || "hoTen".equalsIgnoreCase(stype) || "email".equalsIgnoreCase(stype) || "sdt".equalsIgnoreCase(stype)) {
+            return queryRows(sql, kw, r, r, rPat, st, st, st, st, st, st, expDays, expDays, Math.max(0, offset), Math.max(1, limit));
+        }
+        return queryRows(sql, kw, kw, kw, kw, r, r, rPat, st, st, st, st, st, st, expDays, expDays, Math.max(0, offset), Math.max(1, limit));
     }
 
     public int countClassicCustomers(String search, String rank, String status) {
+        return countClassicCustomers(search, "", rank, status, "");
+    }
+
+    public int countClassicCustomers(String search, String searchType, String rank, String status, String expiring) {
         String kw = likePattern(search);
+        String stype = searchType == null ? "" : searchType.trim();
         String r = rank == null ? "" : rank.trim();
         String st = status == null ? "" : status.trim();
         String rPat = r.isEmpty() ? "" : "%" + r + "%";
+        int expDays = 0;
+        if (expiring != null && !expiring.trim().isEmpty()) {
+            try {
+                expDays = Integer.parseInt(expiring.trim());
+            } catch (NumberFormatException ignored) {
+                expDays = 0;
+            }
+        }
+        String baseCycleExpr = "ISNULL((SELECT MAX(o.ordered_at) FROM orders o WHERE o.customer_id = c.customer_id AND o.status IN ('COMPLETED', 'DELIVERED')), c.created_at)";
+        String searchCond = buildCustomerSearchCondition(stype);
         String sql = "SELECT COUNT(*) FROM customers c LEFT JOIN membership_tiers t ON c.tier_id = t.tier_id "
-                + "WHERE (c.customer_code LIKE ? OR c.full_name LIKE ? OR ISNULL(c.phone, '') LIKE ? OR ISNULL(c.email, '') LIKE ?) "
+                + "WHERE " + searchCond + " "
                 + "AND (? = '' OR ? = 'ALL' OR t.tier_name LIKE ?) "
-                + "AND (? = '' OR ? = 'ALL' OR ((? = '1' OR ? = 'active') AND c.is_active = 1) OR ((? = '0' OR ? = 'locked') AND c.is_active = 0))";
-        return queryInt(sql, kw, kw, kw, kw, r, r, rPat, st, st, st, st, st, st);
+                + "AND (? = '' OR ? = 'ALL' OR ((? = '1' OR ? = 'active') AND c.is_active = 1) OR ((? = '0' OR ? = 'locked') AND c.is_active = 0)) "
+                + "AND (? <= 0 OR (ISNULL(t.discount_percent, 0) > 0 AND DATEDIFF(DAY, GETDATE(), DATEADD(MONTH, 3, " + baseCycleExpr + ")) BETWEEN 0 AND ?))";
+        if ("maKH".equalsIgnoreCase(stype) || "hoTen".equalsIgnoreCase(stype) || "email".equalsIgnoreCase(stype) || "sdt".equalsIgnoreCase(stype)) {
+            return queryInt(sql, kw, r, r, rPat, st, st, st, st, st, st, expDays, expDays);
+        }
+        return queryInt(sql, kw, kw, kw, kw, r, r, rPat, st, st, st, st, st, st, expDays, expDays);
+    }
+
+    private String buildCustomerSearchCondition(String searchType) {
+        if ("maKH".equalsIgnoreCase(searchType)) return "c.customer_code LIKE ?";
+        if ("hoTen".equalsIgnoreCase(searchType)) return "c.full_name LIKE ?";
+        if ("email".equalsIgnoreCase(searchType)) return "ISNULL(c.email, '') LIKE ?";
+        if ("sdt".equalsIgnoreCase(searchType)) return "ISNULL(c.phone, '') LIKE ?";
+        return "(c.customer_code LIKE ? OR c.full_name LIKE ? OR ISNULL(c.phone, '') LIKE ? OR ISNULL(c.email, '') LIKE ?)";
     }
 
     public int updateClassicCustomerFull(int id, String hoTen, String sdt, String email, String gioiTinh, String birthDate) {
+        String normPhone = RequestUtil.normalizePhone(sdt);
+        if (!RequestUtil.isValidVnPhone(normPhone)) {
+            return -2;
+        }
+        if (queryInt("SELECT COUNT(*) FROM customers WHERE phone = ? AND customer_id <> ?", normPhone, id) > 0) {
+            return -4;
+        }
+        String safeDob = RequestUtil.sanitizeDate(birthDate, "");
         String g = "Nữ".equalsIgnoreCase(gioiTinh) || "FEMALE".equalsIgnoreCase(gioiTinh) ? "FEMALE" : "MALE";
         int updated = executeUpdate("UPDATE customers SET full_name = ?, phone = ?, email = ?, gender = ?, birth_date = NULLIF(?, ''), updated_at = GETDATE() WHERE customer_id = ?",
-                hoTen, sdt, email, g, birthDate == null ? "" : birthDate, id);
+                hoTen, normPhone, email, g, safeDob, id);
         if (updated > 0) {
             executeUpdate("UPDATE users SET full_name = ?, phone = NULLIF(?, ''), email = CASE WHEN ? <> '' THEN ? ELSE email END, updated_at = GETDATE() "
                     + "WHERE user_id = (SELECT user_id FROM customers WHERE customer_id = ?)",
-                    hoTen, sdt == null ? "" : sdt, email == null ? "" : email, email == null ? "" : email, id);
+                    hoTen, normPhone, email == null ? "" : email, email == null ? "" : email, id);
         }
         return updated;
     }

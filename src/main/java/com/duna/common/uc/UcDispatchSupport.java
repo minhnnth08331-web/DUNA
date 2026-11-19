@@ -1,5 +1,7 @@
 package com.duna.common.uc;
 
+import com.duna.common.util.RequestUtil;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
@@ -19,6 +21,10 @@ public final class UcDispatchSupport {
     public static String str(HttpServletRequest req, String name, String def) {
         String v = req.getParameter(name);
         return (v == null || v.trim().isEmpty()) ? def : v.trim();
+    }
+
+    public static String safeDate(HttpServletRequest req, String name, String def) {
+        return RequestUtil.getSafeDate(req, name, def);
     }
 
     public static int numInt(HttpServletRequest req, String name, int def) {

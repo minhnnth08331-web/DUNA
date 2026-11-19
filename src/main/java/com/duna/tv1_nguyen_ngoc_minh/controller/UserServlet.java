@@ -33,8 +33,8 @@ public class UserServlet extends BaseServlet {
         String keyword = RequestUtil.getString(req, "keyword", "");
         String roleCode = RequestUtil.getString(req, "roleCode", "");
         String status = RequestUtil.getString(req, "status", "");
-        String fromDate = RequestUtil.getString(req, "fromDate", "2026-01-01");
-        String toDate = RequestUtil.getString(req, "toDate", "2027-12-31");
+        String fromDate = RequestUtil.getSafeDate(req, "fromDate", "2026-01-01");
+        String toDate = RequestUtil.getSafeDate(req, "toDate", "2027-12-31");
         int userId = RequestUtil.getInt(req, "userId", 0);
         int page = Math.max(1, RequestUtil.getInt(req, "page", 1));
         int pageSize = 20;

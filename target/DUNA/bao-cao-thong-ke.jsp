@@ -1,6 +1,9 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<c:if test="${stat_totalRevenueToday == null}">
+    <c:redirect url="/OrderServlet?view=report" />
+</c:if>
 <jsp:useBean id="now" class="java.util.Date" />
 <fmt:formatDate var="todayStr" value="${now}" pattern="dd/MM/yyyy" />
 <!DOCTYPE html>

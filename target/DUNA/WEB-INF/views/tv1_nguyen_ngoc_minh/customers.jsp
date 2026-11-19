@@ -38,7 +38,7 @@
         <form method="post" action="${pageContext.request.contextPath}/customers" class="filter-form" style="width:100%;">
             <input type="hidden" name="action" value="addCustomer">
             <input type="text" name="fullName" class="form-control" style="max-width:220px;" placeholder="Họ tên khách vãng lai" required>
-            <input type="text" name="phone" class="form-control" style="max-width:160px;" placeholder="Số điện thoại" required>
+            <input type="tel" name="phone" class="form-control" style="max-width:170px;" placeholder="0912345678" maxlength="10" pattern="0[35789][0-9]{8}" title="Số điện thoại bắt đầu bằng số 0, gồm đúng 10 chữ số (03, 05, 07, 08, 09)" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" required>
             <select name="gender" class="form-control" style="max-width:120px;">
                 <option value="MALE">Nam</option>
                 <option value="FEMALE">Nữ</option>

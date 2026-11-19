@@ -208,10 +208,19 @@ public class ProductServlet extends BaseServlet {
                         RequestUtil.getDouble(req, "giaBan", 390000),
                         RequestUtil.getInt(req, "soLuong", 10), "");
             }
+        } else if ("uc14".equalsIgnoreCase(action)) {
+            jsonOnly = true;
+            int vid = RequestUtil.getInt(req, "idBienThe", RequestUtil.getInt(req, "idBT", RequestUtil.getInt(req, "id", 0)));
+            int newQty = RequestUtil.getInt(req, "soLuong", -1);
+            if (vid > 0 && newQty >= 0) {
+                affected = productDAO.updateClassicVariantStock(vid, newQty);
+            }
         } else if ("editVariant".equals(action)) {
             jsonOnly = wantsJson(req) || "1".equals(req.getParameter("ajax"));
             int vid = RequestUtil.getInt(req, "idBT", RequestUtil.getInt(req, "id", 0));
-            affected = productDAO.editClassicVariant(vid,
+            String color = RequestUtil.getString(req, "mauSac", "");
+            String size = RequestUtil.getString(req, "trongLuong", "");
+            affected = productDAO.editClassicVariant(vid, color, size,
                     RequestUtil.getDouble(req, "giaBan", 390000),
                     RequestUtil.getInt(req, "soLuong", 0), "");
         } else if ("deleteVariant".equals(action)) {
@@ -225,10 +234,14 @@ public class ProductServlet extends BaseServlet {
             out.put("success", affected > 0);
             out.put("ok", affected > 0);
             out.put("affected", affected);
+            if (affected == -1) {
+                out.put("message", "Biến thể Màu/Size này đã tồn tại trên sản phẩm!");
+            }
             writeJson(resp, 200, out);
         } else {
-            String target = "/products".equals(req.getServletPath()) ? "/products?success=1" : "/ProductServlet?success=1";
-            resp.sendRedirect(req.getContextPath() + target);
+            String base = "/products".equals(req.getServletPath()) ? "/products" : "/ProductServlet";
+            String suffix = affected == -1 ? "?error=duplicate_variant" : "?success=1";
+            resp.sendRedirect(req.getContextPath() + base + suffix);
         }
     }
 

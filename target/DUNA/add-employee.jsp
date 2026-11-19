@@ -102,10 +102,7 @@
                     </div>
                     <div>
                         <label for="fPhone">Số điện thoại <span style="color:var(--negative)">*</span></label>
-                        <div class="phone-wrap">
-                            <span class="phone-prefix">(+84)</span>
-                            <input type="tel" name="soDienThoai" id="fPhone" class="form-control" required placeholder="912 345 678" maxlength="10" title="Vui lòng nhập Số điện thoại">
-                        </div>
+                        <input type="tel" name="soDienThoai" id="fPhone" class="form-control" required placeholder="0912345678 (bắt đầu bằng 0, 10 chữ số)" maxlength="10" pattern="0(3|5|7|8|9)[0-9]{8}" title="Số điện thoại bắt đầu bằng số 0 và gồm đúng 10 chữ số">
                         <div id="errPhone" style="color:var(--negative); font-size:12px; margin-top:3px;"></div>
                     </div>
                     <div>
@@ -213,8 +210,8 @@
 
         var pwd = document.getElementById('fPwd').value;
         var pwd2 = document.getElementById('fPwd2').value;
-        if (pwd.trim() === '') {
-            document.getElementById('errPwd').textContent = 'Mật khẩu không được để trống.';
+        if (pwd.trim() === '' || pwd.length < 6 || !/[a-zA-Z]/.test(pwd) || !/[0-9]/.test(pwd)) {
+            document.getElementById('errPwd').textContent = 'Mật khẩu phải từ 6 ký tự trở lên và gồm cả chữ lẫn số.';
             valid = false;
         }
         if (pwd !== pwd2) {
@@ -227,9 +224,9 @@
             document.getElementById('errPhone').textContent = 'Số điện thoại không được để trống.';
             valid = false;
         } else {
-            var cleanPhone = phone.replace(/[\s\-]/g, '');
-            if (!/^(0\d{9}|[1-9]\d{8})$/.test(cleanPhone)) {
-                document.getElementById('errPhone').textContent = 'Số điện thoại hợp lệ là 10 số (bắt đầu bằng 0) hoặc 9 số.';
+            var cleanPhone = phone.replace(/[\s.\-()]/g, '');
+            if (!/^0(3|5|7|8|9)\d{8}$/.test(cleanPhone)) {
+                document.getElementById('errPhone').textContent = 'Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (03, 05, 07, 08, 09).';
                 valid = false;
             }
         }

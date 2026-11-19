@@ -30,7 +30,7 @@
                 </div>
                 <div class="form-group">
                     <label for="phone">Số điện thoại</label>
-                    <input type="text" id="phone" name="phone" class="form-control" required placeholder="09xxxxxxxx">
+                    <input type="tel" id="phone" name="phone" class="form-control" required placeholder="0912345678" maxlength="10" pattern="0[35789][0-9]{8}" title="Số điện thoại bắt đầu bằng số 0, gồm đúng 10 chữ số (03, 05, 07, 08, 09)" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                 </div>
                 <div class="form-group">
                     <label for="password">Mật khẩu (>= 6 ký tự, có chữ và số)</label>

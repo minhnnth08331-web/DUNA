@@ -12,6 +12,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
@@ -55,8 +56,11 @@ public class CustomerServlet extends BaseServlet {
             return;
         }
 
-        List<Map<String, Object>> listKH = customerDAO.listClassicCustomers(search, rank, status, (page - 1) * pageSize, pageSize);
-        int total = customerDAO.countClassicCustomers(search, rank, status);
+        String searchType = RequestUtil.getString(req, "searchType", "");
+        String expiring = RequestUtil.getString(req, "expiring", "");
+
+        List<Map<String, Object>> listKH = customerDAO.listClassicCustomers(search, searchType, rank, status, expiring, (page - 1) * pageSize, pageSize);
+        int total = customerDAO.countClassicCustomers(search, searchType, rank, status, expiring);
         int totalPages = Math.max(1, (int) Math.ceil(total / (double) pageSize));
 
         if (wantsJson(req)) {
@@ -68,46 +72,89 @@ public class CustomerServlet extends BaseServlet {
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("search", search);
         req.setAttribute("p_search", search);
-        req.setAttribute("p_searchType", RequestUtil.getString(req, "searchType", ""));
+        req.setAttribute("p_searchType", searchType);
         req.setAttribute("rank", rank);
         req.setAttribute("p_rank", rank);
         req.setAttribute("status", status);
         req.setAttribute("p_status", status);
-        req.setAttribute("p_expiring", RequestUtil.getString(req, "expiring", ""));
+        req.setAttribute("p_expiring", expiring);
         forwardView(req, resp, "/quan-ly-khach-hang.jsp");
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String action = RequestUtil.getString(req, "action", "");
+        String baseTarget = "/customers".equals(req.getServletPath()) ? "/customers" : "/CustomerServlet";
         int affected = 0;
+        String errorMsg = null;
+        String successMsg = "1";
+
         if ("add".equals(action) || "addCustomer".equals(action)) {
-            String gender = "Nữ".equalsIgnoreCase(RequestUtil.getString(req, "gioiTinh", "Nam")) ? "FEMALE" : "MALE";
-            affected = customerService.addWalkInCustomer(
-                    RequestUtil.getString(req, "hoTen", RequestUtil.getString(req, "fullName", "")),
-                    RequestUtil.getString(req, "sdt", RequestUtil.getString(req, "phone", "")),
-                    gender);
+            String fullName = RequestUtil.getString(req, "hoTen", RequestUtil.getString(req, "fullName", ""));
+            String rawPhone = RequestUtil.getString(req, "sdt", RequestUtil.getString(req, "phone", ""));
+            String email = RequestUtil.getString(req, "email", "");
+            String gender = "Nữ".equalsIgnoreCase(RequestUtil.getString(req, "gioiTinh", RequestUtil.getString(req, "gender", "Nam")))
+                    || "FEMALE".equalsIgnoreCase(RequestUtil.getString(req, "gender", "")) ? "FEMALE" : "MALE";
+            String birthDate = RequestUtil.getString(req, "ngaySinh", RequestUtil.getString(req, "birthDate", ""));
+            String address = RequestUtil.getString(req, "diaChi", "");
+
+            if (fullName.isEmpty()) {
+                errorMsg = "Vui lòng nhập họ và tên khách hàng!";
+            } else if (!RequestUtil.isValidVnPhone(rawPhone)) {
+                errorMsg = "Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (đầu số 03, 05, 07, 08, 09).";
+            } else {
+                affected = customerService.addCustomerFull(fullName, rawPhone, email, gender, birthDate, address);
+                if (affected == -2) {
+                    errorMsg = "Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (đầu số 03, 05, 07, 08, 09).";
+                } else if (affected <= 0) {
+                    errorMsg = "Số điện thoại " + RequestUtil.normalizePhone(rawPhone) + " đã tồn tại trong hệ thống!";
+                } else {
+                    successMsg = "added";
+                }
+            }
         } else if ("edit".equals(action) || "update".equals(action)) {
-            affected = customerDAO.updateClassicCustomerFull(
-                    RequestUtil.getInt(req, "id", RequestUtil.getInt(req, "customerId", 0)),
-                    RequestUtil.getString(req, "hoTen", ""),
-                    RequestUtil.getString(req, "sdt", RequestUtil.getString(req, "phone", "")),
-                    RequestUtil.getString(req, "email", ""),
-                    RequestUtil.getString(req, "gioiTinh", "Nam"),
-                    RequestUtil.getString(req, "ngaySinh", RequestUtil.getString(req, "birthDate", "")));
+            int id = RequestUtil.getInt(req, "id", RequestUtil.getInt(req, "customerId", 0));
+            String fullName = RequestUtil.getString(req, "hoTen", "");
+            String rawPhone = RequestUtil.getString(req, "sdt", RequestUtil.getString(req, "phone", ""));
+            if (!RequestUtil.isValidVnPhone(rawPhone)) {
+                errorMsg = "Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (đầu số 03, 05, 07, 08, 09).";
+            } else {
+                affected = customerDAO.updateClassicCustomerFull(
+                        id,
+                        fullName,
+                        rawPhone,
+                        RequestUtil.getString(req, "email", ""),
+                        RequestUtil.getString(req, "gioiTinh", "Nam"),
+                        RequestUtil.getString(req, "ngaySinh", RequestUtil.getString(req, "birthDate", "")));
+                if (affected == -2) {
+                    errorMsg = "Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số.";
+                } else if (affected == -4) {
+                    errorMsg = "Số điện thoại " + RequestUtil.normalizePhone(rawPhone) + " đã thuộc về khách hàng khác!";
+                } else if (affected > 0) {
+                    successMsg = "updated";
+                }
+            }
         } else if ("lock".equals(action)) {
             int id = RequestUtil.getInt(req, "id", 0);
             Map<String, Object> cur = customerService.getCustomerDetail(id);
             boolean activeNow = cur != null && Boolean.TRUE.equals(cur.get("is_active"));
             affected = customerService.setCustomerActive(id, !activeNow);
+            successMsg = "locked";
         } else if ("autoUpgrade".equals(action)) {
             affected = customerService.autoUpgradeTiers();
         }
         if (wantsJson(req)) {
-            writeOkJson(resp, action, "Thanh cong", affected);
+            if (errorMsg != null) {
+                writeErrJson(resp, 400, errorMsg);
+            } else {
+                writeOkJson(resp, action, "Thanh cong", affected);
+            }
         } else {
-            String target = "/customers".equals(req.getServletPath()) ? "/customers?success=1" : "/CustomerServlet?success=1";
-            resp.sendRedirect(req.getContextPath() + target);
+            if (errorMsg != null) {
+                resp.sendRedirect(req.getContextPath() + baseTarget + "?error=" + URLEncoder.encode(errorMsg, "UTF-8"));
+            } else {
+                resp.sendRedirect(req.getContextPath() + baseTarget + "?success=" + successMsg);
+            }
         }
     }
 }

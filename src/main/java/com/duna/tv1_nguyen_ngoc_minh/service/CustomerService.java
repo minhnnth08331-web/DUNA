@@ -26,13 +26,28 @@ public class CustomerService {
     }
 
     public int addWalkInCustomer(String fullName, String phone, String gender) {
+        return addCustomerFull(fullName, phone, "", gender, "", "");
+    }
+
+    public int addCustomerFull(String fullName, String phone, String email, String gender, String birthDate, String address) {
         String norm = RequestUtil.normalizePhone(phone);
+        if (!RequestUtil.isValidVnPhone(norm)) {
+            return -2;
+        }
         String code = "KH" + String.format("%06d", Math.abs((norm + System.currentTimeMillis()).hashCode() % 900000) + 100000);
-        return customerDAO.uc031_addWalkInCustomer(code, fullName, norm, gender);
+        return customerDAO.addClassicCustomerFull(code, fullName, norm, email, gender, birthDate, address);
+    }
+
+    public Map<String, Object> findByExactPhone(String phone) {
+        return customerDAO.findByExactPhone(phone);
     }
 
     public int updateCustomer(int customerId, String phone, String email, String birthDate) {
-        return customerDAO.uc032_updateCustomer(customerId, RequestUtil.normalizePhone(phone), email, birthDate);
+        String norm = RequestUtil.normalizePhone(phone);
+        if (!RequestUtil.isValidVnPhone(norm)) {
+            return -2;
+        }
+        return customerDAO.uc032_updateCustomer(customerId, norm, email, birthDate);
     }
 
     public int setCustomerActive(int customerId, boolean active) {

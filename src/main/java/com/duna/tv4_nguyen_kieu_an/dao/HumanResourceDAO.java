@@ -113,9 +113,15 @@ public class HumanResourceDAO extends BaseDAO {
     // ==================== CLASSIC UI ADAPTERS (employee-management.jsp / employee-detail.jsp) ====================
 
     public int updatePasswordForEmployee(int empOrUserId, String passwordHash) {
-        String sql = "UPDATE users SET password_hash = ?, updated_at = GETDATE() "
-                + "WHERE user_id = ? OR user_id = (SELECT user_id FROM employees WHERE employee_id = ?)";
-        return executeUpdate(sql, passwordHash, empOrUserId, empOrUserId);
+        Integer targetUserId = queryOne("SELECT user_id FROM employees WHERE employee_id = ?", rs -> rs.getInt(1), empOrUserId);
+        if (targetUserId == null) {
+            targetUserId = queryOne("SELECT user_id FROM users WHERE user_id = ?", rs -> rs.getInt(1), empOrUserId);
+        }
+        if (targetUserId == null || targetUserId <= 0) {
+            return 0;
+        }
+        return executeUpdate("UPDATE users SET password_hash = ?, updated_at = GETDATE() WHERE user_id = ?",
+                passwordHash, targetUserId);
     }
 
     public boolean verifyUserPassword(int userId, String passwordHash) {
@@ -157,7 +163,7 @@ public class HumanResourceDAO extends BaseDAO {
 
     public Map<String, Object> getClassicEmployeeDetail(int idOrUserId) {
         ensureStaffUsersSyncedToEmployees();
-        String sql = "SELECT TOP 1 e.employee_id AS id, e.employee_code AS maNV, e.full_name AS hoVaTen, "
+        String baseSelect = "SELECT TOP 1 e.employee_id AS id, e.employee_code AS maNV, e.full_name AS hoVaTen, "
                 + "ISNULL(u.email, '') AS email, ISNULL(u.phone, e.phone) AS soDienThoai, "
                 + "ISNULL(u.email, e.employee_code) AS username, "
                 + "CONVERT(VARCHAR(10), e.birth_date, 23) AS ngaySinh, "
@@ -169,9 +175,11 @@ public class HumanResourceDAO extends BaseDAO {
                 + "FROM employees e "
                 + "LEFT JOIN users u ON e.user_id = u.user_id "
                 + "LEFT JOIN roles r ON u.role_id = r.role_id "
-                + "LEFT JOIN stores s ON e.store_id = s.store_id "
-                + "WHERE e.employee_id = ? OR e.user_id = ?";
-        Map<String, Object> row = queryFirstRow(sql, idOrUserId, idOrUserId);
+                + "LEFT JOIN stores s ON e.store_id = s.store_id ";
+        Map<String, Object> row = queryFirstRow(baseSelect + "WHERE e.employee_id = ?", idOrUserId);
+        if (row == null) {
+            row = queryFirstRow(baseSelect + "WHERE e.user_id = ?", idOrUserId);
+        }
         if (row == null) {
             return null;
         }
@@ -214,8 +222,10 @@ public class HumanResourceDAO extends BaseDAO {
             code = String.format("NV%04d", newUserId);
         }
         long empId = executeInsertGetId(
-                "INSERT INTO employees (employee_code, user_id, full_name, phone, email, birth_date, hire_date, store_id, status) "
-                + "VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), GETDATE(), 1, 'WORKING')",
+                "INSERT INTO employees (employee_code, user_id, full_name, phone, email, birth_date, hire_date, department_id, position_id, store_id, status) "
+                + "VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), GETDATE(), "
+                + "(SELECT TOP 1 department_id FROM departments ORDER BY department_id), "
+                + "(SELECT TOP 1 position_id FROM positions ORDER BY base_salary ASC), 1, 'WORKING')",
                 code, newUserId, fullName, phone, email, birthDate == null ? "" : birthDate);
         if (empId > 0) {
             saveHrProfileMeta((int) empId, actorUserId, username, cccd, ngayCapCccd, ngayHetHanCccd,
@@ -228,12 +238,25 @@ public class HumanResourceDAO extends BaseDAO {
                                      String cccd, String ngayCapCccd, String ngayHetHanCccd, String noiCapCccd,
                                      String queQuan, String noiThuongTru, String diaChiHienTai,
                                      String reason, int actorUserId) {
+        String cleanEmail = email == null ? "" : email.trim();
+        String cleanPhone = phone == null ? "" : phone.trim();
+        Integer linkedUserId = queryOne("SELECT user_id FROM employees WHERE employee_id = ?", rs -> rs.getInt(1), empId);
+        if (linkedUserId != null && linkedUserId > 0) {
+            if (!cleanEmail.isEmpty() && queryInt("SELECT COUNT(*) FROM users WHERE email = ? AND user_id <> ?", cleanEmail, linkedUserId) > 0) {
+                return -1;
+            }
+            if (!cleanPhone.isEmpty() && queryInt("SELECT COUNT(*) FROM users WHERE phone = ? AND user_id <> ?", cleanPhone, linkedUserId) > 0) {
+                return -1;
+            }
+        }
         int res = executeUpdate(
                 "UPDATE employees SET full_name = ?, phone = ?, email = ?, birth_date = NULLIF(?, ''), updated_at = GETDATE() WHERE employee_id = ?",
-                fullName, phone, email, birthDate == null ? "" : birthDate, empId);
-        executeUpdate(
-                "UPDATE users SET full_name = ?, phone = ?, updated_at = GETDATE() WHERE user_id = (SELECT user_id FROM employees WHERE employee_id = ?)",
-                fullName, phone, empId);
+                fullName, cleanPhone, cleanEmail, birthDate == null ? "" : birthDate, empId);
+        if (linkedUserId != null && linkedUserId > 0) {
+            executeUpdate(
+                    "UPDATE users SET full_name = ?, phone = NULLIF(?, ''), email = CASE WHEN ? <> '' THEN ? ELSE email END, updated_at = GETDATE() WHERE user_id = ?",
+                    fullName, cleanPhone, cleanEmail, cleanEmail, linkedUserId);
+        }
         saveHrProfileMeta(empId, actorUserId, "", cccd, ngayCapCccd, ngayHetHanCccd,
                 noiCapCccd, queQuan, noiThuongTru, diaChiHienTai);
         if (reason != null && !reason.trim().isEmpty()) {

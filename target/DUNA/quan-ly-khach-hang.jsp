@@ -58,13 +58,21 @@
 <div class="page-container">
     <c:if test="${not empty param.error}">
         <div class="alert alert-danger">
-            <span>${param.error}</span>
+            <span><c:out value="${param.error}"/></span>
             <button type="button" onclick="this.parentElement.style.display='none'" class="close-btn" style="position:static; margin-left:auto;">&times;</button>
         </div>
     </c:if>
-    <c:if test="${not empty msgSuccess}">
+    <c:if test="${not empty msgSuccess or not empty param.success}">
         <div class="alert alert-success">
-            <span>${msgSuccess}</span>
+            <span>
+                <c:choose>
+                    <c:when test="${not empty msgSuccess}"><c:out value="${msgSuccess}"/></c:when>
+                    <c:when test="${param.success == 'added'}">Đã thêm khách hàng mới thành công!</c:when>
+                    <c:when test="${param.success == 'updated'}">Đã cập nhật thông tin khách hàng thành công!</c:when>
+                    <c:when test="${param.success == 'locked'}">Đã cập nhật trạng thái tài khoản khách hàng!</c:when>
+                    <c:otherwise>Thao tác thành công!</c:otherwise>
+                </c:choose>
+            </span>
             <button type="button" onclick="this.parentElement.style.display='none'" class="close-btn" style="position:static; margin-left:auto;">&times;</button>
         </div>
     </c:if>
@@ -220,7 +228,7 @@
 
         <%-- Thanh phân trang --%>
         <c:if test="${totalPages > 1}">
-            <c:set var="urlParams" value="${not empty p_search ? '&search='.concat(p_search) : ''}${not empty p_searchType ? '&searchType='.concat(p_searchType) : ''}${not empty p_rank ? '&rank='.concat(p_rank) : ''}${not empty p_status ? '&status='.concat(p_status) : ''}" />
+            <c:set var="urlParams" value="${not empty p_search ? '&search='.concat(p_search) : ''}${not empty p_searchType ? '&searchType='.concat(p_searchType) : ''}${not empty p_rank ? '&rank='.concat(p_rank) : ''}${not empty p_status ? '&status='.concat(p_status) : ''}${not empty p_expiring ? '&expiring='.concat(p_expiring) : ''}" />
             <div class="pagination-bar">
                 <c:choose>
                     <c:when test="${currentPage > 1}">
@@ -313,10 +321,11 @@
         <div class="modal-header">
             <h3 class="modal-title" id="modalTitle">Thêm khách hàng</h3>
         </div>
-        <form method="post" action="${pageContext.request.contextPath}/CustomerServlet" id="formKH">
+        <form method="post" action="${pageContext.request.contextPath}/CustomerServlet" id="formKH" onsubmit="return validateCustomerForm(event)">
             <input type="hidden" name="action" id="fAction" value="add">
             <input type="hidden" name="id"     id="fId">
             <div class="modal-body">
+                <div id="fFormError" class="alert alert-danger" style="display:none; margin-bottom:12px;"></div>
                 <div class="form-grid">
                     <div>
                         <label for="fName">Họ và tên <span style="color:var(--negative)">*</span></label>
@@ -324,10 +333,11 @@
                     </div>
                     <div>
                         <label for="fSdt">Số điện thoại <span style="color:var(--negative)">*</span></label>
-                        <div class="phone-wrap">
-                            <span class="phone-prefix">(+84)</span>
-                            <input type="tel" name="sdt" id="fSdt" class="form-control" required placeholder="912 345 678" maxlength="10">
-                        </div>
+                        <input type="tel" name="sdt" id="fSdt" class="form-control font-mono" required
+                               placeholder="0912345678" maxlength="10" pattern="0[35789][0-9]{8}"
+                               title="Số điện thoại Việt Nam phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (03, 05, 07, 08, 09)"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10); clearPhoneError();">
+                        <small style="display:block; margin-top:4px; font-size:11.5px; color:var(--muted);">Bắt đầu bằng số 0, đủ 10 chữ số (đầu số 03, 05, 07, 08, 09)</small>
                     </div>
                     <div>
                         <label for="fEmail">Địa chỉ Email</label>
@@ -410,7 +420,34 @@ function copyOfflineReminder() {
         }
     });
 }
+function clearPhoneError() {
+    var err = document.getElementById('fFormError');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+}
+function validateCustomerForm(event) {
+    var name = (document.getElementById('fName').value || '').trim();
+    var sdt = (document.getElementById('fSdt').value || '').trim();
+    var err = document.getElementById('fFormError');
+    if (!name) {
+        event.preventDefault();
+        if (err) { err.textContent = 'Vui lòng nhập họ và tên khách hàng!'; err.style.display = 'block'; }
+        document.getElementById('fName').focus();
+        return false;
+    }
+    if (!/^0[35789][0-9]{8}$/.test(sdt)) {
+        event.preventDefault();
+        if (err) {
+            err.textContent = 'Số điện thoại không hợp lệ! Phải bắt đầu bằng số 0 và gồm đúng 10 chữ số (đầu số 03, 05, 07, 08, 09).';
+            err.style.display = 'block';
+        }
+        document.getElementById('fSdt').focus();
+        return false;
+    }
+    clearPhoneError();
+    return true;
+}
 function openAdd(){
+    clearPhoneError();
     document.getElementById('modalTitle').textContent='Thêm Khách Hàng Mới';
     document.getElementById('fAction').value='add'; document.getElementById('fId').value='';
     ['fName','fSdt','fEmail','fAddr'].forEach(function(i){document.getElementById(i).value=''; document.getElementById(i).readOnly=false;});
@@ -421,10 +458,11 @@ function openAdd(){
     openModal('modalKH');
 }
 function openEdit(id,ten,sdt,email,gt,dob,dc){
+    clearPhoneError();
     document.getElementById('modalTitle').textContent='Chỉnh Sửa Hồ Sơ Khách Hàng';
     document.getElementById('fAction').value='edit'; document.getElementById('fId').value=id;
     document.getElementById('fName').value=ten; document.getElementById('fName').readOnly=false;
-    document.getElementById('fSdt').value=sdt ? sdt.replace(/^0+/, '') : ''; document.getElementById('fSdt').readOnly=false;
+    document.getElementById('fSdt').value=sdt || ''; document.getElementById('fSdt').readOnly=false;
     document.getElementById('fEmail').value=email; document.getElementById('fEmail').readOnly=false;
     document.getElementById('fGender').value=gt; document.getElementById('fGender').disabled=false;
     document.getElementById('fDob').value=dob; document.getElementById('fDob').readOnly=false;
@@ -434,10 +472,11 @@ function openEdit(id,ten,sdt,email,gt,dob,dc){
     openModal('modalKH');
 }
 function openDetail(id,ten,sdt,email,gt,dob,dc){
+    clearPhoneError();
     document.getElementById('modalTitle').textContent='Hồ Sơ Chi Tiết Khách Hàng';
     document.getElementById('fAction').value=''; document.getElementById('fId').value=id;
     document.getElementById('fName').value=ten; document.getElementById('fName').readOnly=true;
-    document.getElementById('fSdt').value=sdt ? sdt.replace(/^0+/, '') : ''; document.getElementById('fSdt').readOnly=true;
+    document.getElementById('fSdt').value=sdt || ''; document.getElementById('fSdt').readOnly=true;
     document.getElementById('fEmail').value=email; document.getElementById('fEmail').readOnly=true;
     document.getElementById('fGender').value=gt; document.getElementById('fGender').disabled=true;
     document.getElementById('fDob').value=dob; document.getElementById('fDob').readOnly=true;

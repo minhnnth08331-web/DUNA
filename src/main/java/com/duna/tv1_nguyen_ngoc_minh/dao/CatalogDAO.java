@@ -29,8 +29,10 @@ public class CatalogDAO extends BaseDAO {
 
     // UC046: Cap nhat ten, mo ta va anh dai dien danh muc
     public int uc046_updateCategory(int categoryId, String name, String description, String imageUrl) {
-        String sql = "UPDATE categories SET category_name = ?, description = ?, image_url = ? WHERE category_id = ?";
-        return executeUpdate(sql, name, description, imageUrl, categoryId);
+        String img = imageUrl == null ? "" : imageUrl.trim();
+        String sql = "UPDATE categories SET category_name = ?, description = ?, "
+                + "image_url = CASE WHEN ? <> '' THEN ? ELSE image_url END WHERE category_id = ?";
+        return executeUpdate(sql, name, description, img, img, categoryId);
     }
 
     // UC047: Xoa danh muc va kiem tra san pham, danh muc con
@@ -50,9 +52,26 @@ public class CatalogDAO extends BaseDAO {
 
     // UC049: Them moi bo suu tap Xuan He / Thu Dong kem banner
     public int uc049_createCollection(String name, String season, String bannerUrl, String desc, String startDate, String endDate) {
+        String normSeason = normalizeCollectionSeason(season);
         String sql = "INSERT INTO collections (collection_name, season, banner_image_url, description, start_date, end_date) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
-        return executeUpdate(sql, name, season, bannerUrl, desc, startDate, endDate);
+        return executeUpdate(sql, name, normSeason, bannerUrl, desc, startDate, endDate);
+    }
+
+    private String normalizeCollectionSeason(String raw) {
+        if (raw == null) return "ALL_SEASON";
+        String u = raw.trim().toUpperCase();
+        if ("SPRING_SUMMER".equals(u) || "FALL_WINTER".equals(u) || "ALL_SEASON".equals(u)) {
+            return u;
+        }
+        String lower = raw.trim().toLowerCase();
+        if (lower.contains("xuân") || lower.contains("xuan") || lower.contains("hè") || lower.contains("he") || lower.contains("spring") || lower.contains("summer")) {
+            return "SPRING_SUMMER";
+        }
+        if (lower.contains("thu") || lower.contains("đông") || lower.contains("dong") || lower.contains("fall") || lower.contains("winter")) {
+            return "FALL_WINTER";
+        }
+        return "ALL_SEASON";
     }
 
     // UC050: Cap nhat thoi gian ap dung va banner bo suu tap

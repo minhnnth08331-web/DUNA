@@ -45,8 +45,8 @@ public class MarketingServlet extends BaseServlet {
                     RequestUtil.getString(req, "linkUrl", "/products"),
                     RequestUtil.getString(req, "bannerPosition", "HOME_HERO"),
                     RequestUtil.getInt(req, "displayOrder", 1),
-                    RequestUtil.getString(req, "startDate", "2026-11-01"),
-                    RequestUtil.getString(req, "endDate", "2027-03-31"));
+                    RequestUtil.getSafeDate(req, "startDate", "2026-11-01"),
+                    RequestUtil.getSafeDate(req, "endDate", "2027-03-31"));
         } else if ("hideExpired".equals(action)) {
             affected = service.hideExpiredBanners();
         } else if ("subscribe".equals(action)) {
