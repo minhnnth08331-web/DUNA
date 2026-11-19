@@ -13,6 +13,7 @@
             <p class="page-subtitle">M03 • Chi tiết biến thể màu/size, SKU, Barcode &amp; Giá bán riêng (TV1 • UC076–UC080)</p>
         </div>
         <div class="action-buttons">
+            <a href="${pageContext.request.contextPath}/products" class="btn btn-outline btn-sm">Nghiệp vụ M03</a>
             <a href="${pageContext.request.contextPath}/ProductServlet" class="btn btn-outline btn-sm">Quay lại Danh sách SP</a>
         </div>
     </div>

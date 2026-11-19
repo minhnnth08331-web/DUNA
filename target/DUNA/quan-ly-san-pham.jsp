@@ -62,6 +62,9 @@
             <p class="page-subtitle">Danh mục áo sơ mi, polo, quần âu, blazer, biến thể màu sắc & size, in tem mác barcode chuẩn xuất xưởng</p>
         </div>
         <div class="action-buttons">
+            <a href="${pageContext.request.contextPath}/products" class="btn btn-outline">
+                Nghiệp vụ M03 (UC064–086)
+            </a>
             <button type="button" class="btn btn-secondary" onclick="openProductMatrixModal('${not empty listSP[0] ? listSP[0].id : 1}', '${not empty listSP[0] ? fn:escapeXml(listSP[0].tenSP) : 'Sản phẩm DUNA'}', '${not empty listSP[0] ? listSP[0].maSP : 'SP001'}')" style="display: inline-flex; align-items: center; gap: 8px;">
                 🔲 Ma Trận Size & Màu (Smart Inventory)
             </button>
@@ -78,18 +81,11 @@
                 <div class="search-box-wrap">
                     <input type="text" name="search" class="search-box" placeholder="Tìm theo tên SP, mã SP, chất liệu, form dáng..." value="${p_search}">
                 </div>
-                <select name="cat" class="form-control" style="width:auto; min-width: 170px;">
+                <select name="cat" class="form-control" style="width:auto; min-width: 185px;">
                     <option value="">Tất cả danh mục</option>
-                    <option value="Áo Sơ Mi Nam" <c:if test="${p_cat == 'Áo Sơ Mi Nam'}">selected</c:if>>Áo Sơ Mi Nam</option>
-                    <option value="Áo Polo Nam" <c:if test="${p_cat == 'Áo Polo Nam'}">selected</c:if>>Áo Polo Nam</option>
-                    <option value="Quần Âu & Khaki" <c:if test="${p_cat == 'Quần Âu & Khaki'}">selected</c:if>>Quần Âu &amp; Khaki</option>
-                    <option value="Áo Thun Nam" <c:if test="${p_cat == 'Áo Thun Nam'}">selected</c:if>>Áo Thun Nam</option>
-                    <option value="Quần Jeans Nam" <c:if test="${p_cat == 'Quần Jeans Nam'}">selected</c:if>>Quần Jeans Nam</option>
-                    <option value="Áo Khoác & Blazer" <c:if test="${p_cat == 'Áo Khoác & Blazer'}">selected</c:if>>Áo Khoác &amp; Blazer</option>
-                    <option value="Quần Short Nam" <c:if test="${p_cat == 'Quần Short Nam'}">selected</c:if>>Quần Short Nam</option>
-                    <option value="Áo Len & Nỉ Nam" <c:if test="${p_cat == 'Áo Len & Nỉ Nam'}">selected</c:if>>Áo Len &amp; Nỉ Nam</option>
-                    <option value="Đồ Thể Thao Nam" <c:if test="${p_cat == 'Đồ Thể Thao Nam'}">selected</c:if>>Đồ Thể Thao Nam</option>
-                    <option value="Phụ Kiện Nam" <c:if test="${p_cat == 'Phụ Kiện Nam'}">selected</c:if>>Phụ Kiện Nam</option>
+                    <c:forEach items="${categories}" var="c">
+                        <option value="${c.category_name}" <c:if test="${p_cat == c.category_name}">selected</c:if>>${not empty c.parent_id ? '↳ ' : ''}${c.category_name}</option>
+                    </c:forEach>
                 </select>
                 <select name="status" class="form-control" style="width:auto; min-width: 150px;">
                     <option value="">Tất cả trạng thái</option>
@@ -133,7 +129,7 @@
                         <td><span class="badge badge-neutral">${sp.danhMuc}</span></td>
                         <td style="font-size: 12.5px; color: var(--muted); line-height: 1.4;">
                             <c:if test="${not empty sp.chatLieu}"><div>Vải: <strong style="color:var(--text-primary);">${sp.chatLieu}</strong></div></c:if>
-                            <c:if test="${not empty sp.formDang}"><div>Form: <strong style="color:var(--text-primary);">${sp.formDang}</strong></div></c:if>
+                            <c:if test="${not empty sp.formDang}"><div>Form: <strong style="color:var(--text-primary);"><c:choose><c:when test="${sp.formDang == 'SLIM_FIT'}">Dáng ôm</c:when><c:when test="${sp.formDang == 'OVERSIZE'}">Form rộng</c:when><c:when test="${sp.formDang == 'REGULAR_FIT'}">Dáng suông</c:when><c:otherwise>${sp.formDang}</c:otherwise></c:choose></strong></div></c:if>
                         </td>
                         <td class="text-right" style="font-weight: 800; font-variant-numeric: tabular-nums; color: ${sp.soLuong > 5 ? 'var(--text-primary)' : (sp.soLuong > 0 ? 'var(--warning)' : 'var(--negative)')};">
                             ${sp.soLuong}
@@ -227,16 +223,9 @@
                     <div>
                         <label for="fCat">Danh mục thời trang <span style="color:var(--negative)">*</span></label>
                         <select name="cat" id="fCat" class="form-control" required>
-                            <option value="Áo Sơ Mi Nam">Áo Sơ Mi Nam</option>
-                            <option value="Áo Polo Nam">Áo Polo Nam</option>
-                            <option value="Quần Âu & Khaki">Quần Âu &amp; Khaki</option>
-                            <option value="Áo Thun Nam">Áo Thun Nam</option>
-                            <option value="Quần Jeans Nam">Quần Jeans Nam</option>
-                            <option value="Áo Khoác & Blazer">Áo Khoác &amp; Blazer</option>
-                            <option value="Quần Short Nam">Quần Short Nam</option>
-                            <option value="Áo Len & Nỉ Nam">Áo Len &amp; Nỉ Nam</option>
-                            <option value="Đồ Thể Thao Nam">Đồ Thể Thao Nam</option>
-                            <option value="Phụ Kiện Nam">Phụ Kiện Nam</option>
+                            <c:forEach items="${categories}" var="c">
+                                <option value="${c.category_name}">${not empty c.parent_id ? '↳ ' : ''}${c.category_name}</option>
+                            </c:forEach>
                         </select>
                     </div>
                     <div>
@@ -249,7 +238,11 @@
                     </div>
                     <div>
                         <label for="fFormDang">Form dáng</label>
-                        <input type="text" name="formDang" id="fFormDang" class="form-control" placeholder="Ví dụ: Slimfit tôn dáng, Regular Fit, Tailored Fit...">
+                        <select name="formDang" id="fFormDang" class="form-control">
+                            <option value="REGULAR_FIT">Dáng suông</option>
+                            <option value="SLIM_FIT">Dáng ôm</option>
+                            <option value="OVERSIZE">Form rộng</option>
+                        </select>
                     </div>
                     <div>
                         <label for="fCostPrice">Giá vốn / Giá nhập (VNĐ) <span style="color:var(--negative)">*</span></label>
@@ -537,7 +530,7 @@ function openAdd() {
     document.getElementById('fName').value = '';
     document.getElementById('fBrand').value = 'DUNA';
     document.getElementById('fChatLieu').value = '';
-    document.getElementById('fFormDang').value = 'Slimfit tôn dáng';
+    document.getElementById('fFormDang').value = 'REGULAR_FIT';
     document.getElementById('fCostPrice').value = '';
     document.getElementById('fPrice').value = '';
     document.getElementById('fQty').value = '10';
@@ -558,7 +551,7 @@ function openEdit(id, ten, cat, brand, giaBan, giaNhap, sl, tt, chatLieu, formDa
     document.getElementById('fCat').value = cat;
     document.getElementById('fBrand').value = brand || 'DUNA';
     document.getElementById('fChatLieu').value = chatLieu || '';
-    document.getElementById('fFormDang').value = formDang || '';
+    document.getElementById('fFormDang').value = (formDang === 'SLIM_FIT' || formDang === 'OVERSIZE') ? formDang : 'REGULAR_FIT';
     document.getElementById('fCostPrice').value = giaNhap || '';
     document.getElementById('fPrice').value = giaBan || '';
     document.getElementById('fQty').value = sl || '0';

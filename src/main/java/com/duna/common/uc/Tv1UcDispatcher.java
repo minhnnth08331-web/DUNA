@@ -81,7 +81,10 @@ public final class Tv1UcDispatcher {
             case "UC043": return wrapMap(custSvc.getLatestMeasurement(numInt(req, "customerId", 1)), uc, "Số đo gần nhất");
 
             case "UC044": return prodSvc.listCategoryTree();
-            case "UC045": return wrapAffected(uc, prodSvc.createCategory(str(req, "categoryName", "Áo Sơ Mi Dài Tay"), str(req, "slug", "ao-so-mi-dai-tay"), null, str(req, "description", "Sơ mi công sở"), numInt(req, "displayOrder", 11)), "Đã tạo danh mục mới", "Danh mục đã tồn tại");
+            case "UC045": {
+                int pId = numInt(req, "parentId", 0);
+                return wrapAffected(uc, prodSvc.createCategory(str(req, "categoryName", "Áo Sơ Mi Dài Tay"), str(req, "slug", "ao-so-mi-dai-tay"), pId > 0 ? pId : null, str(req, "description", "Sơ mi công sở"), numInt(req, "displayOrder", 11)), "Đã tạo danh mục mới", "Danh mục đã tồn tại");
+            }
             case "UC046": return wrapAffected(uc, prodSvc.updateCategory(numInt(req, "categoryId", 1), str(req, "categoryName", "Áo Sơ Mi Nam"), str(req, "description", "Sơ mi Oxford, Bamboo thanh lịch"), ""), "Đã cập nhật danh mục", "Không tìm thấy danh mục");
             case "UC047": return wrapAffected(uc, prodSvc.deleteCategory(numInt(req, "categoryId", 999)), "Đã xóa danh mục", "Danh mục đang có sản phẩm hoặc không tồn tại");
             case "UC048": return prodSvc.listCollections(kw);
@@ -101,7 +104,11 @@ public final class Tv1UcDispatcher {
             case "UC062": return wrapMap(prodSvc.recommendSize(numInt(req, "categoryId", 1), str(req, "formFit", "REGULAR_FIT"), numDouble(req, "heightCm", 172), numDouble(req, "weightKg", 66)), uc, "Kết quả tư vấn size");
             case "UC063": return wrapAffected(uc, prodSvc.addSizeRule(numInt(req, "categoryId", 1), str(req, "formFit", "SLIM_FIT"), numDouble(req, "hMin", 170), numDouble(req, "hMax", 176), numDouble(req, "wMin", 62), numDouble(req, "wMax", 68), numInt(req, "sizeId", 1)), "Đã thêm quy tắc tư vấn size", "Không thêm được quy tắc");
 
-            case "UC064": return prodSvc.listProducts(kw, 0, 30);
+            case "UC064": {
+                int page = Math.max(1, numInt(req, "page", 1));
+                int limit = Math.max(1, numInt(req, "limit", 20));
+                return prodSvc.listProducts(kw, (page - 1) * limit, limit);
+            }
             case "UC065": return prodSvc.searchProducts(kw);
             case "UC066": {
                 int cid = numInt(req, "categoryId", 0);

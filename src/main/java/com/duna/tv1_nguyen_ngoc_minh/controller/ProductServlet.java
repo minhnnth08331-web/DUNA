@@ -39,7 +39,8 @@ public class ProductServlet extends BaseServlet {
             List<Map<String, Object>> variants = productDAO.listClassicVariants(pid);
             List<Map<String, Object>> specs = new ArrayList<>();
             specs.add(spec("Chất liệu vải", prod != null && prod.get("material_info") != null ? String.valueOf(prod.get("material_info")) : "Cotton cao cấp DUNA"));
-            specs.add(spec("Form dáng", prod != null && prod.get("form_fit") != null ? String.valueOf(prod.get("form_fit")) : "REGULAR_FIT"));
+            String rawForm = prod != null && prod.get("form_fit") != null ? String.valueOf(prod.get("form_fit")) : "REGULAR_FIT";
+            specs.add(spec("Form dáng", formatFormFitVi(rawForm)));
             specs.add(spec("Thương hiệu", prod != null && prod.get("brand_name") != null ? String.valueOf(prod.get("brand_name")) : "DUNA Men's Wear"));
             specs.add(spec("Hướng dẫn giặt ủi", prod != null && prod.get("care_instructions") != null ? String.valueOf(prod.get("care_instructions")) : "Giặt máy nhẹ, ủi nhiệt độ vừa"));
             Map<String, Object> payload = new LinkedHashMap<>();
@@ -93,6 +94,16 @@ public class ProductServlet extends BaseServlet {
                 writeOkJson(resp, activeUc, "Thanh cong", rows);
                 return;
             }
+            if ("UC064".equals(activeUc)) {
+                int ucPage = Math.max(1, RequestUtil.getInt(req, "page", 1));
+                int ucPageSize = Math.max(1, RequestUtil.getInt(req, "limit", 20));
+                int ucTotal = productService.countProducts(search);
+                int ucTotalPages = Math.max(1, (int) Math.ceil(ucTotal / (double) ucPageSize));
+                req.setAttribute("currentPage", ucPage);
+                req.setAttribute("totalPages", ucTotalPages);
+                req.setAttribute("totalProducts", ucTotal);
+            }
+            req.setAttribute("p_keyword", search);
             req.setAttribute("categories", productService.listCategoryTree());
             req.setAttribute("selectedProductId", RequestUtil.getInt(req, "productId", 1));
             setResultRows(req, activeUc, meta != null ? activeUc + " — " + meta.getTitle() : "Nghiệp vụ Sản phẩm M03", rows);
@@ -114,6 +125,7 @@ public class ProductServlet extends BaseServlet {
             return;
         }
         req.setAttribute("listSP", listSP);
+        req.setAttribute("categories", productService.listCategoryTree());
         req.setAttribute("currentPage", page);
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("p_search", search);
@@ -178,11 +190,24 @@ public class ProductServlet extends BaseServlet {
         } else if ("addVariant".equals(action)) {
             jsonOnly = wantsJson(req) || "1".equals(req.getParameter("ajax"));
             int pid = RequestUtil.getInt(req, "idSP", RequestUtil.getInt(req, "productId", 1));
-            String color = RequestUtil.getString(req, "mauSac", "Đen");
-            String size = RequestUtil.getString(req, "trongLuong", "M");
-            affected = productDAO.addClassicVariant(pid, color, size,
-                    RequestUtil.getDouble(req, "giaBan", 390000),
-                    RequestUtil.getInt(req, "soLuong", 10), "");
+            if (req.getParameter("colorId") != null && req.getParameter("sizeId") != null) {
+                int colorId = RequestUtil.getInt(req, "colorId", 1);
+                int sizeId = RequestUtil.getInt(req, "sizeId", 1);
+                String sku = RequestUtil.getString(req, "sku", "");
+                String barcode = RequestUtil.getString(req, "barcode", "");
+                double price = RequestUtil.getDouble(req, "price", RequestUtil.getDouble(req, "giaBan", 390000));
+                affected = productService.addUniqueVariant(pid, colorId, sizeId, sku, barcode, price);
+                if (!jsonOnly && !wantsJson(req)) {
+                    resp.sendRedirect(req.getContextPath() + "/variants?productId=" + pid + (affected > 0 ? "&success=1" : "&msg=skip"));
+                    return;
+                }
+            } else {
+                String color = RequestUtil.getString(req, "mauSac", "Đen");
+                String size = RequestUtil.getString(req, "trongLuong", "M");
+                affected = productDAO.addClassicVariant(pid, color, size,
+                        RequestUtil.getDouble(req, "giaBan", 390000),
+                        RequestUtil.getInt(req, "soLuong", 10), "");
+            }
         } else if ("editVariant".equals(action)) {
             jsonOnly = wantsJson(req) || "1".equals(req.getParameter("ajax"));
             int vid = RequestUtil.getInt(req, "idBT", RequestUtil.getInt(req, "id", 0));
@@ -205,6 +230,12 @@ public class ProductServlet extends BaseServlet {
             String target = "/products".equals(req.getServletPath()) ? "/products?success=1" : "/ProductServlet?success=1";
             resp.sendRedirect(req.getContextPath() + target);
         }
+    }
+
+    private String formatFormFitVi(String raw) {
+        if ("SLIM_FIT".equalsIgnoreCase(raw)) return "Dáng ôm";
+        if ("OVERSIZE".equalsIgnoreCase(raw)) return "Form rộng";
+        return "Dáng suông";
     }
 
     private Map<String, Object> spec(String k, String v) {

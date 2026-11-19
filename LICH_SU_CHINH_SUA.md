@@ -6,7 +6,51 @@
 
 ---
 
-## 📅 CẬP NHẬT GẦN NHẤT: 18/11/2026
+## 📅 CẬP NHẬT GẦN NHẤT: 19/11/2026
+
+### 14. Chuẩn Hóa Mã DM (`11–14`), Reseed Identity & Tổng Rà Soát Toàn Dự Án (CSDL ↔ Web)
+- **Chuẩn hóa mã danh mục & sửa nhảy số `IDENTITY` (+1000) trong SQL Server (`DUNA_MensWear`):**
+  - Chuyển 4 danh mục con từ `1011–1014` về đúng tuần tự `11–14` và chạy `DBCC CHECKIDENT` reseed lại toàn bộ 10 bảng danh mục/gốc bị nhảy số `IDENTITY` (`products` → `100`, `categories` → `14`, `colors` → `11`, `sizes` → `15`, `brands` → `4`, `collections` → `3`, `roles` → `4`, `permissions` → `11`, `membership_tiers` → `4`, `customer_groups` → `4`).
+- **Đồng bộ danh mục động & lọc danh mục cha trên `/ProductServlet` ([ProductServlet.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/controller/ProductServlet.java), [ProductDAO.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/dao/ProductDAO.java), [quan-ly-san-pham.jsp](file:///d:/fpt/DUNA/src/main/webapp/quan-ly-san-pham.jsp)):**
+  - Nạp danh sách `categories` động từ CSDL cho cả bộ lọc và modal Thêm/Sửa của [quan-ly-san-pham.jsp](file:///d:/fpt/DUNA/src/main/webapp/quan-ly-san-pham.jsp) thay cho 10 `<option>` viết cứng, giúp các danh mục mới/danh mục con (`11–14`) hiển thị đồng bộ trên toàn bộ web.
+  - Cập nhật `listClassicProducts` / `countClassicProducts` trong [ProductDAO.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/dao/ProductDAO.java) hỗ trợ lọc sản phẩm thuộc danh mục con khi chọn danh mục cha.
+- **Sửa lỗi lệch tham số form thêm biến thể tại `/variants` ([variants.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/variants.jsp) ↔ [ProductServlet.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/controller/ProductServlet.java), [CatalogProductService.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/service/CatalogProductService.java)):**
+  - Bổ sung nhánh xử lý `colorId`, `sizeId`, `sku`, `price` gọi `productService.addUniqueVariant(...)` (dùng đúng `product_code` chuẩn `SPxxx`) và redirect về `/variants?productId=...` thay vì bỏ qua và đẩy về `/products`.
+- **Việt hóa toàn bộ 203 khóa cột trên [result-table.jspf](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/common/result-table.jspf):**
+  - Bổ sung nhãn tiếng Việt cho toàn bộ các bảng ở 25 màn hình mở rộng (`customers`, `warehouses`, `orders`, `payments`, `shipping`, `promotions`, `loyalty`, `hr`, `finance`, `system`, ...) và `is_online` → `Có/Không`. Kiểm thử 25/25 route đạt HTTP `200`, `0` tiêu đề cột chưa Việt hóa, và 114/114 READ UC chạy không lỗi.
+
+### 13. Bổ Sung Cây Danh Mục Cha – Con Lên Giao Diện Web & Dữ Liệu Mẫu (`categories.jsp`, `UC045`, SQL Server)
+- **Giao diện `/categories` ([categories.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/categories.jsp)) & `/products` ([products.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/products.jsp)):**
+  - Thêm ô chọn `<select name="parentId">` (`-- Danh mục gốc (Cấp 1) --` hoặc chọn danh mục cha) ngay trên form `+ Thêm danh mục (UC045)` tại [categories.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/categories.jsp), đồng thời hiển thị thụt đầu dòng `↳` cho danh mục con trong dropdown.
+- **Workbench `UC045` ([UcRegistry.java](file:///d:/fpt/DUNA/src/main/java/com/duna/common/uc/UcRegistry.java), [Tv1UcDispatcher.java](file:///d:/fpt/DUNA/src/main/java/com/duna/common/uc/Tv1UcDispatcher.java)):**
+  - Bổ sung tham số `parentId` (`Mã DM cha (0=gốc)`) vào `UC045` và bỏ giá trị cứng `null` để chạy trực tiếp tạo danh mục con từ bàn UC.
+- **Hiển thị bảng ([result-table.jspf](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/common/result-table.jspf)) & dữ liệu SQL Server (`DUNA_MensWear`):**
+  - Hiển thị `—` và nhãn **Danh mục gốc** khi `parent_id`/`parent_name` trống; thêm 4 danh mục con mẫu (*Áo Sơ Mi Dài Tay*, *Áo Sơ Mi Ngắn Tay* thuộc *Áo Sơ Mi Nam*; *Quần Âu Công Sở*, *Quần Khaki Chinos* thuộc *Quần Âu & Khaki*) vào bảng `categories`.
+
+### 12. Việt Hóa Toàn Bộ Cột Danh Mục / Bộ Sưu Tập / Màu / Size & Giá Trị Boolean (`result-table.jspf`)
+- Bổ sung nhãn tiếng Việt trong [result-table.jspf](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/common/result-table.jspf) cho các cột còn lại của phân hệ `M03` (`/categories` `UC044–UC063`): `parent_id` → **Mã DM cha**, `parent_name` → **Danh mục cha**, `display_order` → **Thứ tự hiển thị**, cùng các cột của `UC048`, `UC052`, `UC054`, `UC057`, `UC060` (`collection_id`, `season`, `banner_image_url`, `start_date`, `end_date`, `brand_id`, `color_id`, `hex_code`, `color_group`, `size_id`, `category_type`, `chart_detail_id`, `min/max_height_cm`, `min/max_weight_kg`, `min/max_chest_cm`).
+- Chuyển hiển thị giá trị boolean (`is_active`, `is_featured`, `is_primary`, `is_default`) sang **Có / Không** (dùng `cv.toString()` an toàn cho Tomcat 7 EL).
+
+### 11. Việt Hóa Form Dáng, Bổ Sung Phân Trang `/products`, Liên Kết 2 Chiều & Chuẩn Hóa Mã SP (`SP001`–`SP100`)
+- **Việt hóa Form dáng toàn bộ giao diện & form nhập liệu:**
+  - Quy đổi `REGULAR_FIT` → **Dáng suông**, `SLIM_FIT` → **Dáng ôm**, `OVERSIZE` → **Form rộng** (vẫn giữ mã enum chuẩn khi lưu CSDL để thỏa `CK_products_form_fit`) tại [result-table.jspf](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/common/result-table.jspf), [products.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/products.jsp), [quan-ly-san-pham.jsp](file:///d:/fpt/DUNA/src/main/webapp/quan-ly-san-pham.jsp) (cả bảng và modal Thêm/Sửa) và [ProductServlet.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/controller/ProductServlet.java).
+- **Bổ sung đủ danh sách & thanh phân trang (5 trang × 20 SP = 100 SP) cho `/products` (`UC064`):**
+  - Thêm `uc064_countProducts` trong [ProductDAO.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/dao/ProductDAO.java) và `countProducts` trong [CatalogProductService.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/service/CatalogProductService.java); cập nhật [Tv1UcDispatcher.java](file:///d:/fpt/DUNA/src/main/java/com/duna/common/uc/Tv1UcDispatcher.java) và [ProductServlet.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/controller/ProductServlet.java) hỗ trợ `page` (`20` sản phẩm/trang) và hiển thị thanh phân trang `< 1 2 3 4 5 > Đến trang:` trên [products.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/products.jsp).
+- **Liên kết hai chiều giữa các trang sản phẩm:**
+  - Gắn nút chuyển qua lại giữa `/ProductServlet` ([quan-ly-san-pham.jsp](file:///d:/fpt/DUNA/src/main/webapp/quan-ly-san-pham.jsp)) ↔ `/products` ([products.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/products.jsp)) ↔ `/variants` ([variants.jsp](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/tv1_nguyen_ngoc_minh/variants.jsp)) ↔ `/categories`.
+- **Chuẩn hóa mã sản phẩm & SKU đồng bộ trong CSDL SQL Server (`DUNA_MensWear`):**
+  - Cập nhật `products.product_code` khớp 1:1 theo `product_id` (`1` → `SP001`, ..., `100` → `SP100`), đồng bộ lại toàn bộ `570` dòng `product_variants.sku` và `1.019` dòng `order_items.sku` (`0` dòng lệch). Cập nhật `saveClassicProduct` và `addClassicVariant` trong [ProductDAO.java](file:///d:/fpt/DUNA/src/main/java/com/duna/tv1_nguyen_ngoc_minh/dao/ProductDAO.java) tự sinh mã `SPxxx` tuần tự khi thêm mới.
+
+### 10. Việt Hóa Tiêu Đề Cột Sản Phẩm / Biến Thể Trên Bảng UC Mở Rộng (`result-table.jspf`)
+- Bổ sung đầy đủ nhãn tiếng Việt vào `colLabels` trong [result-table.jspf](file:///d:/fpt/DUNA/src/main/webapp/WEB-INF/views/common/result-table.jspf) cho các cột SQL còn thiếu của phân hệ sản phẩm & biến thể (`brand_name` → `Thương hiệu`, `base_price` → `Giá niêm yết`, `cost_price` → `Giá vốn`, `sell_price`/`price` → `Giá bán`, `form_fit` → `Form dáng`, `is_featured` → `Nổi bật`, `is_active` → `Đang bán`, `sold_count` → `Đã bán`, `variant_id` → `Mã biến thể`, `stock_qty` → `Tồn kho`, `collection_name` → `Bộ sưu tập`, `tag_id`, `tag_name`, `slug`, `total_products`, `media_id`, `media_type`, `media_url`, `is_primary`, `material_info`, `care_instructions`, `view_count`, `description`, `updated_at`), thay thế các tên cột tiếng Anh thô khi hiển thị tại `/products` (`UC064–UC086`).
+
+---
+
+## 📅 CẬP NHẬT: 18/11/2026
+
+### 9. Cài Đặt Cloudflare Tunnel & Tạo Script Mở Web Online Nhanh (`start-tunnel.bat`)
+- Cài đặt `cloudflared` (v2026.11.1) hỗ trợ mở tunnel HTTPS công khai tới `http://localhost:8080/DUNA`.
+- Thêm file [start-tunnel.bat](file:///d:/fpt/DUNA/start-tunnel.bat) tại thư mục gốc `D:\fpt\DUNA` để tự kiểm tra cổng `8080`, bật `mvn -B tomcat7:run` chạy ngầm ghi log vào `target/tomcat-console.log` (tránh lỗi treo cửa sổ QuickEdit trên Windows) và khởi chạy Cloudflare Tunnel.
 
 ### 8. Gộp Toàn Bộ CSDL Thành 1 File Duy Nhất & Xóa Các File SQL Thừa
 - **Xóa bỏ các file SQL không dùng / cũ / tách lẻ:** `QUANLYBANHANGQUANAODUNA.sql`, `seed_duna_50kh_70sp.sql`, `database/01_DUNA_Schema_100_Bang.sql`, `database/02_DUNA_300UC_SQL.sql`, `database/03_DUNA_Seed_Data.sql`, `database/04_DUNA_Sync_Integrity.sql`.

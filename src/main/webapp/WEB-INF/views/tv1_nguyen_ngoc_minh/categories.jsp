@@ -25,9 +25,15 @@
     <div class="toolbar-section">
         <form method="post" action="${pageContext.request.contextPath}/categories" class="filter-form" style="width:100%;">
             <input type="hidden" name="action" value="createCategory">
-            <input type="text" name="categoryName" class="form-control" style="max-width:220px;" placeholder="Tên danh mục mới" required>
-            <input type="text" name="slug" class="form-control" style="max-width:180px;" placeholder="slug-seo" required>
-            <input type="text" name="description" class="form-control" style="max-width:260px;" placeholder="Mô tả">
+            <input type="text" name="categoryName" class="form-control" style="max-width:200px;" placeholder="Tên danh mục mới" required>
+            <input type="text" name="slug" class="form-control" style="max-width:170px;" placeholder="duong-dan-seo" required>
+            <select name="parentId" class="form-control" style="max-width:210px;" title="Chọn danh mục cha nếu tạo danh mục con">
+                <option value="0">-- Danh mục gốc (Cấp 1) --</option>
+                <c:forEach items="${categories}" var="cat">
+                    <option value="${cat.category_id}">${not empty cat.parent_id ? '↳ ' : ''}${cat.category_name}</option>
+                </c:forEach>
+            </select>
+            <input type="text" name="description" class="form-control" style="max-width:230px;" placeholder="Mô tả">
             <button type="submit" class="btn btn-primary btn-sm">+ Thêm danh mục (UC045)</button>
         </form>
     </div>

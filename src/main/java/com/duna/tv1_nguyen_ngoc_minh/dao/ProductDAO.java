@@ -24,6 +24,11 @@ public class ProductDAO extends BaseDAO {
         return queryRows(sql, pat, pat, Math.max(0, offset), Math.max(1, limit));
     }
 
+    public int uc064_countProducts(String keyword) {
+        String pat = likePattern(keyword);
+        return queryInt("SELECT COUNT(*) FROM products p WHERE p.product_name LIKE ? OR p.product_code LIKE ?", pat, pat);
+    }
+
     // UC065: Tim kiem san pham theo ma san pham hoac ten
     public List<Map<String, Object>> uc065_searchProducts(String keyword) {
         String sql = "SELECT p.product_id, p.product_code, p.product_name, c.category_name, p.base_price, p.cost_price, p.form_fit, p.is_active "
@@ -211,15 +216,16 @@ public class ProductDAO extends BaseDAO {
                 + "ELSE N'Còn hàng' END AS trangThai, "
                 + "CONVERT(VARCHAR(10), p.created_at, 120) AS ngayTao "
                 + "FROM products p JOIN categories cat ON p.category_id = cat.category_id "
+                + "LEFT JOIN categories pcat ON cat.parent_id = pcat.category_id "
                 + "LEFT JOIN brands b ON p.brand_id = b.brand_id "
                 + "WHERE (p.product_code LIKE ? OR p.product_name LIKE ? OR ISNULL(p.material_info, '') LIKE ?) "
-                + "AND (? = '' OR cat.category_name = ?) "
+                + "AND (? = '' OR cat.category_name = ? OR pcat.category_name = ?) "
                 + "AND (? = '' "
                 + "  OR (? = N'Ngừng bán' AND p.is_active = 0) "
                 + "  OR (? = N'Hết hàng' AND p.is_active = 1 AND ISNULL((SELECT SUM(inv.stock_quantity) FROM product_variants pv JOIN inventories inv ON pv.variant_id = inv.variant_id WHERE pv.product_id = p.product_id), 0) <= 0) "
                 + "  OR (? = N'Còn hàng' AND p.is_active = 1 AND ISNULL((SELECT SUM(inv.stock_quantity) FROM product_variants pv JOIN inventories inv ON pv.variant_id = inv.variant_id WHERE pv.product_id = p.product_id), 0) > 0)) "
                 + "ORDER BY p.product_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
-        return queryRows(sql, kw, kw, kw, c, c, st, st, st, st, Math.max(0, offset), Math.max(1, limit));
+        return queryRows(sql, kw, kw, kw, c, c, c, st, st, st, st, Math.max(0, offset), Math.max(1, limit));
     }
 
     public int countClassicProducts(String search, String cat, String status) {
@@ -227,13 +233,14 @@ public class ProductDAO extends BaseDAO {
         String c = cat == null ? "" : cat.trim();
         String st = status == null ? "" : status.trim();
         String sql = "SELECT COUNT(*) FROM products p JOIN categories cat ON p.category_id = cat.category_id "
+                + "LEFT JOIN categories pcat ON cat.parent_id = pcat.category_id "
                 + "WHERE (p.product_code LIKE ? OR p.product_name LIKE ? OR ISNULL(p.material_info, '') LIKE ?) "
-                + "AND (? = '' OR cat.category_name = ?) "
+                + "AND (? = '' OR cat.category_name = ? OR pcat.category_name = ?) "
                 + "AND (? = '' "
                 + "  OR (? = N'Ngừng bán' AND p.is_active = 0) "
                 + "  OR (? = N'Hết hàng' AND p.is_active = 1 AND ISNULL((SELECT SUM(inv.stock_quantity) FROM product_variants pv JOIN inventories inv ON pv.variant_id = inv.variant_id WHERE pv.product_id = p.product_id), 0) <= 0) "
                 + "  OR (? = N'Còn hàng' AND p.is_active = 1 AND ISNULL((SELECT SUM(inv.stock_quantity) FROM product_variants pv JOIN inventories inv ON pv.variant_id = inv.variant_id WHERE pv.product_id = p.product_id), 0) > 0))";
-        return queryInt(sql, kw, kw, kw, c, c, st, st, st, st);
+        return queryInt(sql, kw, kw, kw, c, c, c, st, st, st, st);
     }
 
     public List<Map<String, Object>> listClassicVariants(int productId) {
@@ -258,7 +265,18 @@ public class ProductDAO extends BaseDAO {
         if (catId == null) catId = queryOne("SELECT TOP 1 category_id FROM categories ORDER BY category_id", rs -> rs.getInt(1));
         Integer brandId = queryOne("SELECT TOP 1 brand_id FROM brands WHERE brand_name = ?", rs -> rs.getInt(1), brandName);
         if (brandId == null) brandId = queryOne("SELECT TOP 1 brand_id FROM brands ORDER BY brand_id", rs -> rs.getInt(1));
-        String safeCode = (maSP == null || maSP.trim().isEmpty()) ? ("SP" + (System.currentTimeMillis() % 100000)) : maSP.trim().toUpperCase();
+        String safeCode;
+        if (maSP == null || maSP.trim().isEmpty()) {
+            Integer nextNum = queryOne("SELECT ISNULL(MAX(product_id), 0) + 1 FROM products", rs -> rs.getInt(1));
+            int n = nextNum != null ? nextNum : 101;
+            safeCode = String.format("SP%03d", n);
+            while (queryInt("SELECT COUNT(*) FROM products WHERE product_code = ?", safeCode) > 0) {
+                n++;
+                safeCode = String.format("SP%03d", n);
+            }
+        } else {
+            safeCode = maSP.trim().toUpperCase();
+        }
         String safeForm = ("SLIM_FIT".equalsIgnoreCase(formDang) || "OVERSIZE".equalsIgnoreCase(formDang)) ? formDang.toUpperCase() : "REGULAR_FIT";
         String slug = safeCode.toLowerCase() + "-" + (System.currentTimeMillis() % 10000);
         long pid = executeInsertGetId(
@@ -300,7 +318,11 @@ public class ProductDAO extends BaseDAO {
         if (sizeId == null) {
             sizeId = (int) executeInsertGetId("INSERT INTO sizes (size_code, category_type, display_order) VALUES (?, 'SHIRT', 99)", sizeCode);
         }
-        String sku = "SP" + productId + "-" + colorId + "-" + sizeCode.toUpperCase();
+        String pCode = queryOne("SELECT product_code FROM products WHERE product_id = ?", rs -> rs.getString(1), productId);
+        if (pCode == null || pCode.trim().isEmpty()) {
+            pCode = String.format("SP%03d", productId);
+        }
+        String sku = pCode.trim().toUpperCase() + "-" + colorId + "-" + sizeCode.toUpperCase();
         String bc = (barcode == null || barcode.trim().isEmpty()) ? ("8936" + System.currentTimeMillis() % 100000000L) : barcode.trim();
         long vid = executeInsertGetId(
                 "IF NOT EXISTS (SELECT 1 FROM product_variants WHERE product_id = ? AND color_id = ? AND size_id = ?) "

@@ -118,7 +118,7 @@ public final class UcRegistry {
 
         String vCat = "/WEB-INF/views/tv1_nguyen_ngoc_minh/categories.jsp";
         r("UC044", "M03", "TV1", "/categories", vCat, "Xem cây danh mục sản phẩm đa cấp (cha - con)");
-        w("UC045", "M03", "TV1", "/categories", vCat, "Thêm mới danh mục sản phẩm kèm slug chuẩn SEO", p("categoryName", "Tên danh mục", "text", "Áo Sơ Mi Dài Tay"), p("slug", "Slug SEO", "text", "ao-so-mi-dai-tay"), p("description", "Mô tả", "text", "Dòng sơ mi công sở"), p("displayOrder", "Thứ tự", "number", "11"));
+        w("UC045", "M03", "TV1", "/categories", vCat, "Thêm mới danh mục sản phẩm kèm slug chuẩn SEO", p("categoryName", "Tên danh mục", "text", "Áo Sơ Mi Dài Tay"), p("slug", "Slug SEO", "text", "ao-so-mi-dai-tay"), p("parentId", "Mã DM cha (0=gốc)", "number", "1"), p("description", "Mô tả", "text", "Dòng sơ mi công sở"), p("displayOrder", "Thứ tự", "number", "1"));
         w("UC046", "M03", "TV1", "/categories", vCat, "Cập nhật tên, mô tả và ảnh đại diện danh mục", p("categoryId", "ID danh mục", "number", "1"), p("categoryName", "Tên danh mục", "text", "Áo Sơ Mi Nam"), p("description", "Mô tả", "text", "Sơ mi Oxford, Bamboo thanh lịch"));
         w("UC047", "M03", "TV1", "/categories", vCat, "Xóa danh mục và kiểm tra sản phẩm, danh mục con đang trực thuộc", p("categoryId", "ID danh mục", "number", "999"));
         r("UC048", "M03", "TV1", "/categories", vCat, "Xem danh sách bộ sưu tập thời trang theo mùa", p("keyword", "Từ khóa", "text", ""));

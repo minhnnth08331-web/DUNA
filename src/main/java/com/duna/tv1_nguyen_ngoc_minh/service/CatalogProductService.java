@@ -99,6 +99,10 @@ public class CatalogProductService {
         return productDAO.uc064_listProductsPaged(keyword, offset, limit);
     }
 
+    public int countProducts(String keyword) {
+        return productDAO.uc064_countProducts(keyword);
+    }
+
     public List<Map<String, Object>> searchProducts(String keyword) {
         return productDAO.uc065_searchProducts(keyword);
     }
@@ -146,8 +150,12 @@ public class CatalogProductService {
     }
 
     public int addUniqueVariant(int productId, int colorId, int sizeId, String sku, String barcode, double price) {
+        Map<String, Object> prod = productDAO.uc067_getProductDetail(productId);
+        String pCode = (prod != null && prod.get("product_code") != null)
+                ? String.valueOf(prod.get("product_code")).trim().toUpperCase()
+                : String.format("SP%03d", productId);
         String finalSku = (sku == null || sku.trim().isEmpty())
-                ? BarcodeUtil.generateBarcode("SP" + productId, "C" + colorId, "S" + sizeId)
+                ? BarcodeUtil.generateBarcode(pCode, "C" + colorId, "S" + sizeId)
                 : sku.trim().toUpperCase();
         String finalBarcode = (barcode == null || barcode.trim().isEmpty())
                 ? "8936" + String.format("%04d%02d%02d", productId, colorId, sizeId)

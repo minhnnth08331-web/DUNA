@@ -17,6 +17,31 @@
     colLabels.put("product_id", "Mã định danh SP");
     colLabels.put("product_code", "Mã SP");
     colLabels.put("product_name", "Tên sản phẩm");
+    colLabels.put("brand_name", "Thương hiệu");
+    colLabels.put("base_price", "Giá niêm yết");
+    colLabels.put("cost_price", "Giá vốn");
+    colLabels.put("sell_price", "Giá bán");
+    colLabels.put("price", "Giá bán");
+    colLabels.put("form_fit", "Form dáng");
+    colLabels.put("material_info", "Chất liệu");
+    colLabels.put("care_instructions", "Bảo quản");
+    colLabels.put("is_featured", "Nổi bật");
+    colLabels.put("is_active", "Đang bán");
+    colLabels.put("sold_count", "Đã bán");
+    colLabels.put("view_count", "Lượt xem");
+    colLabels.put("variant_id", "Mã biến thể");
+    colLabels.put("stock_qty", "Tồn kho");
+    colLabels.put("collection_name", "Bộ sưu tập");
+    colLabels.put("tag_id", "Mã thẻ");
+    colLabels.put("tag_name", "Tên thẻ Tag");
+    colLabels.put("slug", "Đường dẫn");
+    colLabels.put("total_products", "Số sản phẩm");
+    colLabels.put("media_id", "Mã ảnh");
+    colLabels.put("media_type", "Loại media");
+    colLabels.put("media_url", "Đường dẫn ảnh");
+    colLabels.put("is_primary", "Ảnh chính");
+    colLabels.put("description", "Mô tả");
+    colLabels.put("updated_at", "Cập nhật lúc");
     colLabels.put("color_name", "Màu sắc");
     colLabels.put("size_code", "Size");
     colLabels.put("sku", "Mã SKU");
@@ -27,6 +52,27 @@
     colLabels.put("low_stock_threshold", "Mức cảnh báo");
     colLabels.put("category_id", "Mã DM");
     colLabels.put("category_name", "Danh mục");
+    colLabels.put("parent_id", "Mã DM cha");
+    colLabels.put("parent_name", "Danh mục cha");
+    colLabels.put("display_order", "Thứ tự hiển thị");
+    colLabels.put("collection_id", "Mã BST");
+    colLabels.put("season", "Mùa");
+    colLabels.put("banner_image_url", "Ảnh banner");
+    colLabels.put("start_date", "Ngày bắt đầu");
+    colLabels.put("end_date", "Ngày kết thúc");
+    colLabels.put("brand_id", "Mã thương hiệu");
+    colLabels.put("color_id", "Mã màu");
+    colLabels.put("hex_code", "Mã màu Hex");
+    colLabels.put("color_group", "Nhóm màu");
+    colLabels.put("size_id", "Mã size");
+    colLabels.put("category_type", "Loại trang phục");
+    colLabels.put("chart_detail_id", "Mã thông số");
+    colLabels.put("min_height_cm", "Cao min (cm)");
+    colLabels.put("max_height_cm", "Cao max (cm)");
+    colLabels.put("min_weight_kg", "Nặng min (kg)");
+    colLabels.put("max_weight_kg", "Nặng max (kg)");
+    colLabels.put("min_chest_cm", "Ngực min (cm)");
+    colLabels.put("max_chest_cm", "Ngực max (cm)");
     colLabels.put("audit_id", "Mã nhật ký");
     colLabels.put("action", "Hành động");
     colLabels.put("entity_name", "Bảng dữ liệu");
@@ -49,8 +95,129 @@
     colLabels.put("store_name", "Tên cửa hàng");
     colLabels.put("employee_id", "Mã ID NV");
     colLabels.put("employee_code", "Mã NV");
+    colLabels.put("department_id", "Mã PB");
     colLabels.put("department_name", "Phòng ban");
+    colLabels.put("position_id", "Mã CV");
     colLabels.put("position_name", "Chức vụ");
+    colLabels.put("base_salary", "Lương cơ bản");
+    colLabels.put("present_days", "Ngày đi làm");
+    colLabels.put("late_days", "Đi muộn");
+    colLabels.put("absent_days", "Vắng mặt");
+    colLabels.put("customer_id", "Mã ID KH");
+    colLabels.put("customer_code", "Mã khách hàng");
+    colLabels.put("gender", "Giới tính");
+    colLabels.put("birth_date", "Ngày sinh");
+    colLabels.put("tier_id", "Mã hạng");
+    colLabels.put("tier_name", "Hạng thành viên");
+    colLabels.put("min_spend", "Chi tiêu tối thiểu");
+    colLabels.put("discount_percent", "Chiết khấu (%)");
+    colLabels.put("point_multiplier", "Hệ số điểm");
+    colLabels.put("benefits", "Quyền lợi");
+    colLabels.put("total_customers", "Số khách hàng");
+    colLabels.put("total_spent", "Tổng chi tiêu");
+    colLabels.put("total_orders", "Tổng số đơn");
+    colLabels.put("group_id", "Mã nhóm");
+    colLabels.put("group_name", "Nhóm khách hàng");
+    colLabels.put("measurement_id", "Mã số đo");
+    colLabels.put("height_cm", "Chiều cao (cm)");
+    colLabels.put("weight_kg", "Cân nặng (kg)");
+    colLabels.put("chest_cm", "Vòng ngực (cm)");
+    colLabels.put("waist_cm", "Vòng eo (cm)");
+    colLabels.put("hip_cm", "Vòng mông (cm)");
+    colLabels.put("shoulder_cm", "Rộng vai (cm)");
+    colLabels.put("measured_at", "Ngày đo");
+    colLabels.put("warehouse_id", "Mã kho");
+    colLabels.put("warehouse_code", "Mã code kho");
+    colLabels.put("address", "Địa chỉ");
+    colLabels.put("total_stock", "Tổng tồn kho");
+    colLabels.put("low_stock_items", "SP sắp hết");
+    colLabels.put("stock_quantity", "Tồn thực tế");
+    colLabels.put("inventory_value", "Giá trị tồn kho");
+    colLabels.put("total_qty", "Tổng số lượng");
+    colLabels.put("total_value", "Tổng giá trị");
+    colLabels.put("order_id", "Mã ID đơn");
+    colLabels.put("order_code", "Mã đơn hàng");
+    colLabels.put("channel", "Kênh bán");
+    colLabels.put("payment_status", "Trạng thái TT");
+    colLabels.put("subtotal", "Tạm tính");
+    colLabels.put("discount_amount", "Giảm giá");
+    colLabels.put("shipping_fee", "Phí vận chuyển");
+    colLabels.put("total_amount", "Tổng thanh toán");
+    colLabels.put("ordered_at", "Ngày đặt");
+    colLabels.put("final_price", "Thành tiền");
+    colLabels.put("qty_sold", "SL bán");
+    colLabels.put("items_sold", "SP đã bán");
+    colLabels.put("cancelled_orders", "Đơn hủy");
+    colLabels.put("return_requests", "Yêu cầu đổi/trả");
+    colLabels.put("pending_returns", "Đổi trả chờ xử lý");
+    colLabels.put("method_id", "Mã PTTT");
+    colLabels.put("method_code", "Mã phương thức");
+    colLabels.put("method_name", "Phương thức thanh toán");
+    colLabels.put("is_online", "Thanh toán online");
+    colLabels.put("payment_id", "Mã thanh toán");
+    colLabels.put("amount", "Số tiền");
+    colLabels.put("gateway", "Cổng thanh toán");
+    colLabels.put("gateway_txn_no", "Mã GD cổng");
+    colLabels.put("response_code", "Mã phản hồi");
+    colLabels.put("province_id", "Mã tỉnh");
+    colLabels.put("province_code", "Mã code tỉnh");
+    colLabels.put("ward_id", "Mã phường/xã");
+    colLabels.put("ward_code", "Mã code phường/xã");
+    colLabels.put("ward_type", "Loại ĐVHC");
+    colLabels.put("zone_id", "Mã vùng");
+    colLabels.put("zone_name", "Vùng vận chuyển");
+    colLabels.put("total_provinces", "Số tỉnh/TP");
+    colLabels.put("voucher_id", "Mã ID Voucher");
+    colLabels.put("voucher_code", "Mã Voucher");
+    colLabels.put("voucher_name", "Tên chương trình");
+    colLabels.put("discount_type", "Loại giảm giá");
+    colLabels.put("discount_value", "Giá trị giảm");
+    colLabels.put("max_discount_amount", "Giảm tối đa");
+    colLabels.put("min_order_value", "Đơn tối thiểu");
+    colLabels.put("used_count", "Đã dùng");
+    colLabels.put("usage_limit", "Giới hạn lượt");
+    colLabels.put("total_uses", "Tổng lượt dùng");
+    colLabels.put("total_discount", "Tổng tiền giảm");
+    colLabels.put("revenue_with_voucher", "Doanh thu kèm mã");
+    colLabels.put("account_id", "Mã ví điểm");
+    colLabels.put("points_balance", "Điểm hiện có");
+    colLabels.put("lifetime_points", "Điểm tích lũy");
+    colLabels.put("loyalty_txn_id", "Mã GD điểm");
+    colLabels.put("txn_type", "Loại giao dịch");
+    colLabels.put("points", "Số điểm");
+    colLabels.put("expires_at", "Hết hạn lúc");
+    colLabels.put("price_history_id", "Mã LS giá");
+    colLabels.put("old_price", "Giá cũ");
+    colLabels.put("new_price", "Giá mới");
+    colLabels.put("changed_by_name", "Người sửa");
+    colLabels.put("changed_at", "Thời gian sửa");
+    colLabels.put("reason", "Lý do");
+    colLabels.put("login_id", "Mã đăng nhập");
+    colLabels.put("email_attempt", "Email thử đăng nhập");
+    colLabels.put("fail_reason", "Lý do thất bại");
+    colLabels.put("device_info", "Thiết bị");
+    colLabels.put("linked_cust_id", "ID KH liên kết");
+    colLabels.put("linked_emp_id", "ID NV liên kết");
+    colLabels.put("open_time", "Giờ mở cửa");
+    colLabels.put("close_time", "Giờ đóng cửa");
+    colLabels.put("total_items", "Số sản phẩm");
+    colLabels.put("revenue", "Doanh thu");
+    colLabels.put("cogs", "Giá vốn (COGS)");
+    colLabels.put("gross_profit", "Lợi nhuận gộp");
+    colLabels.put("operating_expenses", "Chi phí vận hành");
+    colLabels.put("revenue_today", "Doanh thu hôm nay");
+    colLabels.put("orders_today", "Đơn hôm nay");
+    colLabels.put("new_customers", "Khách mới");
+    colLabels.put("open_tickets", "Ticket đang mở");
+    colLabels.put("month_no", "Tháng");
+    colLabels.put("year_no", "Năm");
+    colLabels.put("setting_id", "Mã cấu hình");
+    colLabels.put("setting_key", "Khóa cấu hình");
+    colLabels.put("setting_value", "Giá trị cấu hình");
+    colLabels.put("new_value", "Giá trị mới");
+    colLabels.put("ketqua", "Kết quả");
+    colLabels.put("mauc", "Mã UC");
+    colLabels.put("trangthai", "Trạng thái");
     request.setAttribute("_dunaColLabels", colLabels);
 %>
 <div class="table-wrap" style="margin-top: 16px;">
@@ -82,6 +249,32 @@
                                         <span class="badge ${cv == 'ACTIVE' || cv == 'WORKING' || cv == 'COMPLETED' || cv == 'PAID' || cv == 'SUCCESS' || cv == 'RUNNING' || cv == 'RESOLVED' ? 'badge-success' : (cv == 'LOCKED' || cv == 'CANCELLED' || cv == 'RESIGNED' || cv == 'FAILED' ? 'badge-danger' : 'badge-warning')}">
                                             <c:out value="${cv}"/>
                                         </span>
+                                    </c:when>
+                                    <c:when test="${ck == 'form_fit' || ck == 'formdang'}">
+                                        <c:choose>
+                                            <c:when test="${cv == 'SLIM_FIT'}">Dáng ôm</c:when>
+                                            <c:when test="${cv == 'OVERSIZE'}">Form rộng</c:when>
+                                            <c:when test="${cv == 'REGULAR_FIT'}">Dáng suông</c:when>
+                                            <c:otherwise><c:out value="${cv}"/></c:otherwise>
+                                        </c:choose>
+                                    </c:when>
+                                    <c:when test="${ck == 'parent_id'}">
+                                        <c:choose>
+                                            <c:when test="${empty cv}"><span style="color:var(--muted);">—</span></c:when>
+                                            <c:otherwise><c:out value="${cv}"/></c:otherwise>
+                                        </c:choose>
+                                    </c:when>
+                                    <c:when test="${ck == 'parent_name'}">
+                                        <c:choose>
+                                            <c:when test="${empty cv}"><span style="color:var(--muted);">Danh mục gốc</span></c:when>
+                                            <c:otherwise><span class="badge badge-info"><c:out value="${cv}"/></span></c:otherwise>
+                                        </c:choose>
+                                    </c:when>
+                                    <c:when test="${ck == 'is_active' || ck == 'is_featured' || ck == 'is_primary' || ck == 'is_default' || ck == 'is_online'}">
+                                        <c:choose>
+                                            <c:when test="${not empty cv && (cv.toString() == 'true' || cv.toString() == '1')}">Có</c:when>
+                                            <c:otherwise>Không</c:otherwise>
+                                        </c:choose>
                                     </c:when>
                                     <c:when test="${ck == 'barcode' || ck == 'sku' || ck == 'linked_code'}">
                                         <code style="font-weight:700;"><c:out value="${cv}"/></code>

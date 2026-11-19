@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><title>ERD DUNA_MensWear</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f8fafc;font-family:"Segoe UI",Arial,sans-serif;color:#0f172a}
+#wrap{position:relative;width:2140px;padding:28px 36px 30px 90px}
+h1{margin:0 0 4px;font-size:34px}
+.sub{font-size:18px;color:#475569;margin-bottom:22px}
+#grid{display:flex;gap:70px;align-items:flex-start;position:relative;z-index:2}
+.col{display:flex;flex-direction:column;gap:34px;width:400px}
+.col h2{margin:0 0 -18px;font-size:20px;text-transform:uppercase;letter-spacing:.5px}
+.t{background:#fff;border:2px solid var(--c);border-radius:10px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.t .hd{background:var(--c);color:#fff;font-weight:700;font-size:21px;padding:8px 12px}
+.r{display:flex;justify-content:space-between;padding:4px 12px;font-size:17px;border-top:1px solid #e2e8f0}
+.r .ty{color:#64748b;font-size:15px}
+.pk{font-weight:700}
+.pk::before{content:"PK ";color:#b45309;font-size:13px}
+.fk::before{content:"FK ";color:#2563eb;font-size:13px;font-weight:700}
+.more{font-size:14px;color:#94a3b8;padding:3px 12px;border-top:1px solid #e2e8f0;font-style:italic}
+svg{position:absolute;left:0;top:0;z-index:1;overflow:visible}
+.legend{margin-top:26px;font-size:17px;color:#334155}
+</style></head><body>
+<div id="wrap">
+<h1>ERD cốt lõi – CSDL DUNA_MensWear (SQL Server)</h1>
+<div class="sub">20 bảng trọng tâm / tổng 100 bảng • Nhóm 6 – DUNA Men's Wear • Đường nối: FK ➜ PK (một ┤ —— &lt; nhiều)</div>
+<div id="grid"></div>
+<div class="legend"><b>PK</b> khóa chính &nbsp;•&nbsp; <b style="color:#2563eb">FK</b> khóa ngoại &nbsp;•&nbsp; Đầu “chân gà” = phía nhiều (N), đầu gạch = phía một (1)</div>
+<svg id="svg"></svg>
+</div>
+<script>
+const C={auth:'#7c3aed',cus:'#db2777',ord:'#ea580c',prd:'#059669',att:'#0891b2'};
+const cols=[
+ {title:'Phân quyền & Nhân sự',c:C.auth,tables:[
+  ['permissions',[['permission_id','INT','pk'],['permission_code','VARCHAR(60)'],['permission_name','NVARCHAR(150)'],['module_name','NVARCHAR(50)']]],
+  ['role_permissions',[['role_permission_id','INT','pk'],['role_id','INT','fk','roles'],['permission_id','INT','fk','permissions']]],
+  ['roles',[['role_id','INT','pk'],['role_code','VARCHAR(30)'],['role_name','NVARCHAR(100)'],['is_active','BIT']]],
+  ['users',[['user_id','INT','pk'],['role_id','INT','fk','roles'],['email','VARCHAR(150)'],['phone','VARCHAR(15)'],['password_hash','VARCHAR(255)'],['full_name','NVARCHAR(150)'],['status','VARCHAR(20)']],5],
+  ['employees',[['employee_id','INT','pk'],['user_id','INT','fk','users'],['employee_code','VARCHAR(20)'],['full_name','NVARCHAR(150)'],['hire_date','DATE'],['status','VARCHAR(20)']],8]]},
+ {title:'Khách hàng & Khuyến mãi',c:C.cus,tables:[
+  ['membership_tiers',[['tier_id','INT','pk'],['tier_name','NVARCHAR(50)'],['min_spend','DECIMAL(18,0)'],['discount_percent','DECIMAL(5,2)']],2],
+  ['customers',[['customer_id','INT','pk'],['user_id','INT','fk','users'],['tier_id','INT','fk','membership_tiers'],['customer_code','VARCHAR(20)'],['full_name','NVARCHAR(150)'],['phone','VARCHAR(15)'],['total_spent','DECIMAL(18,0)']],8],
+  ['vouchers',[['voucher_id','INT','pk'],['voucher_code','VARCHAR(30)'],['discount_type','VARCHAR(20)'],['discount_value','DECIMAL(18,0)'],['min_order_value','DECIMAL(18,0)'],['end_date','DATETIME2']],7],
+  ['voucher_usages',[['usage_id','INT','pk'],['voucher_id','INT','fk','vouchers'],['user_id','INT','fk','users'],['order_id','BIGINT','fk','orders'],['discount_amount','DECIMAL(18,0)']],1]]},
+ {title:'Bán hàng & Thanh toán',c:C.ord,tables:[
+  ['orders',[['order_id','BIGINT','pk'],['customer_id','INT','fk','customers'],['user_id','INT','fk','users'],['voucher_id','INT','fk','vouchers'],['order_code','VARCHAR(20)'],['channel','VARCHAR(20)'],['status','VARCHAR(20)'],['tax_amount','DECIMAL(18,0)'],['total_amount','DECIMAL(18,0)']],15],
+  ['order_items',[['order_item_id','BIGINT','pk'],['order_id','BIGINT','fk','orders'],['variant_id','INT','fk','product_variants'],['quantity','INT'],['unit_price','DECIMAL(18,0)'],['line_total','DECIMAL(18,0)']],3],
+  ['payments',[['payment_id','BIGINT','pk'],['order_id','BIGINT','fk','orders'],['amount','DECIMAL(18,0)'],['status','VARCHAR(20)'],['paid_at','DATETIME2']],3],
+  ['return_requests',[['return_id','INT','pk'],['order_id','BIGINT','fk','orders'],['customer_id','INT','fk','customers'],['request_type','VARCHAR(20)'],['status','VARCHAR(20)']],5]]},
+ {title:'Sản phẩm & Biến thể',c:C.prd,tables:[
+  ['categories',[['category_id','INT','pk'],['parent_id','INT','fk','categories'],['category_name','NVARCHAR(150)'],['is_active','BIT']],4],
+  ['products',[['product_id','INT','pk'],['category_id','INT','fk','categories'],['product_code','VARCHAR(20)'],['product_name','NVARCHAR(200)'],['base_price','DECIMAL(18,0)'],['cost_price','DECIMAL(18,0)'],['form_fit','VARCHAR(20)']],12],
+  ['product_variants',[['variant_id','INT','pk'],['product_id','INT','fk','products'],['color_id','INT','fk','colors'],['size_id','INT','fk','sizes'],['sku','VARCHAR(50)'],['barcode','VARCHAR(20)'],['price','DECIMAL(18,0)']],1],
+  ['inventories',[['inventory_id','INT','pk'],['variant_id','INT','fk','product_variants'],['warehouse_id','INT','fk','warehouses'],['stock_quantity','INT'],['low_stock_threshold','INT']],2]]},
+ {title:'Thuộc tính & Kho',c:C.att,tables:[
+  ['colors',[['color_id','INT','pk'],['color_name','NVARCHAR(50)'],['hex_code','VARCHAR(7)']],1],
+  ['sizes',[['size_id','INT','pk'],['size_code','VARCHAR(10)'],['category_type','VARCHAR(20)']],1],
+  ['warehouses',[['warehouse_id','INT','pk'],['warehouse_code','VARCHAR(20)'],['warehouse_name','NVARCHAR(150)'],['address','NVARCHAR(255)']],2]]}
+];
+const grid=document.getElementById('grid'),rels=[];
+cols.forEach(col=>{
+ const d=document.createElement('div');d.className='col';
+ d.innerHTML='<h2 style="color:'+col.c+'">'+col.title+'</h2>';
+ col.tables.forEach(([name,rows,more])=>{
+  const t=document.createElement('div');t.className='t';t.id='t_'+name;t.style.setProperty('--c',col.c);
+  let h='<div class="hd">'+name+'</div>';
+  rows.forEach(([n,ty,k,ref])=>{
+   h+='<div class="r" id="'+name+'__'+n+'"><span class="'+(k||'')+'">'+n+'</span><span class="ty">'+ty+'</span></div>';
+   if(k==='fk')rels.push([name,n,ref,col.c]);
+  });
+  if(more)h+='<div class="more">+ '+more+' cột khác</div>';
+  t.innerHTML=h;d.appendChild(t);
+ });
+ grid.appendChild(d);
+});
+const wrap=document.getElementById('wrap'),svg=document.getElementById('svg'),W=wrap.getBoundingClientRect();
+svg.setAttribute('width',W.width);svg.setAttribute('height',W.height);
+function box(el){const b=el.getBoundingClientRect();return{l:b.left-W.left,r:b.right-W.left,y:(b.top+b.bottom)/2-W.top,top:b.top-W.top};}
+const NS='http://www.w3.org/2000/svg';
+function path(d,c,w){const p=document.createElementNS(NS,'path');p.setAttribute('d',d);p.setAttribute('stroke',c);p.setAttribute('stroke-width',w||2.4);p.setAttribute('fill','none');svg.appendChild(p);}
+const pkOf=t=>document.querySelector('#t_'+t+' .r');
+rels.forEach(([t,c,ref,color],i)=>{
+ const a=box(document.getElementById(t+'__'+c)),b=box(pkOf(ref));
+ if(t===ref){ // tự tham chiếu
+  const x=a.r;path(`M${x} ${a.y} H${x+30} V${b.y} H${x}`,color);
+  path(`M${x} ${a.y-8} L${x+12} ${a.y} L${x} ${a.y+8}`,color);path(`M${x+8} ${b.y-8} V${b.y+8}`,color);return;
+ }
+ let x1,x2,s1,s2;
+ if(Math.abs(a.l-b.l)<5){x1=a.l;x2=b.l;s1=-1;s2=-1;}
+ else if(a.l>b.l){x1=a.l;x2=b.r;s1=-1;s2=1;}else{x1=a.r;x2=b.l;s1=1;s2=-1;}
+ const off=(i%5)*7, k=Math.max(60,Math.abs(x2-x1)/2.2)+off;
+ path(`M${x1} ${a.y} C${x1+s1*k} ${a.y} ${x2+s2*k} ${b.y} ${x2} ${b.y}`,color);
+ // chân gà phía nhiều (FK)
+ const e=x1+s1*16;path(`M${e} ${a.y} L${x1} ${a.y-9} M${e} ${a.y} L${x1} ${a.y+9} M${e} ${a.y} L${x1} ${a.y}`,color);
+ // gạch phía một (PK)
+ const g=x2+s2*10;path(`M${g} ${b.y-9} V${b.y+9}`,color);
+});
+</script></body></html>
